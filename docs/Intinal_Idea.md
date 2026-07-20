@@ -3,8 +3,8 @@
 
 **Status:** Grounded working document — every claim below is either (a) confirmed via search with sourcing, (b) explicitly marked as an assumption requiring validation, or (c) explicitly marked as an open decision. Nothing is presented as settled unless it was actually settled in strategy discussion.
 
-**Companion document:** `BEHAVIORAL_RESEARCH.md` — living research log for UX/trust behavior, disclosure policy, vehicle-category parameters, and SEO/AEO. This spec references findings from it rather than duplicating them; check there for full sourcing and detail behind any §5 item marked "see BEHAVIORAL_RESEARCH.md."
-
+**Companion documents:** `BEHAVIORAL_RESEARCH.md` — living research log for UX/trust behavior, disclosure policy, vehicle-category parameters, and SEO/AEO. This spec references findings from it rather than duplicating them; check there for full sourcing and detail behind any §5 item marked "see BEHAVIORAL_RESEARCH.md."
+System Constitution & Architectural Masterplan.mdcontains the mature plan for starting
 ---
 
 ## 1. Thesis (What This MVP Is Actually Testing)
