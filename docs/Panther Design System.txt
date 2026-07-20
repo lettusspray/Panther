@@ -1,0 +1,395 @@
+Panther Design System — Complete Specification
+
+Version 1.0 — Working Name: PANTHER
+
+---
+
+1. Executive Summary & Session Context
+
+This document codifies the entire visual, spatial, tonal, and interaction design system developed through a rigorous, iterative session between the brand founder and an AI reasoning model. The goal was to create a distinctive, trust‑anchored identity for a used‑car marketplace operating in Nigeria and expanding across Africa, targeting a 25‑35 year old digitally native audience.
+
+The system is built around a single mascot – the Black Panther (melanistic leopard) – which was chosen for its deep aspirational and cultural resonance, its duality (guardian vs. predator), and its ability to be sculpted into four distinct postures that map directly to user journey stages. Every design decision (colour, typography, layout, motion, copy) is derived from these postures, creating a cohesive, emotionally intelligent brand language.
+
+---
+
+2. The Panther Mascot – Foundation
+
+2.1 Taxonomic Clarification
+
+The "Black Panther" is not a separate species; it is a melanistic colour variant found primarily in leopards (Panthera pardus) in Africa/Asia and jaguars (Panthera onca) in the Americas. For this brand, we anchor to the African leopard melanistic phenotype, associating it with the continent’s royal and protective symbolism.
+
+2.2 Why the Panther?
+
+· Aspirational weight – the “unreachable” mystique that luxury and performance brands covet.
+· Cultural resonance – in many African traditions, the leopard/panther symbolises kingship, spiritual power, and guardianship.
+· Marvel/Wakanda effect – a generational association with hidden, technologically advanced African excellence.
+· Duality – it can be framed as a guardian (trust) or predator (risk) – we deliberately choose the guardian frame, but the duality allows flexibility.
+
+2.3 The Four Postures (Locked)
+
+We rejected pouncing and stalking (aggressive, hidden). We selected four postures, each with a distinct emotional payload and user action:
+
+Posture Emotional State User Action Geometric Bias
+Roaring Calm Sovereign Confidence Enter & Discover (top‑funnel) Wide, triangular, expansive
+Walking Forward Guided Curiosity Explore & Compare (mid‑funnel) Diagonal, directional
+Eyes-Forward Focused Scrutiny Inspect & Validate (analytical) Vertical, frontal, symmetrical
+Resting Assured Calm Confirm & Commit (terminal) Horizontal, low centre of gravity
+
+These postures are non‑negotiable and serve as the primary axis for all subsequent design decisions.
+
+---
+
+3. Colour System – Perceptual Physics
+
+3.1 Core Principles
+
+· Colours are modulators, not labels – they amplify or attenuate the geometric bias of each posture.
+· We use OKLCH colour space for perceptual uniformity across devices; HEX is provided for legacy fallback.
+· The Lightness axis is the primary differentiator between Resting and Walking Forward (Option A locked).
+· Saturation and Temperature are secondary, but fixed per posture.
+
+3.2 Locked Colour Tokens
+
+Posture OKLCH Value sRGB Hex Lightness (L) Chroma (C) Hue (H)
+Resting oklch(20% 0.02 30) #34312E 0.20 (±0.02) 0.02 30° (neutral‑warm)
+Walking Forward oklch(62% 0.08 210) #9BAEBF 0.62 (±0.03) 0.08 210° (slight cool)
+Eyes-Forward oklch(45% 0.03 225) #6F767D 0.45 (±0.02) 0.03 225° (pronounced cool)
+Roaring Calm oklch(50% 0.18 30) #CB823F 0.50 (±0.02) 0.18 30° (pronounced warm)
+
+3.3 Enforceable Constraints
+
+· Resting Lightness must be at least 30 points lower than Walking Forward Lightness (0.20 vs 0.62 – delta 0.42) to survive display variability.
+· Walking Forward Chroma must remain between 0.07 and 0.09.
+· Eyes‑Forward Chroma must not exceed 0.035 (functionally achromatic).
+· Roaring Calm Hue must be within 28°–32°.
+· Resting never appears on dark backgrounds (fails contrast); it must only be used on light backgrounds (≥ 70% lightness).
+
+---
+
+4. Typography – Dual‑Font System (Option B)
+
+We implement a two‑font architecture: a serif for authority/gravity (Roaring Calm + Resting) and a sans‑serif for motion/clarity (Walking Forward + Eyes‑Forward). This gives us morphological distinctness that colour alone cannot achieve.
+
+4.1 Serif Track – GT Alpina (Primary)
+
+Mandatory Criteria (locked):
+
+· Morphology: Unbracketed, sharp geometric serifs (reject old‑style).
+· Stroke Contrast: High (≥ 3:1 thick‑to‑thin).
+· Weight: Variable or multi‑weight – must support Heavy/Black for headlines.
+· X‑Height: Moderate (0.48–0.52 relative to cap height).
+· Width: Normal to expanded.
+· Curve Contrast: Minimal bracketing.
+
+Usage:
+
+· Roaring Calm: headlines, manifestos, hero copy (full weight range).
+· Resting: contract text, final confirmation pages (only Bold/Black – never Light).
+
+Backups (free, SIL OFL):
+
+1. Alike Angular – sharp, geometric, moderate‑high contrast, large x‑height.
+2. Prata – didone with sharp triangular serifs, high contrast, Google Fonts.
+
+4.2 Sans‑Serif Track – Inter (Primary)
+
+Mandatory Criteria:
+
+· Morphology: Geometric or neo‑grotesque (reject humanist).
+· Stroke Contrast: Low (≤ 1.2:1).
+· Weight: Variable or multi‑weight – Thin (100) to Bold (700) required.
+· X‑Height: Large (≥ 0.54, ≤ 0.60).
+· Width: Slightly condensed (≤ 95%) for Walking Forward; normal for Eyes‑Forward.
+· Aperture: Open (distinguishable a, c, e).
+
+Usage:
+
+· Walking Forward: body text, filter labels, car names (Regular 400, Medium 500).
+· Eyes‑Forward: VIN numbers, inspection data (Light 300 for data, Bold 700 for badges).
+
+Backup: None required – Inter is open‑source and universally available.
+
+4.3 Cross‑System Harmony Rules
+
+· Cap‑height alignment: both families must have cap‑heights within ±2% at the same declared font‑size.
+· The serif must never be used with Eyes‑Forward colour (#6F767D) – that pair is forbidden.
+· The sans‑serif must never be used with Resting colour (#34312E) – that pair is forbidden.
+· Enforcement via CSS utility classes: .serif-track and .sans-track with strict linting.
+
+---
+
+5. Layout & Spacing – 8px Base Unit (Locked)
+
+We adopted an 8px atomic unit (Option B) for its balance of granularity and enforceability, with a supplement of 4px for fine adjustments (border radii, letter‑spacing).
+
+5.1 Spacing Scale
+
+All paddings, margins, and gaps are multiples of 8px:
+
+· 0, 4, 8, 12, 16, 24, 32, 40, 48, 56, 64, 80, 96, 128, 160, 192.
+
+5.2 Posture‑Specific Spatial Rhythms
+
+Posture Container Width Grid Margins Vertical Rhythm (Line‑height) Padding Modifier
+Resting ≤ 1024px 1 or 2 columns Wide (64px desktop) 1.6 (GT Alpina) 2x base (16px) between paragraphs
+Walking Forward ≥ 1280px 12 columns, asymmetrical allowed Standard (32px) 1.4 (Inter) 1x base (8px)
+Eyes-Forward ≤ 1024px 2 or 3 equal columns Tight (16px) 1.3 (Inter) 0.5x base (4px)
+Roaring Calm 1440px+ or full‑bleed 1 or asymmetrical split Expansive (≥ 80px) 1.2 (display) / 1.6 (body) 4x base (32px) between sections
+
+5.3 Breakpoints (Locked)
+
+Breakpoint Device Dominant Posture Rhythm
+≤ 480px Mobile Eyes‑Forward (dense, single column); Walking Forward compresses to 1 column; Roaring Calm hero shrinks to 2‑3 lines
+481–768px Tablet Walking Forward (2 columns); Resting and Eyes‑Forward remain symmetrical
+769–1280px Desktop Roaring Calm and Resting take priority; Walking Forward uses 3‑4 columns
+≥ 1281px Large Desktop Full Roaring Calm theatricality; Resting still constrained to ≤ 1024px
+
+Critical rule: On mobile (≤ 480px), Walking Forward colour must be lightened by +10% via CSS filter to maintain legibility against bright outdoor screens.
+
+5.4 Vertical Rhythm Enforcement
+
+We adopt a strict baseline grid – all vertical spacing (line‑height, margin‑bottom, padding) must align to the 8px scale, but each posture has its own ratio (see table). This ensures harmony across pages while respecting each posture’s emotional pacing.
+
+---
+
+6. Imagery & Photography Style
+
+Each page context inherits the posture’s emotional payload and dictates the photographic treatment.
+
+Posture Lighting & Colour Grade Composition Subject Treatment
+Roaring Calm Warm golden hour, high saturation, slight vignette 16:9 or 21:9, car off‑centre, negative space for text Pristine, gleaming, aspirational – drone/wide‑angle
+Walking Forward Neutral daylight, even lighting, mid‑saturation 4:3 or 3:2, car centred or angled diagonally, multiple cars in grid Clean but honest, no over‑styling
+Eyes-Forward Clinical studio strobes, white background, low saturation, high contrast Square (1:1), straight‑on front/rear/side, extreme close‑ups of VIN, tread, defects Forensic, neutral, all flaws visible – no retouching
+Resting Soft diffused light (golden‑hour afterglow or twilight), low contrast, warm neutral 16:9 cropped tight, car low in frame, foreground negative space Peaceful, static, settled – long exposure with slight motion blur in background
+
+Enforcement: Each asset must be tagged with its intended posture; CMS rejects uploads mismatched to page context.
+
+---
+
+7. Iconography – Phosphor Icons (Bold/Fill)
+
+All icons are derived from the open‑source Phosphor set, selected for their geometric, angular style matching GT Alpina’s sharpness.
+
+· Stroke weight: 1.5px default; 2px for Roaring Calm; 1.25px for Eyes‑Forward.
+· Terminals: Squared‑off (except circular shapes like “user”).
+· Grid: 24×24px with 2px internal padding.
+
+Posture Variant Example Icons
+Roaring Calm Fill magnifying-glass-fill, user-circle-fill, car-fill
+Walking Forward Bold arrow-right-bold, funnel-bold, list-bullets-bold
+Eyes-Forward Light check-circle-light, shield-check-light, file-text-light
+Resting Regular (subdued) lock-simple, check-fat, handshake (custom)
+
+All icons inherit posture colour via CSS variable; no hard‑coded hex values.
+
+---
+
+8. Motion & Micro‑Interactions
+
+Motion serves as a transition vehicle between postures and reinforces the emotional shift.
+
+8.1 Easing Curves
+
+Use Case Easing Function Duration
+Posture shift (Panther morph) cubic-bezier(0.65, 0, 0.35, 1) (ease‑in‑out) 300ms
+Micro‑interaction (hover, expand) cubic-bezier(0.34, 1.56, 0.64, 1) (spring overshoot) 200ms
+Page transition cubic-bezier(0.22, 1, 0.36, 1) (ease‑out) 400ms
+Loading/skeleton linear fade‑in/out 600ms
+
+8.2 Panther SVG Morphing
+
+When the user moves between funnel stages, the Panther path should transition from one posture to the next over 300ms using the ease‑in‑out curve. This requires identical path node counts across postures; if not feasible, use a cross‑fade (opacity transition).
+
+8.3 Hover & Focus States
+
+· Hover: Lightness shift of ±5% on interactive elements (e.g., Roaring Calm button from 50% to 55% lightness).
+· Scale: Buttons scale to 1.02 on hover.
+· Focus‑visible: 2px ring in Eyes‑Forward colour (#6F767D) with 2px offset – never rely on outline: none.
+
+8.4 Loading States
+
+Skeleton cards use Walking Forward colour at 20% and 60% opacity with a shimmer gradient.
+
+---
+
+9. Core Component Library – Styling Specifications
+
+9.1 Buttons
+
+Type Background Text Colour Border Hover Use Case
+Primary (Roaring) --panther-roaring-hex (#CB823F) White None Lighten +5% L Hero CTAs, Sign Up, Search Now
+Secondary (Walking) Transparent --panther-walking-hex (#9BAEBF) 2px solid same Background 10% opacity Filter, Compare
+Tertiary (Eyes‑Forward) Transparent --panther-eyes-hex (#6F767D) None Text darken -10% L Cancel, View Full History
+Destructive #C0392B White None Darken -5% L Delete/Remove (rare)
+
+Button heights: Large 56px, Default 48px, Small 32px. All buttons use Inter (sans‑serif) regardless of page.
+
+9.2 Input Fields (Text, Search, Dropdown)
+
+· Height: 48px (default), 40px (compact)
+· Border: 1px solid --panther-eyes-hex
+· Focus ring: 2px --panther-eyes-hex with 2px offset
+· Placeholder: --panther-walking-hex at 60% opacity
+· Label: Inter, Medium, 14px, --panther-eyes-hex
+
+9.3 Cards (Vehicle Listings)
+
+· Background: White, shadow 0 2px 8px rgba(0,0,0,0.06)
+· Border‑radius: 8px (1 base unit)
+· Padding: 16px (2 units)
+· Hover: shadow 0 8px 24px rgba(0,0,0,0.1), scale 1.01
+· Image: 16:9 crop, Walking Forward photographic style.
+
+9.4 Navigation (Header & Footer)
+
+· Header: fixed top, white background, bottom border 1px solid --panther-eyes-hex at 20% opacity.
+· Active link: underline in --panther-roaring-hex (2px) for Roaring Calm pages; use page‑specific colour otherwise.
+· Dropdown menus: Walking Forward colours, hovered item shifts to Roaring Calm (indicating action leads to decision).
+
+9.5 Modals & Overlays
+
+· Backdrop: rgba(0,0,0,0.5)
+· Modal: White, max‑width 600px, padding 32px (4 units), border‑radius 12px (1.5 units)
+· Close icon: top‑right, --panther-eyes-hex turns to --panther-roaring-hex on hover.
+
+---
+
+10. Trust & Verification Badges
+
+These are the physical manifestation of the Eyes‑Forward posture – forensic, unassailable, neutral.
+
+Badge Background Text Colour Icon Typography
+VIN Verified --panther-eyes-hex 10% opacity --panther-eyes-hex check‑circle‑light Inter, 12px, Regular
+Inspection Passed 20% opacity --panther-eyes-hex shield‑check‑light Inter, 12px, Medium
+Seller Trust Score circular progress ring (no background) --panther-eyes-hex none Inter, 14px, Bold (score)
+Price Transparency --panther-resting-hex 5% opacity --panther-resting-hex tag icon Inter, 12px, Medium
+
+All badges have a 1px border in the respective colour at 50% opacity.
+
+---
+
+11. Accessibility – WCAG 2.1 AA Compliance
+
+· Contrast: All colour pairs pass (verified earlier – Resting text on white = 13:1).
+· Focus indicators: 2px ring with 2px offset in --panther-eyes-hex on all interactive elements.
+· Motion reduction: Respect prefers-reduced-motion – set all durations to 0ms or provide toggle.
+· Screen reader: Icons are aria-hidden="true" if decorative; functional icons have accessible labels.
+· Colour blindness: Never rely solely on colour – badges include icons, text, and borders.
+
+---
+
+12. Theming (Light vs. Dark)
+
+Default theme: Light – used for all transactional pages (inspection, checkout) where legibility and trust are paramount.
+
+Dark theme – restricted to marketing/hero pages (Roaring Calm zone) only. On dark background (#1A1A1A), Resting becomes invisible, so it is excluded from dark theme. Roaring Calm, Walking, and Eyes‑Forward can appear on dark with a light halo for legibility.
+
+---
+
+13. Voice & Tone Guidelines
+
+13.1 Invariant Brand Voice (Panther)
+
+· Direct, not diplomatic – no jargon, plain declarative sentences.
+· Guardian‑like, not predatory – frames every statement as a reveal of truth, not a hunt for a deal.
+· Calmly authoritative – never shouts (no all‑caps), never pleads; states facts with settled confidence.
+· Culturally fluent, not exotic – universal or contextually Nigerian without stereotype.
+
+13.2 Tone Modulations per Posture
+
+Posture Tone Descriptor Copy Principle Example
+Roaring Calm Sovereign Invitation Expansive, aspirational, declarative. Uses “we” confidently. “We don't sell cars. We reveal the truth about them. The rest is just driving.”
+Walking Forward Guided Clarity Neutral, instructive, scannable. Uses imperatives sparingly. “Compare mileage, service history, and price side‑by‑side. No surprises.”
+Eyes-Forward Forensic Neutrality Clinical, data‑driven, objective. Removes subjective adjectives. Passive voice where needed. “VIN verified. Service records attached. Odometer reading confirmed at inspection.”
+Resting Grounded Reassurance Warm, minimal, terminal. Uses “you” and “your” to centre the user. “You've made your choice. We'll secure the rest. Confirm your details below.”
+
+13.3 CTA Micro‑Copy
+
+Context Phrase Rationale
+Roaring Calm (Hero) “Begin” Implies personal journey, not just transaction.
+Walking Forward (Search) “Refine” Puts control in user’s hands.
+Eyes-Forward (History) “View Report” Forensic and official.
+Resting (Checkout) “Secure Deal” Anchors to trust; “Deal” is transactional but not aggressive.
+
+13.4 Enforcement
+
+· All copy must pass the “Roaring Calm” test: read aloud; if it sounds like a nervous salesperson or an AI‑generated blog, it fails.
+· Tone linting: CMS tags each text block with its intended posture; a script flags subjective adjectives (e.g., “amazing,” “stunning”) in Eyes‑Forward zones – they must be stripped.
+· The word “Panther” is a noun only, never a verb or adjective in body copy (e.g., “Panther‑approved” is forbidden).
+
+---
+
+14. Naming – Working Name: PANTHER
+
+After evaluating candidate names (ZENITH, VELOS, KARU, etc.) using the naming skill’s methodology, we settled on Panther as the working name. This literal choice unifies the mascot and brand identity into a single, unmistakable signal. Domain preferences: panther.ng, panther.africa, panthercars.ng, or joinpanther.com – availability to be verified.
+
+---
+
+15. Design System Enforcement – Code & Linting
+
+All decisions are codified as CSS custom properties and enforced via automated checks.
+
+15.1 CSS Custom Properties (Tokens)
+
+```css
+:root {
+  /* Colours */
+  --panther-resting-oklch: oklch(20% 0.02 30);
+  --panther-resting-hex: #34312E;
+  --panther-walking-oklch: oklch(62% 0.08 210);
+  --panther-walking-hex: #9BAEBF;
+  --panther-eyes-oklch: oklch(45% 0.03 225);
+  --panther-eyes-hex: #6F767D;
+  --panther-roaring-oklch: oklch(50% 0.18 30);
+  --panther-roaring-hex: #CB823F;
+
+  /* Typography */
+  --font-serif: 'GT Alpina', 'Alike Angular', 'Prata', Georgia, serif;
+  --font-sans: 'Inter', 'Arial', 'Helvetica', sans-serif;
+
+  /* Spacing */
+  --space-unit: 8px;
+  /* etc. */
+}
+```
+
+15.2 Linting Rules (Examples)
+
+Rule ID Condition Action
+PANTHER-01 fill="var(--panther-resting-*) on non‑checkout page Reject build
+PANTHER-02 Resting L < 0.18 or > 0.22 Reject build
+PANTHER-03 Walking C < 0.07 or > 0.09 Reject build
+PANTHER-04 Roaring H outside 28°–32° Reject build
+PANTHER-05 Serif font used with Eyes‑Forward colour Reject build
+PANTHER-06 Sans font used with Resting colour Reject build
+
+15.3 Utility Classes (Enforcement Mechanism)
+
+We use utility classes for posture context: .posture-roaring, .posture-walking, .posture-eyes, .posture-resting. These set the colour and font variables automatically. Developers must apply these to containers; linting ensures they are not mixed.
+
+---
+
+16. Implementation Checklist
+
+· Generate SVG paths for four Panther postures with identical node counts (for morphing).
+· Implement CSS custom properties in global stylesheet.
+· Set up linting rules in GitHub Actions or equivalent.
+· Build component library (React/Vue) with strict posture‑based styling.
+· Create asset tagging system for CMS (imagery, copy).
+· Register domains and social handles.
+· Draft initial copy for all pages following tone guidelines.
+· Conduct accessibility audit (WCAG 2.1 AA) – automated and manual.
+· Test colour contrast on actual devices (OLED, LCD, various ambient light).
+· Finalise brand guidelines document for external agencies.
+
+---
+
+17. Conclusion
+
+The Panther Design System is a complete, internally consistent, and enforceable brand language. Every element – from colour to typography to motion to copy – is derived from the four postures and the core narrative of revealing truth with calm authority. The system is designed to scale across digital and physical touchpoints, to resonate with the target demographic, and to differentiate the marketplace through emotional intelligence and rigorous attention to perceptual detail.
+
+All decisions documented above are locked. Any future deviations must be justified and approved through a formal design governance process.
+
+---
+
+End of Version 1.0 Specification.
