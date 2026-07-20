@@ -1,0 +1,341 @@
+# System Constitution & Architectural Masterplan
+## Nigerian Auto Trust & Transaction Platform ("Edmunds, Glorified")
+
+**Document Status:** Immutable Master Guide for Executing AI / Engineering Team
+**Philosophy:** First-Principles Derivation. Zero Tolerance for Gambiarra.
+
+---
+
+### PREFACE: THE EXECUTION CONTRACT
+
+This document is the physical, logical, and behavioral constitution of the platform. Every line of code written, every UI component rendered, and every managed service integrated must trace its existence directly back to an axiom, a statutory reality, or a behavioral truth defined within these pages. 
+
+If a feature, pattern, or technical implementation cannot be traced to this constitution, it is rejected. If a specification in this document conflicts with the physical, economic, or behavioral realities of the Nigerian market during the build phase, the executing engineer/AI is **mandated** to stop, re-derive the solution from first principles, and propose a divergence. 
+
+Patching around a wall to comply with literal words is considered architectural sabotage. Duct-tape, shims, parallel paths, manual CSV uploads, runtime LLM hallucinations, and leaky abstractions are strictly forbidden. A blocker honestly reported is a good outcome; a "working" deliverable built on gambiarra is the worst possible outcome.
+
+---
+
+## I. THE CORE AXIOMS (The Physics of the Market)
+
+These axioms represent the unchangeable truths of the environment. No product decision, UI pattern, or technical architecture may violate these principles.
+
+### Axiom 1: Trust is the Product, Not a Feature
+In a Peer-to-Peer (P2P) marketplace operating in a high-fraud environment, verification and dispute resolution are not "features" bolted onto a catalog; they *are* the product. The uncertainty gap for a vehicle purchase is structurally larger than almost any other e-commerce category. Under-investment in trust mechanics costs more than under-investment in search filters.
+
+### Axiom 2: Institutional Distrust is the Baseline
+We are not fighting an "information gap"; we are fighting active, documented skepticism of local platforms. Western "add a badge, add a review count" playbooks are mathematically insufficient. Trust signals must be restrained (a few strong, un-gameable signals outperform a badge-heavy interface) and deeply integrated into the transaction mechanics.
+
+### Axiom 3: Information Asymmetry is the Root Disease
+Middlemen exist and inflate prices *only* because pricing and condition data are opaque. If a trusted, independent pricing reference exists, and a condition-trust layer exists, middlemen lose their structural advantage. We solve the disease; the symptom weakens on its own.
+
+### Axiom 4: The "Not a Dictator" Constraint
+Retention must be achieved by making the on-platform path structurally superior, never by penalizing, trapping, or coercing the user on the off-platform path. We adopt a strict "No Cancellation Fee, Ever" policy. If leaving costs a user money beyond value already received, that is coercion.
+
+### Axiom 5: The Info-First Substrate (Ontology Precedes Market)
+You cannot price, filter, or verify what you cannot definitively identify. The **Global Vehicle Ontology (GVO)** must exist before a single listing can be created. We are an information architecture first, and a transaction layer second. Free-text vehicle identification is banned.
+
+### Axiom 6: The 774 LGA Reality (Anti-Geographic Bias)
+Nigeria is not Lagos. It has 774+ Local Government Areas. Defaulting to "Lagos" as a proxy for the Nigerian market in UX copy, condition warnings (e.g., "Lagos floods"), or parts availability logic is a training-data hallucination and a structural gambiarra. The platform must be nationally agnostic. Variables must be mapped to explicit States/LGAs or flagged as nationally variable. Assuming Lagos infrastructure applies to Kano or Enugu is a fatal design flaw.
+
+---
+
+## II. STATUTORY & ECONOMIC REALITIES (The Hard Math)
+
+This section translates Nigerian import law and market economics into strict computational rules. No approximations, "magic numbers," or hardcoded constants are allowed in the codebase.
+
+### 1. The Landed-Cost Engine (The 13-Step Formula)
+The Pricing Engine is a pure, isomorphic mathematical module. It takes a vehicle cohort profile and returns a Floor and Ceiling landed-cost range. The order of operations is statutory law.
+
+*   **Step 1: FOB (Free on Board)** = Cohort Macro Wholesale Low/High (US export market).
+*   **Step 2: CIF (Cost, Insurance, Freight)** = FOB + Freight ($800–$2,500 range) + Insurance (~0.75% of FOB).
+*   **Step 3: Naira Conversion** = CIF × **LIVE NCS Customs Exchange Rate**. *(CRITICAL: NCS assesses duty using an internal valuation database. The system must pull the NCS rate live. If the rate is stale, the engine must refuse to calculate. Stale data is a trust violation).*
+*   **Step 4: Import Duty** = 20% × CIF (Naira). *(Base rate for passenger cars).*
+*   **Step 5: NAC Levy** = 5% × CIF (Naira). *(Reduced from 15% to 5% for used vehicles per May 2026 NCS Fiscal Policy Measures).*
+*   **Step 6: Surcharge** = 7% × Import Duty. *(NOT 7% of CIF).*
+*   **Step 7: CISS / FCS** = 1% × FOB (Naira). *(System must maintain a config toggle based on live NCS enforcement).*
+*   **Step 8: ETLS** = 0.5% × CIF (Naira).
+*   **Step 9: VAT Base** = CIF + Import Duty + NAC Levy + Surcharge + CISS + ETLS.
+*   **Step 10: VAT** = 7.5% × VAT Base.
+*   **Step 11: Total Statutory Charges** = Sum of Steps 4 through 10.
+*   **Step 12: Non-Statutory Real-World Additions** = Port THC (₦150k-₦250k) + Clearing Agent (₦100k-₦300k flat OR ~5% CIF) + Shipping Release (₦80k-₦150k) + Documentation (₦20k-₦50k).
+*   **Step 13: Final Ranges** = 
+    *   `LANDED_COST_FLOOR` = Steps 1-11 (low variables) + Step 12 (low end).
+    *   `LANDED_COST_CEILING` = Steps 1-11 (high variables) + Step 12 (high end).
+
+### 2. The Live-Data Mandate & The Stale-Data Kill Switch
+Statutory and macroeconomic variables are state, not constants.
+*   **The Rule:** Exchange rates, VAT rates, and Duty bands must **never** exist as hardcoded constants in the codebase. They must only exist in a `System_Config` database table, updated by automated ingestion workers.
+*   **The Kill Switch:** The Pricing Engine must check the `effective_timestamp` of the NCS/CBN rate. If the data is older than the defined freshness threshold, the engine halts and outputs: *"Live market data temporarily unavailable."* Silence is structurally safer than a lie.
+
+### 3. Category Taxonomy & Duty Bands
+Vehicles are categorized by economic function and HS Code. The ECOWAS CET dictates a 5-band system.
+*   **Band 0 (0%):** Essential social goods. *Applies to: Mass-transit buses, EVs.*
+*   **Band 1 (5%) & Band 2 (10%):** Capital/Intermediate Goods. *Applies to: Motorcycles/Tricycles (Keke/Okada) and Commercial Trucks (Reasoned Range: 5%–10% based on income-generating function).*
+*   **Band 3 (20%):** Final Consumption. *Applies to: Standard passenger cars (Tokunbo).*
+
+---
+
+## III. THE INFO-FIRST SUBSTRATE (GVO & Cohort Pricing)
+
+We do not track individual VIN histories. We do not scrape individual US salvage auctions. We price the *machine type*, not the *machine history*. 
+
+### 1. The Global Vehicle Ontology (GVO)
+The GVO is a canonical, hierarchical database (`Domain` $\rightarrow$ `Category` $\rightarrow$ `Make` $\rightarrow$ `Model` $\rightarrow$ `Trim` $\rightarrow$ `Powertrain`). 
+*   **The Ironclad Gate:** When a seller clicks "List a Vehicle", they do not see a text box. They see a cascading selector powered by the GVO. If the vehicle does not exist in the GVO, the listing is paused and queued for admin addition. 
+*   **Anti-Gambiarra Enforcement:** **FORBIDDEN: The "Miscellaneous" Category.** There shall be no "Other" category. Unstructured data is banned from the marketplace.
+
+### 2. Cohort-Level Macro Pricing
+*   **The Mechanism:** The Pricing Engine ingests **Macro Wholesale Market Averages** for specific Cohorts (`Year + Make + Model + Trim`). 
+*   **The Math:** `Cohort_FOB_Low` and `Cohort_FOB_High` are fetched via managed automotive data APIs (e.g., auto.dev, CarAPI). The 13-Step Statutory Formula is applied to these bounds to generate the `Platform_Range`.
+*   **Anti-Gambiarra Enforcement:** **FORBIDDEN: VIN-Level Pricing.** The Pricing Engine shall never query the auction history of a specific VIN. Individual VIN tracking is a scalable nightmare and irrelevant to the local buyer.
+
+### 3. The Condition State Machine (Pure UI Toggles)
+We are not an inspection company. AI vision is banned. Free-text condition notes are banned.
+*   **The Mechanism:** The Condition Report is a rigid, category-specific tree of **UI Toggles and Dropdowns**.
+    *   *Motorcycles:* `Chain/Belt Condition`, `Spoke Integrity`, `Cold-Start Smoke Color`.
+    *   *Commercial:* `Engine Hours` (critical for high idle/PTO time), `Chassis Crossmember Integrity`, `Air Brake Pressure Hold Test`.
+*   **Anti-Gambiarra Enforcement:** **FORBIDDEN: AI Vision & Photo Forensics.** The platform shall not use AI to analyze, verify, or grade user-uploaded photos. Condition verification is strictly handled via UI Toggles and the Switchboard dispute mechanism.
+
+---
+## IV. BEHAVIORAL DIRECTIVES & TRUST MECHANICS
+
+This section translates the behavioral and disclosure-policy research into strict UI/UX and policy enforcement rules. The Nigerian market suffers from institutional distrust, not just an information gap. Therefore, the interface and enforcement mechanisms must clear a higher bar than Western playbooks.
+
+### 1. The Transparency Mandate (Condition & Pricing)
+*   **The Zero-Friction Truth:** Condition reports are the high-trust asset (~73% baseline trust). They must be front-and-center on every listing, zero click-through, zero paywall, and never gated behind a "Contact Seller" button. 
+*   **The Pricing Scaffold:** Pricing is the low-trust asset (~40% baseline trust). The platform must never just display a number. The UI must expose the methodology, the cohort sourcing, and the statutory math. "Show the work" is a structural requirement.
+*   **Anti-Gambiarra Enforcement:** It is strictly forbidden to hide the "Floor/Ceiling" range behind a "Login to see estimated price" modal. The pricing engine's output is a public utility designed to destroy information asymmetry.
+
+### 2. The Disclosure Economics (Seller Onboarding)
+*   **The Incentive Alignment:** Full disclosure is not the natural equilibrium of an unregulated market. The platform must not frame condition reporting as a "compliance burden." 
+*   **The Bayesian Persuasion Framing:** Onboarding and UI micro-copy must explicitly frame honest disclosure (including damage/flaws) as a *sales advantage*. Disclosing negative information sorts buyers with heterogeneous preferences, increasing the probability of a successful match and reducing post-sale disputes.
+*   **Anti-Gambiarra Enforcement:** The UI must never use threatening language as the primary prompt. The primary prompt must be economic (e.g., "Accurate condition reports increase your lead quality by 5x").
+
+### 3. The Light-Touch Enforcement Matrix (Solving the Ban-Evasion Reality)
+*   **The Axiom Acceptance:** We accept the "Light Facilitation Reality." We will not build a KYC police state to chase ban-evaders, as identity is trivially cheap to fake in this market. We do not ban down to the individual hardware/identity level at the MVP stage.
+*   **The Utility Revocation Model:** Instead of identity-tracking, we enforce disclosure policies by revoking *platform utility*. 
+    *   **Tier 1 (Ambiguous/First-time gap):** Warning + Forced Correction. The listing is paused until the condition report is amended.
+    *   **Tier 2 (Confirmed false disclosure):** Loss of Switchboard Privileges. The seller is barred from using the platform's escrow service, effectively stripping them of the platform's primary trust multiplier.
+    *   **Tier 3 (Severe/Repeat Fraud):** Account Deactivation. We accept that the bad actor may create a new email address tomorrow. Our duty is to protect the *current* transaction ecosystem.
+*   **Anti-Gambiarra Enforcement:** It is strictly forbidden to integrate heavy, expensive KYC APIs (e.g., NIN/BVN deep-scraping) at the MVP stage to enforce bans. The cost and friction of deep KYC will destroy the independent-seller supply base.
+
+### 4. Switchboard Positioning (The "Not a Dictator" Constraint)
+*   **The Local Pattern Alignment:** Switchboard (escrow) must be foregrounded in all marketing and onboarding as the digital equivalent of "Pay on Delivery"—a trust pattern the Nigerian market has already converged on.
+*   **The Negotiable Fee:** The platform fee must not be an imposed, unilateral tax. The UI must allow the buyer and seller to negotiate who bears the platform fee (Buyer pays, Seller pays, or Split) during the checkout flow.
+*   **The Anti-Coercion Bright Line:** The platform adopts a strict "No Cancellation Fee, Ever" policy. If a transaction falls through before funds are released, neither party is penalized. 
+*   **Anti-Gambiarra Enforcement:** It is strictly forbidden to build "trap" mechanics that make it financially painful to cancel a pending Switchboard transaction.
+
+---
+
+## V. SYSTEM BOUNDARIES & DATA PIPELINE (The Automated Topology)
+
+This section dictates the exact data pipelines required to populate the Global Vehicle Ontology (GVO), the Cohort Pricing Engine, and the Statutory Math. We utilize managed APIs and Edge-Native AI ETL to turn raw data into "usable human knowledge" offline, caching it in the database so the UI remains lightning-fast.
+
+Manual CSV uploads by founders are banned. Fragile, custom-built HTML scrapers are banned. We rely on stable software contracts (APIs) and managed unlocking services.
+
+### 1. The Ontology Pipeline (What Cars Exist)
+*   **US / Tokunbo (90% of market):** **NHTSA vPIC REST API**. Free, official, government-hosted REST API. Returns pure JSON.
+*   **Global / EVs / Asian Imports:** **auto.dev API** or **CarAPI**. Managed, freemium automotive data APIs providing structured JSON databases of global makes, models, and trims (including BYD, Neta, and JDM imports).
+*   **The Automation:** A Cloudflare Cron Trigger runs nightly, queries these APIs for new model years, and upserts the JSON directly into the Neon Postgres `Global_Vehicle_Ontology` table.
+
+### 2. The Pricing Anchor Pipeline (Cohort Valuation)
+*   **The Source:** **auto.dev Pricing API** or **Kelley Blue Book (KBB) / NADA via RapidAPI**.
+*   **The Mechanism:** We query the managed API for the *Cohort Market Value* (e.g., `GET /api/v1/valuation?make=Toyota&model=Camry&year=2015`). The API returns a JSON object with `wholesale_low` and `wholesale_high`. 
+*   **The Automation:** The Edge Worker fetches this JSON, applies the 13-step statutory math, and updates the `Cohort_Pricing` table in Neon.
+
+### 3. The Statutory & FX Pipeline (Edge-Native Automation)
+*   **CBN Rate:** **ExchangeRate-API** or **FreeCurrencyAPI**. (Pure JSON, highly reliable).
+*   **NCS Customs Rate (The Hard Wall):** The NCS portal is JS-rendered and bot-protected. Building a custom Puppeteer script from scratch to bypass this is a gambiarra that incurs unnecessary compute costs and maintenance debt.
+    *   **The Elegant Solution:** **ZenRows (Free Tier / Managed Web Unlocker)**. Because the NCS rate is not updated hourly, we use ZenRows to handle the headless browser rendering, IP rotation, and CAPTCHA bypassing. 
+    *   **The Fallback Directive:** If integration tests specify that ZenRows free tier limits or fail to satisfy the NCS extraction reliability, the executing AI is mandated to immediately evaluate and substitute alternative managed scraping APIs (e.g., ScraperAPI, BrightData) rather than attempting to build and host a custom VPS-based Puppeteer bridge.
+*   **The Automation:** Cloudflare Cron triggers ZenRows $\rightarrow$ ZenRows returns clean JSON $\rightarrow$ Edge Worker pushes to Neon `System_Config`.
+
+### 4. The AI "Human Knowledge" Engine (Offline ETL)
+*   **The Goal:** Translate raw, dry API specs (e.g., `ground_clearance_inches: 5.8`) into practical, human-readable warnings for the buyer, without introducing runtime latency or hallucinations.
+*   **The Mechanism:** **Groq (Llama-3-8B) via Cloudflare Queues.**
+*   **The Workflow:**
+    1.  The Ontology/Pricing API returns raw JSON.
+    2.  This JSON is pushed to a **Cloudflare Queue** (background worker).
+    3.  The Queue triggers a Worker that sends the JSON to **Groq** with a strict System Prompt: *"You are an Nigerian automotive expert. Translate these raw specs into 3 concise, practical warnings for a buyer. Output strict JSON."*
+    4.  Groq returns structured warnings (e.g., `{"warnings": ["Low clearance: High risk of undercarriage damage on speed bumps.", "AWD: All 4 tires must be replaced simultaneously."]}`).
+    5.  The Worker writes this "Human Knowledge" JSONB directly into the Neon Postgres database, attached to that specific Cohort.
+*   **The Result:** When a user loads the page, the Astro Edge Worker simply reads the *pre-computed, cached JSONB* from Neon. Zero runtime latency. Zero UI hallucinations.
+
+---
+
+## VI. THE 774 LGA REALITY (Anti-Geographic Bias)
+
+Nigeria is not Lagos. It has 774+ Local Government Areas (LGAs) across 36 states and the FCT. Defaulting to "Lagos" as a proxy for the Nigerian market in UX copy, condition warnings, or parts availability logic is a training-data hallucination and a structural gambiarra.
+
+### 1. The National Agnosticism Mandate
+*   **The Rule:** The platform must be nationally agnostic. Variables must be mapped to explicit States/LGAs or flagged as nationally variable. Assuming Lagos infrastructure, traffic patterns, flood risks, or parts markets apply to Kano, Enugu, or Port Harcourt is a fatal design flaw.
+*   **Contextual Translation Engine:** When the Offline AI ETL generates "Human Knowledge" warnings, it is strictly forbidden from hardcoding "Lagos" into the output (e.g., "Bad for Lagos floods"). 
+    *   *Correct Implementation:* "Low ground clearance: High risk of undercarriage damage on unpaved roads and in flood-prone areas."
+    *   *Correct Implementation (TCO):* The Total Cost of Ownership (TCO) overlay must allow the user to input their specific State/LGA to calculate accurate local fuel prices or NEPA/solar tariffs, rather than defaulting to Lagos pricing.
+
+### 2. The "Ladipo Index" (Parts Availability) Proxy
+*   **The Problem:** We cannot assume parts are available nationwide just because they are available in Ladipo (Lagos). 
+*   **The Elegant Solution:** The Parts Availability Score (High / Medium / Low) is computed deterministically based on the vehicle's Make/Model/Year national import volume. However, the UI must explicitly state: *"Parts availability is based on national import volume. Verify local availability in your specific State/LGA."*
+*   **Anchored UGC:** When mechanics add notes via the Anchored Micro-Contributions feature, they must tag their note with their region (e.g., "Suspension parts readily available in the South-East" vs "Requires ordering from Lagos").
+
+### 3. Anti-Gambiarra Enforcement (Geographic Edition)
+*   **FORBIDDEN: The "Lagos Default".** No system config, UI micro-copy, AI system prompt, or TCO calculation may use "Lagos" as a hardcoded default proxy for Nigeria. 
+*   **FORBIDDEN: Homogenized Road Conditions.** Contextual warnings must account for the vast disparity in road infrastructure between federal highways, urban centers, and rural LGAs. Warnings must be phrased conditionally (e.g., "If driving on unpaved roads...") rather than geographically absolute.
+
+---
+
+## VII. THE EDGE ARCHITECTURE (The Stack & Topology)
+
+This section dictates the exact physical and logical infrastructure of the platform. The architecture is derived from the **Mobile-First Prerequisite (<200ms TTFB)** and the **Stale-Data Kill Switch**. We utilize managed services to the absolute maximum to ensure enterprise-grade security and ease, while staying "lean like a beggar" to preserve runway. 
+
+Split-brain infrastructure (e.g., frontend on Cloudflare, API on Railway, DB on Neon) is strictly forbidden, as cross-network hops destroy Edge latency. The entire compute and data layer must be unified at the Edge.
+
+### 1. The Presentation & Edge Compute Layer
+*   **Framework: Astro (running on Cloudflare Pages/Workers)**
+    *   *The Derivation:* Astro’s Island Architecture allows the Knowledge Hub (NHTSA Specs, Contextual Translation Rules) to ship **zero JavaScript** by default. This guarantees the blazing-fast SEO/AEO performance mandated by Track 4. 
+    *   *The Execution:* The Pricing Engine runs as Edge Server-Side Rendering (SSR) via Astro endpoints. When a user requests a price, the Edge Worker fetches the live `System_Config`, runs the Pure TypeScript Formula, and streams the HTML/JSON-LD in <100ms.
+*   **API & State Machine: Hono (running on Cloudflare Workers)**
+    *   *The Derivation:* Hono is the fastest, lightest Edge framework. It handles the Switchboard API, the Dealer Bulk Ingestion parser, and the Payment Webhooks. It runs globally on Cloudflare's network, adjacent to the user.
+*   **Background Ingestion: Cloudflare Cron Triggers & Queues**
+    *   *The Derivation:* Replaces centralized server Crons. We write isolated Workers that trigger periodically to fetch data via managed APIs (auto.dev, ZenRows). If they fail, they push to a **Cloudflare Queue** (Dead Letter Queue) which fires a Sentry alert. Silent failures are structurally banned.
+
+### 2. The Truth Layer (Database & ORM)
+*   **Database: Neon Postgres (Managed Serverless)**
+    *   *The Derivation:* Switchboard requires strict ACID transactions for the financial ledger. Neon scales to zero (lean) and provides database branching for zero-downtime CI/CD schema migrations.
+*   **Connection Acceleration: Cloudflare Hyperdrive**
+    *   *The Derivation:* Postgres requires persistent TCP connections. Opening a new Postgres connection from a serverless Edge Worker takes ~300ms, destroying TTFB. Hyperdrive caches DB connections and queries at the Edge, turning the single-origin Neon database into a globally distributed, low-latency engine.
+*   **ORM: Drizzle ORM**
+    *   *The Derivation:* Type-safe, lightweight, and compiles to standard SQL. It avoids the heavy abstraction leaks and Edge-incompatibility issues of Prisma (which relies on large binary wrappers that exceed Cloudflare Worker CPU limits). It integrates natively with Better-Auth and Hono.
+
+### 3. The Trust, Identity & Media Layer
+*   **Auth: Better-Auth**
+    *   *The Derivation:* A modern, TS-first auth library that runs natively on Cloudflare Workers and integrates seamlessly with Drizzle. It avoids the vendor lock-in and high starting costs of Auth0/Clerk, while supporting the Light Facilitation Model's OTP requirements.
+*   **Identity Verification: Architecture Specification: Zero-Cost Inbound WhatsApp Authentication
+Directive to AI Coder:
+Prioritize the simplest, cleanest, most elegant design. If a specification breaks, an assumption fails, or Meta's API does not support the direct path, STOP. Do not implement flags, special cases, or duct-tape patches to force compliance. Re-derive the design from first principles or report the blocker immediately.
+System Design
+1. Authentication Initialization (Frontend & API)
+ * Session Token: When a user initiates login/signup, the backend generates a short-lived, cryptographically secure token (e.g., auth_8F92A1) tied to their pending session. Store this in a fast, transient layer (e.g., Redis) with a strict expiration (e.g., 5 minutes).
+ * Routing the Link: The UI generates a WhatsApp deep link: [https://wa.me/](https://wa.me/)<BUSINESS_NUMBER>?text=Verify%20<TOKEN>.
+   * Mobile UI: Renders as a native button (opens WhatsApp app directly).
+   * Desktop UI: Renders the exact same URL as a scannable QR code.
+ * State Sync: The frontend listens for state changes via Server-Sent Events (SSE) or a WebSocket connection tied to the session ID.
+2. Webhook Processor (Backend)
+ * Direct Meta Connection: Interface directly with Meta's WhatsApp Cloud API. Do not route through third-party BSPs (Business Solution Providers) to prevent per-message markup fees.
+ * Payload Ingestion: Expose a single, secure webhook endpoint to receive messages events from Meta.
+ * Extraction & Validation: Parse the incoming message. Extract the sender's phone number (wa_id) and parse the text body for the <TOKEN>.
+ * Authentication:
+   * Query the transient store for the <TOKEN>.
+   * If found: Mark the session as authenticated, associate the phone number with the user account, and push the success state to the frontend via SSE/WebSocket.
+   * If missing/expired: Silently drop or send an error reply.
+3. The Engagement Loop (Post-Auth Messaging)
+Because the user initiated the conversation, Meta opens a 24-hour free service window. The backend must immediately fire an automated HTTP POST request to the Meta Cloud API to send a confirmation message.
+ * Trigger: Successful validation of the <TOKEN>.
+ * Message Payload: A unified confirmation and community-capture hook.
+   * Text: "Login verified! Welcome to [App Name]. Join the team, Connect with other members, get updates, talk to us and share feedback directly in our community here: [Link to WhatsApp/Community]"
+ * Objective: Visually close the loop for the user so they know the login worked, while simultaneously converting a transactional authentication event into long-term community retention for $0.00.
+.
+*   **Image Pipeline: Cloudflare Images**
+    *   *The Derivation:* Serving raw, unoptimized 5MB images from a standard S3 bucket or Hetzner to a Nigerian 3G/4G network is architectural sabotage. Cloudflare Images ($5 per 100k images) handles storage, global CDN delivery, and **on-the-fly Next-Gen resizing (WebP/AVIF)** natively. Sellers upload via presigned URLs; the Edge handles the rest. No duct-tape resizing workers required.
+
+---
+
+## VIII. SEO/AEO AS STRUCTURAL INFRASTRUCTURE
+
+Search visibility is not a marketing afterthought; it is a byproduct of system architecture. We treat AEO (Answer Engine Optimization) as a structural layer built directly on top of SEO fundamentals (per Track 4 research).
+
+### 1. The Freshness Moat & AI Citation
+*   **The Structural Advantage:** AEO requires quarterly-or-better content refresh. Our Cohort Pricing and NCS duty rates are pulled live via managed APIs and ZenRows. Our pricing pages are automatically, structurally fresher than any static competitor blog post. 
+*   **The Chatgpt/Perplexity Priority:** While Google AI Overviews favor content already ranking in the top 10 (a weakness for a zero-authority launch), Perplexity favors *fresh, well-cited articles*. Perplexity is our highest-value early AI-citation target.
+*   **The Google Monopoly Reality:** Nigeria is ~98.7% Google search concentration. Bing/DuckDuckGo optimization is strictly forbidden as a waste of engineering resources.
+
+### 2. The Answer-First Schema & JSON-LD Generation
+*   **The TL;DR Rule:** The pricing engine's output pages are our primary AEO asset. The page must format headings as questions (e.g., *"What is the landed cost of a 2015 Toyota Camry in Nigeria?"*), followed immediately by a concise, 40-60 word direct answer (the Floor/Ceiling range), and *then* the full formula breakdown.
+*   **Dynamic JSON-LD:** FAQPage, HowTo, and Product schema are not hardcoded in the UI components. The Pure Formula Module *generates the JSON-LD schema dynamically* based on the exact math it just performed. If the statutory formula changes, the AI schema changes automatically.
+
+### 3. The Mobile-First Prerequisite
+*   **The Hard Gate:** Nigeria runs at 68-75%+ mobile web traffic. Google uses mobile-first indexing. A slow mobile page doesn't just hurt UX; it structurally destroys Google ranking.
+*   **The TTFB Mandate:** Time to First Byte (TTFB) on Nigerian mobile networks must be <200ms. This is achieved via Edge-First Compute (Cloudflare) and Hyperdrive connection pooling. Mobile performance is a hard prerequisite, not a nice-to-have.
+
+---
+
+## IX. PHASING & SYSTEM STATES (The Evolutionary Roadmap)
+
+The platform does not evolve by adding random features; it evolves through distinct **System States**. A subsequent state cannot be entered until the foundational prerequisites of the prior state are mathematically and behaviorally proven.
+
+### State 1: The Trust & Computation Foundation (MVP)
+*The "Chicken" Phase. We launch with computed truth and structural escrow.*
+*   **Pricing Engine:** 100% reliant on Cohort-Level Macro Pricing (auto.dev/CarAPI) + 13-Step Landed-Cost Formula. 
+*   **Knowledge Hub:** 100% reliant on the Global Vehicle Ontology (NHTSA + auto.dev) + Offline Groq AI ETL for contextual warnings.
+*   **Trust Layer:** Standardized UI Toggle Condition Reports + Switchboard (Escrow) for payment trust.
+*   **Explicit Deferrals:** No auctions, no financing, no physical inspection networks, no historical Carfax-style records. 
+
+### State 2: The Empirical Shift (The "Egg" Harvest)
+*The transition from imported logic to local market reality.*
+*   **The Trigger:** Switchboard transaction volume ($N$) for specific vehicle cohorts reaches statistical significance, and variance ($\sigma$) shrinks.
+*   **The Mechanism:** The **Bayesian Blending Engine** activates. The Pricing Engine begins weighting real, closed-price Switchboard data higher than the Cohort Formula. 
+*   **The Result:** The platform's pricing ranges begin to reflect actual Nigerian street-level negotiation realities. The formula organically retires itself, cohort by cohort.
+
+### State 3: Market Mechanics (Auctions & B2B Scaling)
+*Introducing high-velocity transaction mechanics.*
+*   **The Prerequisite:** A trusted pricing baseline (State 2) and condition-verified listings must exist. 
+*   **The Mechanism:** Introduction of timed, escrow-backed auction mechanics for specific high-demand or distressed inventory. 
+
+### State 4: The Financial Ecosystem (Bolt-ons)
+*Monetizing the trust layer via institutional partnerships.*
+*   **The Prerequisite:** Proven, high-volume transaction data and verified default/dispute rates via Switchboard.
+*   **The Mechanism:** Integration of auto-loan origination and insurance underwriting via API bolt-ons.
+
+---
+
+## X. THE FINAL, ABSOLUTE ANTI-GAMBIARRA ENFORCEMENT MATRIX
+
+This is the uncompromising checklist for the executing AI and engineering team. If a proposed solution, pull request, or product requirement violates any of these rules, it is **automatically rejected**. There are no exceptions for "speed" or "MVP shortcuts." Duct-tape is the enemy of elegance.
+
+### 1. Geographic & Contextual Violations
+*   **FORBIDDEN: The "Lagos Default".** No system config, UI micro-copy, AI system prompt, or TCO calculation may use "Lagos" as a hardcoded default proxy for Nigeria. Nigeria has 774+ LGAs. Assuming Lagos infrastructure applies to Kano or Enugu is a fatal design flaw. Variables must be mapped to explicit States/LGAs or flagged as nationally variable.
+*   **FORBIDDEN: The "Ladipo Index" Proxy.** We will not name or structure parts availability logic around a single Lagos market. Parts availability must be computed deterministically based on national import volume and explicitly state: *"Verify local availability in your specific State/LGA."*
+
+### 2. Data & Architecture Violations
+*   **FORBIDDEN: VIN-Level Pricing.** The Pricing Engine shall never query the auction history of a specific VIN. It shall only query the Macro Cohort Average.
+*   **FORBIDDEN: Manual CSV Uploads & VPS Scrapers.** We will not rely on founders uploading CSVs, nor will we build custom Puppeteer scripts on a VPS to scrape the NCS. We use managed APIs (auto.dev) and managed web unlockers (ZenRows). *Directive: If integration tests specify that ZenRows or auto.dev fail to satisfy reliability requirements, the executing AI is mandated to immediately evaluate and substitute alternative managed APIs (e.g., ScraperAPI, CarAPI) rather than building custom scrapers.*
+*   **FORBIDDEN: The PaaS Split-Brain.** We will not deploy the API to Railway, Render, or Fly.io while hosting the frontend on Cloudflare. The entire compute layer must live on Cloudflare Workers.
+*   **FORBIDDEN: Direct Postgres Connections.** No Cloudflare Worker is allowed to connect directly to Neon using a standard `pg` connection string. All DB traffic must be routed through **Cloudflare Hyperdrive**.
+*   **FORBIDDEN: Prisma ORM.** Prisma's query engine relies on large binary wrappers that exceed Cloudflare Worker limits. Drizzle ORM is the mandated alternative.
+*   **FORBIDDEN: Raw S3 Image Serving.** All condition report images must pass through Cloudflare Images to guarantee Next-Gen format delivery on Nigerian mobile networks.
+
+### 3. Product & AI Violations
+*   **FORBIDDEN: AI Vision & Photo Forensics.** The platform shall not use AI to analyze, verify, or grade user-uploaded photos. Condition verification is strictly handled via UI Toggles.
+*   **FORBIDDEN: Runtime LLM Translation.** LLMs will never be used to parse user input, translate vehicle specs, or verify photos in the production application runtime. AI (Groq) is strictly walled inside offline Cloudflare Queues for ETL structuring.
+*   **FORBIDDEN: Free-Text Vehicle Identification.** Make, Model, and Trim must only be resolved against the Global Vehicle Ontology (GVO) via cascading selectors.
+*   **FORBIDDEN: The "Miscellaneous" Category.** There shall be no "Other" category in the GVO. Unstructured data is banned from the marketplace.
+*   **FORBIDDEN: Hardcoded JSON-LD.** Schema must be generated dynamically by the backend/edge compute layer based on the exact math the Pricing Engine just performed.
+
+### 4. Trust & Policy Violations
+*   **FORBIDDEN: Payment Gateway State.** We will never use Paystack/Flutterwave's native APIs to handle the *logic* of conditional P2P releases. Third-party rails are dumb pipes for fiat movement; the Switchboard state machine must live entirely in our proprietary Neon Postgres ledger.
+*   **FORBIDDEN: Coercive Cancellation Fees.** "No Cancellation Fee, Ever" is a structural bright-line test against dictatorship.
+*   **FORBIDDEN: The KYC Police State.** We will not integrate heavy, expensive KYC APIs at the MVP stage to enforce bans. Enforcement relies on Switchboard Utility Revocation.
+*   **FORBIDDEN: Schema Homogenization.** We will never force a Commercial Truck or a Motorcycle through a standard Passenger Car condition report. Commercial vehicles *must* include `Engine Hours` and `Air Brake Pressure Hold` fields. Motorcycles *must* include `Chain/Spoke Integrity`.
+
+---
+
+## XI. THE EXECUTION MANDATE (Conclusion)
+
+This document is the physical, logical, and behavioral constitution of the Nigerian Auto Trust & Transaction Platform. It is the result of aggressive, uncompromising research, behavioral analysis, and first-principles architectural derivation. 
+
+**To the Executing AI and the Engineering Team:**
+
+You are not building a bulletin board. You are building a deterministic, financial, and mechanical truth engine for a high-friction, high-distrust, 774-LGA market. 
+
+The walls you will hit during development are not bugs; they are information. When a managed service limits you, or a spec breaks, **STOP**. Do not patch. Do not build a shim. Re-derive the solution from the Core Axioms until the wall does not exist. 
+
+If re-deriving the solution means diverging from a literal interpretation of a feature request, it is your **DUTY** to diverge. Present the divergence. Explain the architectural, logical, or systemic failure of the original request, and present the rigorously derived alternative. 
+
+**The Substitution Directive:** If at any point during testing or integration, a mandated managed service (e.g., ZenRows, auto.dev, Groq, Neon) fails to satisfy the technical or reliability directives outlined in this constitution, you are strictly forbidden from building a custom "duct-tape" workaround to replace it. You must halt, research, and substitute it with another enterprise-grade managed alternative that fulfills the exact same architectural boundary.
+
+A blocker honestly reported is a good outcome. A "working" deliverable built on gambiarra is sabotage.
+
+Trust is the product. Math is the foundation. Elegance is the mandate. 
+
+**END OF MASTERPLAN. BEGIN EXECUTION.**
