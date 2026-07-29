@@ -87,7 +87,7 @@ The GVO is a canonical, hierarchical database (`Domain` $\rightarrow$ `Category`
 
 ### 2. Cohort-Level Macro Pricing
 *   **The Mechanism:** The Pricing Engine ingests **Macro Wholesale Market Averages** for specific Cohorts (`Year + Make + Model + Trim`). 
-*   **The Math:** `Cohort_FOB_Low` and `Cohort_FOB_High` are fetched via managed automotive data APIs (e.g., auto.dev, CarAPI). The 13-Step Statutory Formula is applied to these bounds to generate the `Platform_Range`.
+*   **The Math:** `Cohort_FOB_Low` and `Cohort_FOB_High` are fetched via managed automotive data APIs (e.g., auto.dev, CarsDataset). The 13-Step Statutory Formula is applied to these bounds to generate the `Platform_Range`.
 *   **Anti-Gambiarra Enforcement:** **FORBIDDEN: VIN-Level Pricing.** The Pricing Engine shall never query the auction history of a specific VIN. Individual VIN tracking is a scalable nightmare and irrelevant to the local buyer.
 
 ### 3. The Condition State Machine (Pure UI Toggles)
@@ -136,7 +136,7 @@ Manual CSV uploads by founders are banned. Fragile, custom-built HTML scrapers a
 
 ### 1. The Ontology Pipeline (What Cars Exist)
 *   **US / Tokunbo (90% of market):** **NHTSA vPIC REST API**. Free, official, government-hosted REST API. Returns pure JSON.
-*   **Global / EVs / Asian Imports:** **auto.dev API** or **CarAPI**. Managed, freemium automotive data APIs providing structured JSON databases of global makes, models, and trims (including BYD, Neta, and JDM imports).
+*   **Global / EVs / Asian Imports:** **auto.dev API** or **CarsDataset**. Managed, freemium automotive data APIs providing structured JSON databases of global makes, models, and trims (including BYD, Neta, and JDM imports).
 *   **The Automation:** A Cloudflare Cron Trigger runs nightly, queries these APIs for new model years, and upserts the JSON directly into the Neon Postgres `Global_Vehicle_Ontology` table.
 
 ### 2. The Pricing Anchor Pipeline (Cohort Valuation)
@@ -147,9 +147,9 @@ Manual CSV uploads by founders are banned. Fragile, custom-built HTML scrapers a
 ### 3. The Statutory & FX Pipeline (Edge-Native Automation)
 *   **CBN Rate:** **ExchangeRate-API** or **FreeCurrencyAPI**. (Pure JSON, highly reliable).
 *   **NCS Customs Rate (The Hard Wall):** The NCS portal is JS-rendered and bot-protected. Building a custom Puppeteer script from scratch to bypass this is a gambiarra that incurs unnecessary compute costs and maintenance debt.
-    *   **The Elegant Solution:** **ZenRows (Free Tier / Managed Web Unlocker)**. Because the NCS rate is not updated hourly, we use ZenRows to handle the headless browser rendering, IP rotation, and CAPTCHA bypassing. 
-    *   **The Fallback Directive:** If integration tests specify that ZenRows free tier limits or fail to satisfy the NCS extraction reliability, the executing AI is mandated to immediately evaluate and substitute alternative managed scraping APIs (e.g., ScraperAPI, BrightData) rather than attempting to build and host a custom VPS-based Puppeteer bridge.
-*   **The Automation:** Cloudflare Cron triggers ZenRows $\rightarrow$ ZenRows returns clean JSON $\rightarrow$ Edge Worker pushes to Neon `System_Config`.
+    *   **The Elegant Solution:** **ScraperAPI (Managed Web Unlocker)**. Because the NCS rate is not updated hourly, we use ScraperAPI to handle the headless browser rendering, IP rotation, and CAPTCHA bypassing. 
+    *   **The Fallback Directive:** If integration tests specify that ScraperAPI free tier limits or fail to satisfy the NCS extraction reliability, the executing AI is mandated to immediately evaluate and substitute alternative managed scraping APIs (e.g., BrightData, ScrapingBee) rather than attempting to build and host a custom VPS-based Puppeteer bridge.
+*   **The Automation:** Cloudflare Cron triggers ScraperAPI $\rightarrow$ ScraperAPI returns clean JSON $\rightarrow$ Edge Worker pushes to Neon `System_Config`.
 
 ### 4. The AI "Human Knowledge" Engine (Offline ETL)
 *   **The Goal:** Translate raw, dry API specs (e.g., `ground_clearance_inches: 5.8`) into practical, human-readable warnings for the buyer, without introducing runtime latency or hallucinations.
@@ -198,7 +198,7 @@ Split-brain infrastructure (e.g., frontend on Cloudflare, API on Railway, DB on 
 *   **API & State Machine: Hono (running on Cloudflare Workers)**
     *   *The Derivation:* Hono is the fastest, lightest Edge framework. It handles the Switchboard API, the Dealer Bulk Ingestion parser, and the Payment Webhooks. It runs globally on Cloudflare's network, adjacent to the user.
 *   **Background Ingestion: Cloudflare Cron Triggers & Queues**
-    *   *The Derivation:* Replaces centralized server Crons. We write isolated Workers that trigger periodically to fetch data via managed APIs (auto.dev, ZenRows). If they fail, they push to a **Cloudflare Queue** (Dead Letter Queue) which fires a Sentry alert. Silent failures are structurally banned.
+    *   *The Derivation:* Replaces centralized server Crons. We write isolated Workers that trigger periodically to fetch data via managed APIs (auto.dev, ScraperAPI). If they fail, they push to a **Cloudflare Queue** (Dead Letter Queue) which fires a Sentry alert. Silent failures are structurally banned.
 
 ### 2. The Truth Layer (Database & ORM)
 *   **Database: Neon Postgres (Managed Serverless)**
@@ -246,7 +246,7 @@ Because the user initiated the conversation, Meta opens a 24-hour free service w
 Search visibility is not a marketing afterthought; it is a byproduct of system architecture. We treat AEO (Answer Engine Optimization) as a structural layer built directly on top of SEO fundamentals (per Track 4 research).
 
 ### 1. The Freshness Moat & AI Citation
-*   **The Structural Advantage:** AEO requires quarterly-or-better content refresh. Our Cohort Pricing and NCS duty rates are pulled live via managed APIs and ZenRows. Our pricing pages are automatically, structurally fresher than any static competitor blog post. 
+*   **The Structural Advantage:** AEO requires quarterly-or-better content refresh. Our Cohort Pricing and NCS duty rates are pulled live via managed APIs and ScraperAPI. Our pricing pages are automatically, structurally fresher than any static competitor blog post. 
 *   **The Chatgpt/Perplexity Priority:** While Google AI Overviews favor content already ranking in the top 10 (a weakness for a zero-authority launch), Perplexity favors *fresh, well-cited articles*. Perplexity is our highest-value early AI-citation target.
 *   **The Google Monopoly Reality:** Nigeria is ~98.7% Google search concentration. Bing/DuckDuckGo optimization is strictly forbidden as a waste of engineering resources.
 
@@ -266,7 +266,7 @@ The platform does not evolve by adding random features; it evolves through disti
 
 ### State 1: The Trust & Computation Foundation (MVP)
 *The "Chicken" Phase. We launch with computed truth and structural escrow.*
-*   **Pricing Engine:** 100% reliant on Cohort-Level Macro Pricing (auto.dev/CarAPI) + 13-Step Landed-Cost Formula. 
+*   **Pricing Engine:** 100% reliant on Cohort-Level Macro Pricing (auto.dev/CarsDataset) + 13-Step Landed-Cost Formula. 
 *   **Knowledge Hub:** 100% reliant on the Global Vehicle Ontology (NHTSA + auto.dev) + Offline Groq AI ETL for contextual warnings.
 *   **Trust Layer:** Standardized UI Toggle Condition Reports + Switchboard (Escrow) for payment trust.
 *   **Explicit Deferrals:** No auctions, no financing, no physical inspection networks, no historical Carfax-style records. 
@@ -299,7 +299,7 @@ This is the uncompromising checklist for the executing AI and engineering team. 
 
 ### 2. Data & Architecture Violations
 *   **FORBIDDEN: VIN-Level Pricing.** The Pricing Engine shall never query the auction history of a specific VIN. It shall only query the Macro Cohort Average.
-*   **FORBIDDEN: Manual CSV Uploads & VPS Scrapers.** We will not rely on founders uploading CSVs, nor will we build custom Puppeteer scripts on a VPS to scrape the NCS. We use managed APIs (auto.dev) and managed web unlockers (ZenRows). *Directive: If integration tests specify that ZenRows or auto.dev fail to satisfy reliability requirements, the executing AI is mandated to immediately evaluate and substitute alternative managed APIs (e.g., ScraperAPI, CarAPI) rather than building custom scrapers.*
+*   **FORBIDDEN: Manual CSV Uploads & VPS Scrapers.** We will not rely on founders uploading CSVs, nor will we build custom Puppeteer scripts on a VPS to scrape the NCS. We use managed APIs (auto.dev, CarsDataset) and managed web unlockers (ScraperAPI). *Directive: If integration tests specify that ScraperAPI or auto.dev fail to satisfy reliability requirements, the executing AI is mandated to immediately evaluate and substitute alternative managed APIs rather than building custom scrapers.*
 *   **FORBIDDEN: The PaaS Split-Brain.** We will not deploy the API to Railway, Render, or Fly.io while hosting the frontend on Cloudflare. The entire compute layer must live on Cloudflare Workers.
 *   **FORBIDDEN: Direct Postgres Connections.** No Cloudflare Worker is allowed to connect directly to Neon using a standard `pg` connection string. All DB traffic must be routed through **Cloudflare Hyperdrive**.
 *   **FORBIDDEN: Prisma ORM.** Prisma's query engine relies on large binary wrappers that exceed Cloudflare Worker limits. Drizzle ORM is the mandated alternative.
@@ -332,7 +332,7 @@ The walls you will hit during development are not bugs; they are information. Wh
 
 If re-deriving the solution means diverging from a literal interpretation of a feature request, it is your **DUTY** to diverge. Present the divergence. Explain the architectural, logical, or systemic failure of the original request, and present the rigorously derived alternative. 
 
-**The Substitution Directive:** If at any point during testing or integration, a mandated managed service (e.g., ZenRows, auto.dev, Groq, Neon) fails to satisfy the technical or reliability directives outlined in this constitution, you are strictly forbidden from building a custom "duct-tape" workaround to replace it. You must halt, research, and substitute it with another enterprise-grade managed alternative that fulfills the exact same architectural boundary.
+**The Substitution Directive:** If at any point during testing or integration, a mandated managed service (e.g., ScraperAPI, auto.dev, Groq, Neon) fails to satisfy the technical or reliability directives outlined in this constitution, you are strictly forbidden from building a custom "duct-tape" workaround to replace it. You must halt, research, and substitute it with another enterprise-grade managed alternative that fulfills the exact same architectural boundary.
 
 A blocker honestly reported is a good outcome. A "working" deliverable built on gambiarra is sabotage.
 
