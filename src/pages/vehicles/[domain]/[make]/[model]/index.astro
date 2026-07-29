@@ -1,0 +1,381 @@
+---
+import BaseLayout from "../../../../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../../../../styles/global.css";
+import { db } from "../../../../../lib/db";
+import {
+  gvoDomain,
+  gvoCategory,
+  gvoMake,
+  gvoModel,
+  gvoTrim,
+  knowledgeEntry,
+  cohortPricing,
+} from "../../../../../lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { searchVehicleImages } from "../../../../../lib/images";
+import { getPartsAvailability } from "../../../../../lib/gvo/parts-availability";
+
+const { domain, make, model } = Astro.params;
+if (!domain || !make || !model) return Astro.redirect("/vehicles");
+
+const [domainRow] = await db
+  .select()
+  .from(gvoDomain)
+  .where(eq(gvoDomain.slug, domain))
+  .limit(1);
+
+if (!domainRow) return Astro.redirect("/vehicles");
+
+const categories = await db
+  .select()
+  .from(gvoCategory)
+  .where(eq(gvoCategory.domainId, domainRow.id));
+
+let makeRow: typeof gvoMake.$inferSelect | null = null;
+for (const cat of categories) {
+  const [found] = await db
+    .select()
+    .from(gvoMake)
+    .where(and(eq(gvoMake.categoryId, cat.id), eq(gvoMake.slug, make)))
+    .limit(1);
+  if (found) {
+    makeRow = found;
+    break;
+  }
+}
+
+if (!makeRow) return Astro.redirect(`/vehicles/${domain}`);
+
+const [modelRow] = await db
+  .select()
+  .from(gvoModel)
+  .where(and(eq(gvoModel.makeId, makeRow.id), eq(gvoModel.slug, model)))
+  .limit(1);
+
+if (!modelRow) return Astro.redirect(`/vehicles/${domain}/${make}`);
+
+const trims = await db
+  .select()
+  .from(gvoTrim)
+  .where(eq(gvoTrim.modelId, modelRow.id))
+  .orderBy(gvoTrim.name);
+
+// Fetch Knowledge Hub content for this model
+const khWarnings: string[] = [];
+let khSpecs: Record<string, unknown> | null = null;
+if (trims.length > 0) {
+  const knowledge = await db
+    .select()
+    .from(knowledgeEntry)
+    .where(eq(knowledgeEntry.trimId, trims[0].id))
+    .limit(1);
+
+  if (knowledge.length > 0) {
+    if (knowledge[0].warnings) {
+      const w = knowledge[0].warnings as Record<string, unknown>;
+      if (Array.isArray(w.warnings)) {
+        khWarnings.push(...(w.warnings as string[]));
+      }
+    }
+    if (knowledge[0].specs) {
+      khSpecs = knowledge[0].specs as Record<string, unknown>;
+    }
+  }
+}
+
+// Fetch cohort pricing for spec hints
+const pricingData = await db
+  .select()
+  .from(cohortPricing)
+  .where(eq(cohortPricing.trimId, trims[0]?.id ?? ""))
+  .limit(1);
+
+// Fetch vehicle images from multi-provider service
+const imageResult = await searchVehicleImages({
+  make: makeRow.name,
+  model: modelRow.name,
+  year: modelRow.firstModelYear ?? undefined,
+  count: 6,
+});
+const images = imageResult.images;
+const attribution = [...new Set(images.map((img) => img.photographer).filter(Boolean))].join(", ");
+---
+
+<BaseLayout
+  title={`${makeRow.name} ${modelRow.name}`}
+  posture="eyes"
+  description={`${makeRow.name} ${modelRow.name} — specs, pricing, and buyer warnings for the Nigerian market.`}
+>
+  <section class={styles.hero}>
+    <nav class={styles.breadcrumb}>
+      <a href="/vehicles">Vehicles</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <a href={`/vehicles/${domain}`}>{domainRow.name}</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <a href={`/vehicles/${domain}/${make}`}>{makeRow.name}</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{modelRow.name}</span>
+    </nav>
+    <h1 class={styles.heroTitle}>{makeRow.name} {modelRow.name}</h1>
+    <p class={styles.heroSubtitle}>
+      Specs, pricing data, and buyer warnings for the Nigerian market.
+    </p>
+  </section>
+
+  {images.length > 0 && (
+    <div class={styles.gallery}>
+      <img
+        src={images[0].urls.medium}
+        alt={images[0].alt || `${makeRow.name} ${modelRow.name}`}
+        class={`${styles.galleryImg} ${styles.galleryHero}`}
+        loading="eager"
+      />
+      {images.slice(1, 5).map((img, i) => (
+        <img
+          src={img.urls.small}
+          alt={img.alt || `${makeRow.name} ${modelRow.name} photo ${i + 2}`}
+          class={styles.galleryImg}
+          loading="lazy"
+        />
+      ))}
+      {attribution && (
+        <div class={styles.galleryCredit}>Photos: {attribution}</div>
+      )}
+    </div>
+  )}
+
+  <div class={styles.contentGrid}>
+    <div class={styles.mainContent}>
+      {/* Specs Section */}
+      <div class={styles.section}>
+        <h2 class={styles.sectionTitle}>Specifications</h2>
+
+        <div class={styles.sectionBorder}>
+          <div class={styles.specRow}>
+            <span class={styles.specLabel}>Make</span>
+            <span class={styles.specValue}>{makeRow.name}</span>
+          </div>
+          <div class={styles.specRow}>
+            <span class={styles.specLabel}>Model</span>
+            <span class={styles.specValue}>{modelRow.name}</span>
+          </div>
+          {modelRow.firstModelYear && (
+            <div class={styles.specRow}>
+              <span class={styles.specLabel}>First Model Year</span>
+              <span class={styles.specValue}>{modelRow.firstModelYear}</span>
+            </div>
+          )}
+          {modelRow.lastModelYear && (
+            <div class={styles.specRow}>
+              <span class={styles.specLabel}>Last Model Year</span>
+              <span class={styles.specValue}>{modelRow.lastModelYear}</span>
+            </div>
+          )}
+          {makeRow.origin && (
+            <div class={styles.specRow}>
+              <span class={styles.specLabel}>Market Origin</span>
+              <span class={styles.specValue}>{makeRow.origin}</span>
+            </div>
+          )}
+        </div>
+
+        {trims.length > 0 && trims.map((trim) => (
+          <div class={styles.sectionBorder} key={trim.id}>
+            <div class={styles.specRow}>
+              <span class={styles.specLabel}>Trim</span>
+              <span class={styles.specValue}>{trim.name}</span>
+            </div>
+            {trim.engine && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Engine</span>
+                <span class={styles.specValue}>{trim.engine}</span>
+              </div>
+            )}
+            {trim.transmission && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Transmission</span>
+                <span class={styles.specValue}>{trim.transmission}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Knowledge Hub — Vehicle Insights from auto-data.net / ev-database / NHTSA */}
+      {khSpecs && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>Vehicle Insights</h2>
+          <div class={styles.specGrid}>
+            {khSpecs.fuel_type && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Fuel Type</span>
+                <span class={styles.specValue}>{String(khSpecs.fuel_type)}</span>
+              </div>
+            )}
+            {khSpecs.engine_displacement_cc && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Engine</span>
+                <span class={styles.specValue}>{String(khSpecs.engine_displacement_cc)} cc</span>
+              </div>
+            )}
+            {khSpecs.power_hp && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Power</span>
+                <span class={styles.specValue}>{String(khSpecs.power_hp)} hp</span>
+              </div>
+            )}
+            {khSpecs.transmission_type && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Transmission</span>
+                <span class={styles.specValue}>{String(khSpecs.transmission_type)}</span>
+              </div>
+            )}
+            {khSpecs.drivetrain && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Drivetrain</span>
+                <span class={styles.specValue}>{String(khSpecs.drivetrain)}</span>
+              </div>
+            )}
+            {khSpecs.body_type && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Body Type</span>
+                <span class={styles.specValue}>{String(khSpecs.body_type)}</span>
+              </div>
+            )}
+            {khSpecs.seats && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Seats</span>
+                <span class={styles.specValue}>{String(khSpecs.seats)}</span>
+              </div>
+            )}
+            {khSpecs.acceleration_0_100_sec && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>0-100 km/h</span>
+                <span class={styles.specValue}>{String(khSpecs.acceleration_0_100_sec)}s</span>
+              </div>
+            )}
+            {khSpecs.top_speed_kmh && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Top Speed</span>
+                <span class={styles.specValue}>{String(khSpecs.top_speed_kmh)} km/h</span>
+              </div>
+            )}
+            {khSpecs.curb_weight_kg && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Curb Weight</span>
+                <span class={styles.specValue}>{String(khSpecs.curb_weight_kg)} kg</span>
+              </div>
+            )}
+            {khSpecs.fuel_consumption_litres_per_100km && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Fuel Consumption</span>
+                <span class={styles.specValue}>{String(khSpecs.fuel_consumption_litres_per_100km)} L/100km</span>
+              </div>
+            )}
+            {khSpecs.ncap_stars && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>NCAP Safety</span>
+                <span class={styles.specValue}>{String(khSpecs.ncap_stars)} ★</span>
+              </div>
+            )}
+            {khSpecs.battery_usable_kwh && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Battery</span>
+                <span class={styles.specValue}>{String(khSpecs.battery_usable_kwh)} kWh</span>
+              </div>
+            )}
+            {khSpecs.range_km && (
+              <div class={styles.specRow}>
+                <span class={styles.specLabel}>Range</span>
+                <span class={styles.specValue}>{String(khSpecs.range_km)} km</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Buyer Warnings from Knowledge Hub */}
+      {khWarnings.length > 0 && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>Buyer Warnings</h2>
+          <div class={styles.warningList}>
+            {khWarnings.map((warn) => (
+              <div class={styles.warningItem}>
+                <span>⚠️</span>
+                <p class={styles.warningText}>{warn}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trims Section */}
+      {trims.length > 0 && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>Available Trims</h2>
+          <div class={styles.trimsGrid}>
+            {trims.map((trim) => (
+              <a
+                href={`/pricing/${domain}/${make}/${model}/${trim.slug}`}
+                class={styles.trimChip}
+              >
+                <span class={styles.trimName}>{trim.name}</span>
+                {trim.engine && (
+                  <span class={styles.trimEngine}>{trim.engine}</span>
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div class={styles.sidebar}>
+      {/* Pricing CTA */}
+      <div class={styles.pricingCta}>
+        <h3 class={styles.pricingCtaTitle}>Check Landed Cost</h3>
+        <p class={styles.pricingCtaText}>
+          See the full 13-step statutory breakdown for any {makeRow.name} {modelRow.name} trim.
+        </p>
+        <a
+          href={`/pricing/${domain}/${make}/${model}/${trims[0]?.slug ?? ""}`}
+          class={styles.pricingCtaBtn}
+        >
+          View Pricing
+        </a>
+      </div>
+
+      {/* Quick Facts */}
+      <div class={styles.section}>
+        <h2 class={styles.sectionTitle}>Quick Facts</h2>
+        <div class={styles.specRow}>
+          <span class={styles.specLabel}>Domain</span>
+          <span class={styles.specValue}>{domainRow.name}</span>
+        </div>
+        <div class={styles.specRow}>
+          <span class={styles.specLabel}>Available Trims</span>
+          <span class={styles.specValue}>{trims.length}</span>
+        </div>
+        {pricingData.length > 0 && (
+          <div class={styles.specRow}>
+            <span class={styles.specLabel}>FOB Range (USD)</span>
+            <span class={styles.specValue}>
+              ${Number(pricingData[0].fobLowUsd).toLocaleString()} – ${Number(pricingData[0].fobHighUsd).toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        <div class={styles.specRow}>
+          <span class={styles.specLabel}>Parts Availability</span>
+          <span class={`${styles.partsBadge} ${styles[`parts_${getPartsAvailability(makeRow.name).score}`]}`}>
+            {getPartsAvailability(makeRow.name).label}
+          </span>
+        </div>
+        <p class={styles.partsDisclaimer}>
+          {getPartsAvailability(makeRow.name).description}
+        </p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,470 @@
+---
+export interface GvoSelectorsProps {
+  stepNextId?: string;
+  yearSelectId?: string;
+}
+
+const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
+---
+
+<div class="gvo-section">
+  <div class="selectors-grid">
+    <div class="field-group">
+      <label class="field-label">Make</label>
+      <select id="gvo-make" class="field-select">
+        <option value="">Select make...</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Model</label>
+      <select id="gvo-model" class="field-select" disabled>
+        <option value="">Select make first...</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Trim</label>
+      <select id="gvo-trim" class="field-select" disabled>
+        <option value="">Select model first...</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="gvo-selected" class="selected-vehicle" hidden>
+    <span class="selected-label">Selected:</span>
+    <span class="selected-text" id="gvo-selected-text"></span>
+  </div>
+
+  <div class="gvo-request-area">
+    <button type="button" class="gvo-request-toggle" id="gvo-request-toggle">
+      Can't find your vehicle?
+    </button>
+    <div class="gvo-request-form" id="gvo-request-form" hidden>
+      <p class="gvo-request-desc">
+        Enter your vehicle details below.
+      </p>
+      <input type="hidden" id="gvo-request-domain" />
+      <div class="field-group">
+        <label class="field-label">Make</label>
+        <input type="text" class="field-input" id="gvo-custom-make" placeholder="e.g. Toyota, Bajaj, MAN" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Model</label>
+        <input type="text" class="field-input" id="gvo-custom-model" placeholder="e.g. Camry, CT 100, TGS" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Trim / Variant <span class="field-optional">(optional)</span></label>
+        <input type="text" class="field-input" id="gvo-custom-trim" placeholder="e.g. LE, Standard" />
+      </div>
+      <div class="gvo-lookup-actions">
+        <button type="button" class="gvo-lookup-btn" id="gvo-lookup-btn">Look up vehicle</button>
+        <span class="gvo-lookup-or">or</span>
+        <button type="button" class="gvo-custom-btn" id="gvo-custom-btn">Continue with custom details</button>
+      </div>
+      <p class="gvo-lookup-status" id="gvo-lookup-status" hidden></p>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ stepNextId, yearSelectId }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const makeSelect = document.getElementById("gvo-make");
+    const modelSelect = document.getElementById("gvo-model");
+    const trimSelect = document.getElementById("gvo-trim");
+    const selectedEl = document.getElementById("gvo-selected");
+    const selectedText = document.getElementById("gvo-selected-text");
+    const stepNextBtn = document.getElementById(stepNextId);
+    const yearSelect = document.getElementById(yearSelectId);
+    const toggleBtn = document.getElementById("gvo-request-toggle");
+    const requestForm = document.getElementById("gvo-request-form");
+    const domainInput = document.getElementById("gvo-request-domain");
+    const lookupBtn = document.getElementById("gvo-lookup-btn");
+    const customBtn = document.getElementById("gvo-custom-btn");
+    const lookupStatus = document.getElementById("gvo-lookup-status");
+    const customMake = document.getElementById("gvo-custom-make");
+    const customModel = document.getElementById("gvo-custom-model");
+    const customTrim = document.getElementById("gvo-custom-trim");
+
+    let selectedMake = "";
+    let selectedModel = "";
+    let selectedTrim = "";
+    let currentDomain = "";
+
+    function resetSelectors() {
+      modelSelect.innerHTML = '<option value="">Select make first...</option>';
+      modelSelect.disabled = true;
+      trimSelect.innerHTML = '<option value="">Select model first...</option>';
+      trimSelect.disabled = true;
+      selectedEl.hidden = true;
+      if (stepNextBtn) stepNextBtn.disabled = true;
+    }
+
+    function setSelected(label) {
+      selectedText.textContent = label;
+      selectedEl.hidden = false;
+      if (stepNextBtn) stepNextBtn.disabled = false;
+    }
+
+    // Listen for domain selection from parent
+    document.addEventListener("domain-selected", (e) => {
+      currentDomain = e.detail.slug;
+      if (domainInput) domainInput.value = e.detail.slug;
+      loadMakes();
+      resetSelectors();
+    });
+
+    async function loadMakes() {
+      if (!currentDomain || !makeSelect) return;
+      makeSelect.innerHTML = '<option value="">Loading makes...</option>';
+      makeSelect.disabled = true;
+      resetSelectors();
+
+      try {
+        const domainsRes = await fetch("/api/pricing/gvo/domains");
+        const domains = await domainsRes.json();
+        const domain = domains.find((d) => d.slug === currentDomain);
+        if (!domain) throw new Error("Domain not found");
+
+        const catsRes = await fetch(`/api/pricing/gvo/categories/${domain.id}`);
+        const categories = await catsRes.json();
+
+        let allMakes = [];
+        for (const cat of categories) {
+          const makesRes = await fetch(`/api/pricing/gvo/makes/${cat.id}`);
+          const makes = await makesRes.json();
+          allMakes.push(...makes);
+        }
+
+        const uniqueMakes = Array.from(
+          new Map(allMakes.map((m) => [m.name, m])).values()
+        );
+
+        makeSelect.innerHTML = '<option value="">Select make...</option>';
+        for (const make of uniqueMakes) {
+          const opt = document.createElement("option");
+          opt.value = make.id;
+          opt.textContent = make.name;
+          makeSelect.appendChild(opt);
+        }
+        makeSelect.disabled = false;
+      } catch {
+        makeSelect.innerHTML = '<option value="">Failed to load makes</option>';
+      }
+    }
+
+    makeSelect.addEventListener("change", async () => {
+      const makeId = makeSelect.value;
+      if (!makeId) { resetSelectors(); return; }
+
+      selectedMake = makeSelect.options[makeSelect.selectedIndex].text;
+      modelSelect.innerHTML = '<option value="">Loading models...</option>';
+      modelSelect.disabled = true;
+      trimSelect.innerHTML = '<option value="">Select model first...</option>';
+      trimSelect.disabled = true;
+      if (stepNextBtn) stepNextBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/pricing/gvo/models/${makeId}`);
+        const models = await res.json();
+        modelSelect.innerHTML = '<option value="">Select model...</option>';
+        for (const model of models) {
+          const opt = document.createElement("option");
+          opt.value = model.id;
+          opt.textContent = model.name;
+          opt.dataset.firstYear = model.firstModelYear ?? "";
+          opt.dataset.lastYear = model.lastModelYear ?? "";
+          modelSelect.appendChild(opt);
+        }
+        modelSelect.disabled = false;
+      } catch {
+        modelSelect.innerHTML = '<option value="">Failed to load models</option>';
+      }
+    });
+
+    modelSelect.addEventListener("change", async () => {
+      const modelId = modelSelect.value;
+      if (!modelId) { resetSelectors(); return; }
+
+      selectedModel = modelSelect.options[modelSelect.selectedIndex].text;
+      trimSelect.innerHTML = '<option value="">Loading trims...</option>';
+      trimSelect.disabled = true;
+      if (stepNextBtn) stepNextBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/pricing/gvo/trims/${modelId}`);
+        const trims = await res.json();
+        trimSelect.innerHTML = '<option value="">Select trim...</option>';
+        for (const trim of trims) {
+          const opt = document.createElement("option");
+          opt.value = trim.id;
+          opt.textContent = trim.name + (trim.engine ? ` (${trim.engine})` : "");
+          trimSelect.appendChild(opt);
+        }
+        trimSelect.disabled = false;
+      } catch {
+        trimSelect.innerHTML = '<option value="">Failed to load trims</option>';
+      }
+    });
+
+    trimSelect.addEventListener("change", () => {
+      const trimId = trimSelect.value;
+      if (!trimId) { resetSelectors(); return; }
+
+      selectedTrim = trimSelect.options[trimSelect.selectedIndex].text;
+      setSelected(`${selectedMake} ${selectedModel} — ${selectedTrim}`);
+
+      if (yearSelect) {
+        const modelOpt = modelSelect.options[modelSelect.selectedIndex];
+        const firstYear = Number(modelOpt.dataset.firstYear) || 1990;
+        const lastYear = Number(modelOpt.dataset.lastYear) || new Date().getFullYear();
+        yearSelect.innerHTML = '<option value="">Select year...</option>';
+        for (let y = lastYear; y >= firstYear; y--) {
+          const opt = document.createElement("option");
+          opt.value = String(y);
+          opt.textContent = String(y);
+          yearSelect.appendChild(opt);
+        }
+      }
+
+      document.dispatchEvent(new CustomEvent("vehicle-selected", {
+        detail: { trimId, make: selectedMake, model: selectedModel, trim: selectedTrim, custom: false }
+      }));
+    });
+
+    if (toggleBtn && requestForm) {
+      toggleBtn.addEventListener("click", () => {
+        const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
+        toggleBtn.setAttribute("aria-expanded", String(!expanded));
+        requestForm.hidden = expanded;
+      });
+    }
+
+    if (lookupBtn) {
+      lookupBtn.addEventListener("click", async () => {
+        const makeName = customMake.value.trim();
+        const modelName = customModel.value.trim();
+        if (!makeName || !modelName) {
+          lookupStatus.textContent = "Please enter at least make and model.";
+          lookupStatus.className = "gvo-lookup-status gvo-lookup-status--error";
+          lookupStatus.hidden = false;
+          return;
+        }
+
+        lookupBtn.disabled = true;
+        lookupBtn.textContent = "Looking up...";
+        lookupStatus.hidden = true;
+
+        try {
+          const res = await fetch("/api/gvo/lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              domain: currentDomain,
+              makeName,
+              modelName,
+              trimName: customTrim.value.trim() || "",
+              vehicleType: currentDomain,
+            }),
+          });
+          const data = await res.json();
+          if (data.found && data.trimId) {
+            setSelected(`${data.make} ${data.model} — ${data.trim}`);
+            toggleBtn.style.display = "none";
+            requestForm.hidden = true;
+            document.dispatchEvent(new CustomEvent("vehicle-selected", {
+              detail: { trimId: data.trimId, make: data.make, model: data.model, trim: data.trim, custom: false }
+            }));
+          } else {
+            lookupStatus.textContent = `Could not find "${makeName} ${modelName}" in automotive databases.`;
+            lookupStatus.className = "gvo-lookup-status gvo-lookup-status--error";
+            lookupStatus.hidden = false;
+          }
+        } catch {
+          lookupStatus.textContent = "Network error. Try again.";
+          lookupStatus.className = "gvo-lookup-status gvo-lookup-status--error";
+          lookupStatus.hidden = false;
+        } finally {
+          lookupBtn.disabled = false;
+          lookupBtn.textContent = "Look up vehicle";
+        }
+      });
+    }
+
+    if (customBtn) {
+      customBtn.addEventListener("click", () => {
+        const makeName = customMake.value.trim();
+        const modelName = customModel.value.trim();
+        if (!makeName || !modelName) {
+          lookupStatus.textContent = "Please enter at least make and model.";
+          lookupStatus.hidden = false;
+          return;
+        }
+
+        const customLabel = `${makeName} ${modelName}${customTrim.value.trim() ? " — " + customTrim.value.trim() : ""} (custom entry)`;
+        setSelected("", customLabel);
+        toggleBtn.style.display = "none";
+        requestForm.hidden = true;
+
+        document.dispatchEvent(new CustomEvent("vehicle-selected", {
+          detail: { trimId: "", make: makeName, model: modelName, trim: customTrim.value.trim(), custom: true }
+        }));
+      });
+    }
+  });
+</script>
+
+<style>
+  .gvo-section {
+    margin-top: var(--space-4);
+  }
+  .selectors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-3);
+  }
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .field-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .field-select, .field-input {
+    height: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+  .field-select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .field-input:focus, .field-select:focus {
+    border-color: var(--panther-resting-hex);
+    outline: none;
+  }
+  .field-optional {
+    font-weight: 400;
+    color: var(--panther-eyes-hex);
+    font-size: 10px;
+  }
+  .selected-vehicle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+    background: color-mix(in oklch, #27ae60 8%, #fff);
+    border: 1px solid color-mix(in oklch, #27ae60 20%, transparent);
+    border-radius: 6px;
+  }
+  .selected-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .selected-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e8449;
+  }
+  .gvo-request-area {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+  }
+  .gvo-request-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0;
+  }
+  .gvo-request-toggle:hover {
+    color: var(--panther-roaring-hex);
+  }
+  .gvo-request-form {
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 4%, #fff);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+    border-radius: 6px;
+  }
+  .gvo-request-desc {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-3);
+  }
+  .gvo-lookup-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+  .gvo-lookup-btn {
+    height: 40px;
+    padding: 0 var(--space-5);
+    background: var(--panther-resting-hex);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .gvo-lookup-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .gvo-lookup-or {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--panther-eyes-hex);
+  }
+  .gvo-custom-btn {
+    height: 40px;
+    padding: 0 var(--space-5);
+    background: transparent;
+    color: var(--panther-resting-hex);
+    border: 1px solid var(--panther-resting-hex);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .gvo-custom-btn:hover {
+    background: color-mix(in oklch, var(--panther-resting-hex) 8%, #fff);
+  }
+  .gvo-lookup-status {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    margin-top: var(--space-2);
+  }
+  .gvo-lookup-status--error {
+    color: #C0392B;
+  }
+
+  @media (max-width: 768px) {
+    .selectors-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

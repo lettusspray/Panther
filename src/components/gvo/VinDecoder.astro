@@ -1,0 +1,253 @@
+---
+export interface Props {
+  formId: string;
+}
+
+const { formId } = Astro.props;
+---
+
+<div class="vin-section">
+  <label class="vin-field">
+    <span class="vin-label">VIN (Vehicle Identification Number)</span>
+    <div class="vin-row">
+      <input
+        type="text"
+        id="vin-input"
+        class="vin-input"
+        maxlength="17"
+        minlength="17"
+        placeholder="e.g. 1HGCM82633A004352"
+        pattern="[A-HJ-NPR-Z0-9]{17}"
+        autocomplete="off"
+      />
+      <button type="button" id="vin-decode-btn" class="vin-decode-btn">
+        <span id="vin-btn-label">Decode VIN</span>
+        <span id="vin-btn-spinner" class="vin-spinner" hidden></span>
+      </button>
+    </div>
+    <span class="vin-hint">Enter 17-character VIN to auto-populate vehicle details</span>
+    <span id="vin-status" class="vin-status" hidden></span>
+  </label>
+  <div id="vin-result" class="vin-result" hidden>
+    <div class="vin-result-grid">
+      <div class="vin-result-item"><span class="vin-rl">Make</span><span class="vin-rv" id="vin-r-make"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Model</span><span class="vin-rv" id="vin-r-model"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Year</span><span class="vin-rv" id="vin-r-year"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Trim</span><span class="vin-rv" id="vin-r-trim"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Engine</span><span class="vin-rv" id="vin-r-engine"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Transmission</span><span class="vin-rv" id="vin-r-trans"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Fuel</span><span class="vin-rv" id="vin-r-fuel"></span></div>
+      <div class="vin-result-item"><span class="vin-rl">Drivetrain</span><span class="vin-rv" id="vin-r-drive"></span></div>
+    </div>
+    <p class="vin-success-text">Vehicle found! Fill in the remaining details below.</p>
+  </div>
+</div>
+
+<script define:vars={{ formId }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const vinInput = document.getElementById("vin-input");
+    const decodeBtn = document.getElementById("vin-decode-btn");
+    const btnLabel = document.getElementById("vin-btn-label");
+    const btnSpinner = document.getElementById("vin-btn-spinner");
+    const vinStatus = document.getElementById("vin-status");
+    const vinResult = document.getElementById("vin-result");
+    const form = document.getElementById(formId);
+
+    if (!vinInput || !decodeBtn) return;
+
+    async function decodeVin() {
+      const vin = vinInput.value.trim().toUpperCase();
+      if (vin.length !== 17) {
+        vinStatus.textContent = "VIN must be exactly 17 characters";
+        vinStatus.hidden = false;
+        vinStatus.className = "vin-status vin-status--error";
+        return;
+      }
+      vinStatus.hidden = true;
+      btnLabel.hidden = true;
+      btnSpinner.hidden = false;
+      decodeBtn.disabled = true;
+      vinResult.hidden = true;
+
+      try {
+        const res = await fetch("/api/vin/decode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vin })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          vinStatus.textContent = data.error || "Could not decode VIN. Try entering details manually.";
+          vinStatus.className = "vin-status vin-status--error";
+          vinStatus.hidden = false;
+          return;
+        }
+        document.getElementById("vin-r-make").textContent = data.make || "—";
+        document.getElementById("vin-r-model").textContent = data.model || "—";
+        document.getElementById("vin-r-year").textContent = data.year || "—";
+        document.getElementById("vin-r-trim").textContent = data.trim || "—";
+        document.getElementById("vin-r-engine").textContent = data.specs?.engine_displacement_cc
+          ? `${data.specs.engine_displacement_cc} cc (${data.specs.power_hp || "?"} hp)`
+          : data.specs?.capacity?.toString() || "—";
+        document.getElementById("vin-r-trans").textContent = data.specs?.transmission_type || "—";
+        document.getElementById("vin-r-fuel").textContent = data.specs?.fuel_type || "—";
+        document.getElementById("vin-r-drive").textContent = data.specs?.drivetrain || "—";
+        vinResult.hidden = false;
+
+        // Dispatch event for parent form to pick up
+        const event = new CustomEvent("vin-decoded", {
+          detail: {
+            vin,
+            make: data.make,
+            model: data.model,
+            year: data.year,
+            trim: data.trim,
+            trimId: data.trimId,
+            specs: data.specs
+          }
+        });
+        document.dispatchEvent(event);
+      } catch {
+        vinStatus.textContent = "Network error. Try again.";
+        vinStatus.className = "vin-status vin-status--error";
+        vinStatus.hidden = false;
+      } finally {
+        btnLabel.hidden = false;
+        btnSpinner.hidden = true;
+        decodeBtn.disabled = false;
+      }
+    }
+
+    decodeBtn.addEventListener("click", decodeVin);
+    vinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        decodeVin();
+      }
+    });
+  });
+</script>
+
+<style>
+  .vin-section {
+    margin-bottom: var(--space-5);
+  }
+  .vin-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .vin-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .vin-row {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .vin-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .vin-input:focus {
+    border-color: var(--panther-resting-hex);
+    outline: none;
+  }
+  .vin-decode-btn {
+    height: 44px;
+    padding: 0 var(--space-4);
+    background: var(--panther-resting-hex);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .vin-decode-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .vin-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: vinSpin 600ms linear infinite;
+  }
+  @keyframes vinSpin {
+    to { transform: rotate(360deg); }
+  }
+  .vin-hint {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+  }
+  .vin-status {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    margin-top: var(--space-1);
+  }
+  .vin-status--error {
+    color: #C0392B;
+  }
+  .vin-result {
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: color-mix(in oklch, #27ae60 6%, #fff);
+    border: 1px solid color-mix(in oklch, #27ae60 20%, transparent);
+    border-radius: 6px;
+  }
+  .vin-result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .vin-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-1) var(--space-2);
+    background: #fff;
+    border-radius: 3px;
+  }
+  .vin-rl {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .vin-rv {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+  }
+  .vin-success-text {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e8449;
+    margin: 0;
+  }
+</style>

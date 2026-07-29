@@ -1,0 +1,182 @@
+---
+export interface Props {
+  condition: Record<string, string> | null;
+}
+
+const { condition } = Astro.props;
+
+const FIELD_LABELS: Record<string, string> = {
+  exterior_body: "Exterior Body",
+  paint_quality: "Paint Quality",
+  interior_upholstery: "Interior Upholstery",
+  dashboard_instrument_cluster: "Dashboard & Instruments",
+  air_conditioning: "Air Conditioning",
+  electrical_system: "Electrical System",
+  tire_condition: "Tire Condition",
+  brake_system: "Brake System",
+  suspension: "Suspension",
+  engine_bay: "Engine Bay",
+  transmission: "Transmission",
+  exhaust_system: "Exhaust System",
+  undercarriage: "Undercarriage",
+  frame_structural: "Frame / Structure",
+  has_accident_history: "Accident History",
+  trunk_space: "Trunk Space",
+  windshield_glass: "Windshield & Glass",
+  wiper_system: "Wiper System",
+  chain_belt: "Chain / Belt",
+  spoke_integrity: "Spoke Integrity",
+  seat_condition: "Seat Condition",
+  cold_start_smoke: "Cold-Start Smoke",
+  steering_mechanism: "Steering",
+  engine_hours: "Engine Hours",
+  chassis_crossmember: "Chassis Crossmember",
+  air_brake_pressure_hold: "Air Brake Pressure",
+  cargo_area: "Cargo Area",
+  fifth_wheel_coupling: "Fifth Wheel / Coupling",
+  hydraulic_system: "Hydraulic System",
+};
+
+const summary = condition
+  ? {
+      good: Object.values(condition).filter((v) => v === "good").length,
+      fair: Object.values(condition).filter((v) => v === "fair").length,
+      poor: Object.values(condition).filter((v) => v === "poor").length,
+      absent: Object.values(condition).filter((v) => v === "absent").length,
+      total: Object.keys(condition).length,
+    }
+  : null;
+---
+
+<div class="csection">
+  <h2 class="ctitle">Condition Report</h2>
+  <p class="cdesc">Structured condition data — no free-text, no guesswork.</p>
+
+  {summary && (
+    <div class="csummary">
+      <div class="cpill cgood">
+        <span class="ccount">{summary.good}</span>
+        <span class="cl">Good</span>
+      </div>
+      <div class="cpill cfair">
+        <span class="ccount">{summary.fair}</span>
+        <span class="cl">Fair</span>
+      </div>
+      <div class="cpill cpoor">
+        <span class="ccount">{summary.poor}</span>
+        <span class="cl">Poor</span>
+      </div>
+      {summary.absent > 0 && (
+        <div class="cpill cabsent">
+          <span class="ccount">{summary.absent}</span>
+          <span class="cl">Absent</span>
+        </div>
+      )}
+    </div>
+  )}
+
+  {condition && (
+    <div class="cgrid">
+      {Object.entries(condition).map(([key, value]) => (
+        <div class="citem">
+          <span class="cfl">{FIELD_LABELS[key] ?? key}</span>
+          <span class={`cv cval_${value}`}>{value}</span>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+<style>
+  .csection {
+    margin-top: var(--space-6);
+  }
+  .ctitle {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .cdesc {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-4);
+  }
+  .csummary {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .cpill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-radius: 8px;
+    min-width: 72px;
+  }
+  .cgood {
+    background: color-mix(in oklch, #27ae60 12%, #fff);
+    color: #1e8449;
+  }
+  .cfair {
+    background: color-mix(in oklch, #f39c12 12%, #fff);
+    color: #d68910;
+  }
+  .cpoor {
+    background: color-mix(in oklch, #C0392B 12%, #fff);
+    color: #A93226;
+  }
+  .cabsent {
+    background: color-mix(in oklch, var(--panther-eyes-hex) 12%, #fff);
+    color: var(--panther-eyes-hex);
+  }
+  .ccount {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .cl {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: var(--space-1);
+  }
+  .cgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+  .citem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in oklch, var(--panther-walking-hex) 5%, #fff);
+    border-radius: 4px;
+  }
+  .cfl {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--panther-eyes-hex);
+  }
+  .cv {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  .cval_good { color: #1e8449; }
+  .cval_fair { color: #d68910; }
+  .cval_poor { color: #A93226; }
+  .cval_absent { color: var(--panther-eyes-hex); }
+
+  @media (max-width: 640px) {
+    .cgrid { grid-template-columns: 1fr; }
+    .csummary { flex-wrap: wrap; }
+  }
+</style>

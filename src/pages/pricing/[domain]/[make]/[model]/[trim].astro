@@ -1,0 +1,209 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import styles from "./[trim].module.css";
+import "../../../../styles/global.css";
+import { getTrimPricingData } from "../../../../lib/pricing/get-trim-pricing";
+import { db } from "../../../../lib/db";
+import { knowledgeEntry } from "../../../../lib/db/schema";
+import { eq } from "drizzle-orm";
+import KnowledgeHub from "../../../../components/pricing/KnowledgeHub.astro";
+import TcoCalculator from "../../../../components/pricing/TcoCalculator.astro";
+
+const { domain, make, model, trim } = Astro.params;
+if (!domain || !make || !model || !trim) return Astro.redirect("/pricing");
+
+const data = await getTrimPricingData(domain, make, model, trim);
+
+const errorData = "error" in data ? data : null;
+const pricingData = "vehicle" in data ? data : null;
+
+const makeName = pricingData?.vehicle.make.name ?? make.replace(/-/g, " ");
+const modelName = pricingData?.vehicle.model.name ?? model.replace(/-/g, " ");
+const trimName = pricingData?.vehicle.trim.name ?? trim.replace(/-/g, " ");
+const primaryCohort = pricingData?.cohorts[0];
+const pageTitle = primaryCohort
+  ? `What is the landed cost of a ${primaryCohort.modelYear} ${makeName} ${modelName} ${trimName} in Nigeria?`
+  : `${makeName} ${modelName} ${trimName} Landed Cost`;
+const pageDesc = primaryCohort
+  ? `The estimated landed cost for a ${primaryCohort.modelYear} ${makeName} ${modelName} ${trimName} ranges from ₦${primaryCohort.landedCost.floorNgn.toLocaleString()} to ₦${primaryCohort.landedCost.ceilingNgn.toLocaleString()}. Full 13-step statutory breakdown.`
+  : `Landed cost breakdown for ${makeName} ${modelName} ${trimName} imported into Nigeria.`;
+const jsonLd = pricingData?.jsonLd ?? [];
+const multipleYears = pricingData && pricingData.cohorts.length > 1;
+// Fetch Knowledge Hub content for this trim
+const khWarnings: string[] = [];
+let khSpecs: Record<string, unknown> | null = null;
+if (pricingData) {
+  const [knowledge] = await db
+    .select()
+    .from(knowledgeEntry)
+    .where(eq(knowledgeEntry.trimId, pricingData.vehicle.trimId))
+    .limit(1);
+  if (knowledge) {
+    if (knowledge.warnings) {
+      const w = knowledge.warnings as Record<string, unknown>;
+      if (Array.isArray(w.warnings)) {
+        khWarnings.push(...(w.warnings as string[]));
+      }
+    }
+    if (knowledge.specs) {
+      khSpecs = knowledge.specs as Record<string, unknown>;
+    }
+  }
+}
+
+const stale = errorData?.status === 503;
+const noData = errorData?.status === 404;
+const notFound = errorData?.status === 404 && errorData.error === "Vehicle not found in GVO";
+---
+
+<BaseLayout
+  title={pageTitle}
+  posture="eyes"
+  description={pageDesc}
+  jsonLd={jsonLd}
+>
+  <section class={styles.hero}>
+    <nav class={styles.breadcrumb}>
+      <a href="/pricing">Pricing</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <a href={`/pricing/${domain}/${make}`}>{makeName}</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <a href={`/pricing/${domain}/${make}/${model}`}>{modelName}</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{trimName}</span>
+    </nav>
+
+    {primaryCohort ? (
+      <>
+        <h1 class={styles.heroTitle}>
+          What is the landed cost of a {primaryCohort.modelYear} {makeName} {modelName} {trimName} in Nigeria?
+        </h1>
+        <p class={styles.heroAnswer}>
+          The estimated landed cost for a {primaryCohort.modelYear} {makeName} {modelName} {trimName} ranges from
+          <strong class={styles.answerValue}> ₦{primaryCohort.landedCost.floorNgn.toLocaleString()}</strong>
+          {' '}to{' '}
+          <strong class={styles.answerValue}>₦{primaryCohort.landedCost.ceilingNgn.toLocaleString()}</strong>,
+          inclusive of all statutory charges and non-statutory costs. This estimate uses cohort-level wholesale FOB pricing and live NCS customs exchange rates — see the full breakdown below.
+        </p>
+      </>
+    ) : stale ? (
+      <div class={styles.errorState}>
+        <h1 class={styles.errorTitle}>Live market data temporarily unavailable</h1>
+        <p class={styles.errorText}>Statutory rate data is stale. Pricing cannot be calculated until fresh data is available.</p>
+        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+      </div>
+    ) : noData ? (
+      <div class={styles.errorState}>
+        <h1 class={styles.errorTitle}>Pricing data not yet available for this vehicle</h1>
+        <p class={styles.errorText}>This cohort hasn't been priced yet. Check back after the nightly pricing update, or browse available vehicles.</p>
+        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+      </div>
+    ) : notFound ? (
+      <div class={styles.errorState}>
+        <h1 class={styles.errorTitle}>Vehicle not found</h1>
+        <p class={styles.errorText}>This vehicle doesn't exist in the Global Vehicle Ontology yet.</p>
+        <a href="/vehicles" class={styles.errorBtn}>Browse Vehicles</a>
+      </div>
+    ) : (
+      <div class={styles.errorState}>
+        <h1 class={styles.errorTitle}>Something went wrong</h1>
+        <p class={styles.errorText}>Could not load pricing data. Please try again.</p>
+        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+      </div>
+    )}
+  </section>
+
+  {pricingData && (
+    <section class={styles.resultSection}>
+      {multipleYears && (
+        <div class={styles.yearTabs} id="year-tabs">
+          {pricingData.cohorts.map((c, i) => (
+            <button
+              class={`${styles.yearTab} ${i === 0 ? styles.yearTabActive : ""}`}
+              data-index={i}
+              key={c.modelYear}
+            >
+              {c.modelYear}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div id="cohort-panels">
+        {pricingData.cohorts.map((cohort, i) => {
+          const lc = cohort.landedCost;
+          return (
+            <div
+              class={`${styles.cohortPanel} ${i === 0 ? styles.cohortPanelActive : ""}`}
+              data-index={i}
+              key={cohort.modelYear}
+            >
+              <div class={styles.costCard}>
+                <div class={styles.costHeader}>
+                  <h2 class={styles.costYear}>
+                    {cohort.modelYear} {makeName} {modelName} {trimName}
+                  </h2>
+                  <span class={styles.costSource}>{cohort.source || "auto.dev"}</span>
+                </div>
+                <div class={styles.costRange}>
+                  <div class={styles.costFloor}>
+                    <span class={styles.costLabel}>Floor</span>
+                    <span class={styles.costValue}>₦{lc.floorNgn.toLocaleString()}</span>
+                  </div>
+                  <span class={styles.costDivider} aria-hidden="true">→</span>
+                  <div class={styles.costCeiling}>
+                    <span class={styles.costLabel}>Ceiling</span>
+                    <span class={styles.costValue}>₦{lc.ceilingNgn.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class={styles.breakdown}>
+                <h3 class={styles.breakdownTitle}>Full 13-Step Statutory Breakdown</h3>
+                <div class={styles.stepsTable}>
+                  <div class={styles.stepHeader}>
+                    <span>Step</span>
+                    <span>Name</span>
+                    <span>Low (₦)</span>
+                    <span>High (₦)</span>
+                    <span class={styles.stepFormulaCol}>Formula</span>
+                  </div>
+                  {lc.steps.map((step) => (
+                    <div class={`${styles.stepRow} ${step.step === 13 ? styles.stepFinal : ""}`} key={step.step}>
+                      <span class={styles.stepNum}>{step.step}</span>
+                      <span>{step.name}</span>
+                      <span>₦{step.valueLow.toLocaleString()}</span>
+                      <span>₦{step.valueHigh.toLocaleString()}</span>
+                      <span class={styles.stepFormula}>{step.formula}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <KnowledgeHub specs={khSpecs} warnings={khWarnings} />
+      <TcoCalculator makeSlug={make} />
+
+      <div class={styles.freshnessNote}>
+        <span aria-hidden="true">⏱</span>
+        <span>Rates and FOB data are pulled from live sources. This estimate reflects statutory charges as of the latest available data.</span>
+      </div>
+    </section>
+  )}
+</BaseLayout>
+
+<script>
+  document.querySelectorAll("[data-index]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const idx = tab.getAttribute("data-index");
+      document.querySelectorAll("[data-index]").forEach((t) => t.classList.remove("yearTabActive"));
+      document.querySelectorAll("#cohort-panels > div").forEach((p) => p.classList.remove("cohortPanelActive"));
+      tab.classList.add("yearTabActive");
+      const target = document.querySelector(`#cohort-panels > div[data-index="${idx}"]`);
+      if (target) target.classList.add("cohortPanelActive");
+    });
+  });
+</script>

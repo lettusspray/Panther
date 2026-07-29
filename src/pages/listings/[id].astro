@@ -1,0 +1,331 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import styles from "./[id].module.css";
+import "../../../styles/global.css";
+import { db } from "../../../lib/db";
+import { listing, gvoTrim, gvoModel, gvoMake, gvoDomain, gvoCategory, user, knowledgeEntry } from "../../../lib/db/schema";
+import { eq } from "drizzle-orm";
+import ConditionReportDisplay from "../../../components/listings/ConditionReportDisplay.astro";
+import ReportListing from "../../../components/listings/ReportListing.astro";
+import KnowledgeHub from "../../../components/pricing/KnowledgeHub.astro";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/listings");
+
+const [item] = await db
+  .select({
+    id: listing.id,
+    modelYear: listing.modelYear,
+    mileageKm: listing.mileageKm,
+    askingPriceNgn: listing.askingPriceNgn,
+    conditionReport: listing.conditionReport,
+    images: listing.images,
+    videos: listing.videos,
+    status: listing.status,
+    createdAt: listing.createdAt,
+    trimName: gvoTrim.name,
+    modelName: gvoModel.name,
+    makeName: gvoMake.name,
+    domainSlug: gvoDomain.slug,
+    sellerId: listing.sellerId,
+    sellerName: user.name,
+    customMake: listing.customMake,
+    customModel: listing.customModel,
+    customTrim: listing.customTrim,
+    trimId: listing.trimId,
+  })
+  .from(listing)
+  .leftJoin(gvoTrim, eq(listing.trimId, gvoTrim.id))
+  .leftJoin(gvoModel, eq(gvoTrim.modelId, gvoModel.id))
+  .leftJoin(gvoMake, eq(gvoModel.makeId, gvoMake.id))
+  .leftJoin(gvoCategory, eq(gvoMake.categoryId, gvoCategory.id))
+  .leftJoin(gvoDomain, eq(gvoCategory.domainId, gvoDomain.id))
+  .innerJoin(user, eq(listing.sellerId, user.id))
+  .where(eq(listing.id, id))
+  .limit(1);
+
+if (!item) return Astro.redirect("/listings");
+
+const condition = item.conditionReport as Record<string, string> | null;
+
+// Group condition fields by severity
+const conditionSummary = condition
+  ? {
+      good: Object.entries(condition).filter(([, v]) => v === "good").length,
+      fair: Object.entries(condition).filter(([, v]) => v === "fair").length,
+      poor: Object.entries(condition).filter(([, v]) => v === "poor").length,
+      absent: Object.entries(condition).filter(([, v]) => v === "absent").length,
+      total: Object.keys(condition).length,
+    }
+  : null;
+
+
+---
+
+const images = (item.images as Array<{ tag: string; url: string }> | null) ?? [];
+const videos = (item.videos as Array<{ tag: string; url: string }> | null) ?? [];
+
+const IMAGE_LABELS: Record<string, string> = {
+  front: "Front",
+  rear: "Rear",
+  side: "Side",
+  interior: "Interior",
+  dashboard: "Dashboard",
+  engine_bay: "Engine Bay",
+};
+
+const VIDEO_LABELS: Record<string, string> = {
+  exterior_walkaround: "Exterior Walkaround",
+  interior_walkthrough: "Interior Walkthrough",
+  engine_start: "Engine Start & Idle",
+  drive_test: "Drive Test",
+};
+
+const displayMake = item.makeName || item.customMake || "Unknown";
+const displayModel = item.modelName || item.customModel || "";
+const displayTrim = item.trimName || item.customTrim || "";
+const displayTitle = displayTrim
+  ? `${item.modelYear} ${displayMake} ${displayModel} — ${displayTrim}`
+  : `${item.modelYear} ${displayMake} ${displayModel}`;
+
+// Fetch Knowledge Hub for this listing
+let khWarnings: string[] = [];
+let khSpecs: Record<string, unknown> | null = null;
+if (item.trimId) {
+  const [knowledge] = await db
+    .select()
+    .from(knowledgeEntry)
+    .where(eq(knowledgeEntry.trimId, item.trimId))
+    .limit(1);
+  if (knowledge) {
+    const w = knowledge.warnings as Record<string, unknown>;
+    if (Array.isArray(w.warnings)) khWarnings = w.warnings as string[];
+    if (knowledge.specs) khSpecs = knowledge.specs as Record<string, unknown>;
+  }
+}
+---
+
+<BaseLayout
+  title={displayTitle}
+  posture="eyes"
+  description={`${item.modelYear} ${displayMake} ${displayModel}${displayTrim ? " " + displayTrim : ""}. Condition report, pricing, and specifications.`}
+>
+  <section class={styles.hero}>
+    <nav class={styles.breadcrumb}>
+      <a href="/listings">Listings</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{item.modelYear} {displayMake} {displayModel}</span>
+    </nav>
+    <h1 class={styles.heroTitle}>
+      {item.modelYear} {displayMake} {displayModel}
+    </h1>
+    <p class={styles.heroSubtitle}>{displayTrim}</p>
+  </section>
+
+  <div class={styles.contentGrid}>
+    <div class={styles.mainContent}>
+      {/* Photo Gallery */}
+      {images.length > 0 && (
+        <div class={styles.section}>
+          <div class={styles.imageGrid}>
+            {images.map((img, i) => (
+              <div class={styles.imageCard} key={i}>
+                <img
+                  class={styles.imageCardImg}
+                  src={img.url}
+                  alt={IMAGE_LABELS[img.tag] ?? img.tag}
+                  loading={i < 4 ? "eager" : "lazy"}
+                />
+                <span class={styles.imageCardTag}>{IMAGE_LABELS[img.tag] ?? img.tag}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Video Walkthrough */}
+      {videos.length > 0 && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>Video Walkthrough</h2>
+          <div class={styles.videoGrid}>
+            {videos.map((v, i) => (
+              <div class={styles.videoCard} key={i}>
+                <video
+                  class={styles.videoPlayer}
+                  src={v.url}
+                  controls
+                  preload="metadata"
+                  poster=""
+                >
+                  Your browser does not support video playback.
+                </video>
+                <span class={styles.videoCardTag}>{VIDEO_LABELS[v.tag] ?? v.tag}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Condition Report — Front and Center per Constitution */}
+      <ConditionReportDisplay condition={condition} />
+
+      {/* Knowledge Hub — vehicle specs + buyer warnings */}
+      <KnowledgeHub specs={khSpecs} warnings={khWarnings} />
+
+      {/* Specifications */}
+      <div class={styles.section}>
+        <h2 class={styles.sectionTitle}>Specifications</h2>
+        <div class={styles.specGrid}>
+          <div class={styles.specItem}>
+            <span class={styles.specLabel}>Make</span>
+            <span class={styles.specValue}>{displayMake}</span>
+          </div>
+          <div class={styles.specItem}>
+            <span class={styles.specLabel}>Model</span>
+            <span class={styles.specValue}>{displayModel}</span>
+          </div>
+          <div class={styles.specItem}>
+            <span class={styles.specLabel}>Trim</span>
+            <span class={styles.specValue}>{displayTrim || "—"}</span>
+          </div>
+          <div class={styles.specItem}>
+            <span class={styles.specLabel}>Model Year</span>
+            <span class={styles.specValue}>{item.modelYear}</span>
+          </div>
+          <div class={styles.specItem}>
+            <span class={styles.specLabel}>Mileage</span>
+            <span class={styles.specValue}>{item.mileageKm.toLocaleString()} km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class={styles.sidebar}>
+      {/* Price Card */}
+      <div class={styles.priceCard}>
+        <span class={styles.priceLabel}>Asking Price</span>
+        <span class={styles.priceValue}>₦{Number(item.askingPriceNgn).toLocaleString()}</span>
+        {item.domainSlug && item.makeName && item.modelName && item.trimName ? (
+          <a href={`/pricing/${item.domainSlug}/${item.makeName.toLowerCase().replace(/ /g, "-")}/${item.modelName.toLowerCase().replace(/ /g, "-")}/${item.trimName.toLowerCase().replace(/ /g, "-")}`} class={styles.pricingLink}>
+            View landed cost breakdown →
+          </a>
+        ) : item.askingPriceNgn ? (
+          <p class={styles.pricingNote}>Pricing data not available for custom vehicle entries.</p>
+        ) : null}
+      </div>
+
+      {/* Seller Info */}
+      <div class={styles.section}>
+        <h2 class={styles.sectionTitle}>Seller</h2>
+        <div class={styles.specItem}>
+          <span class={styles.specLabel}>Listed by</span>
+          <span class={styles.specValue}>{item.sellerName}</span>
+        </div>
+        <div class={styles.specItem}>
+          <span class={styles.specLabel}>Listed</span>
+          <span class={styles.specValue}>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}</span>
+        </div>
+      </div>
+
+      {/* Switchboard CTA */}
+      <div class={styles.switchboardCta} id="switchboard-cta" data-listing-id={item.id} data-price={item.askingPriceNgn} data-seller-id={item.sellerId} data-buyer-id={Astro.locals.user?.id ?? ""}>
+        <h3 class={styles.switchboardTitle}>Switchboard Escrow</h3>
+        <p class={styles.switchboardText}>
+          Pay on delivery. The seller never touches your money until you confirm the vehicle.
+        </p>
+        <div id="switchboard-logged-out" style={`font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex); ${Astro.locals.user ? "display: none;" : ""}`}>
+          <a href={`/auth/sign-in?returnTo=${encodeURIComponent("/listings/" + item.id)}`} style="color: var(--panther-roaring-hex); text-decoration: underline;">Sign in</a> to initiate a purchase.
+        </div>
+        <div id="switchboard-seller" style={`font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex); ${Astro.locals.user?.id === item.sellerId ? "" : "display: none;"}`}>
+          This is your listing.
+        </div>
+        <div id="switchboard-fee-breakdown" style="display: none; margin-bottom: var(--space-4); font-family: var(--font-sans); font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; padding: var(--space-2) 0; color: var(--panther-eyes-hex);">
+            <span>Platform fee (2.5%)</span>
+            <span id="fee-amount" style="font-weight: 500; color: var(--panther-resting-hex);"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: var(--space-2) 0; color: var(--panther-eyes-hex);">
+            <span>Fee paid by</span>
+            <span style="font-weight: 500; color: var(--panther-resting-hex);">Seller</span>
+          </div>
+        </div>
+        <button class={styles.switchboardBtn} id="switchboard-buy-btn" style={`${!Astro.locals.user || Astro.locals.user.id === item.sellerId ? "display: none;" : ""}`}>
+          Secure Deal
+        </button>
+        <p id="switchboard-status" style="display: none; font-family: var(--font-sans); font-size: 13px; text-align: center; padding: var(--space-3); border-radius: 6px;"></p>
+      </div>
+
+      <!-- Report Listing — Constitution §IV.3, F2.0b -->
+      <ReportListing listingId={item.id} />
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const cta = document.getElementById("switchboard-cta");
+  if (cta) {
+    const listingId = cta.dataset.listingId;
+    const price = Number(cta.dataset.price);
+    const sellerId = cta.dataset.sellerId;
+    const buyerId = cta.dataset.buyerId;
+
+    // Show fee breakdown if buyer is logged in and is not seller
+    if (buyerId && buyerId !== sellerId) {
+      const feeBreakdown = document.getElementById("switchboard-fee-breakdown");
+      const feeAmount = document.getElementById("fee-amount");
+      if (feeBreakdown && feeAmount) {
+        const fee = Math.round(price * 0.025 * 100) / 100;
+        feeAmount.textContent = `₦${fee.toLocaleString()}`;
+        feeBreakdown.style.display = "block";
+      }
+    }
+
+    const buyBtn = document.getElementById("switchboard-buy-btn");
+    const statusEl = document.getElementById("switchboard-status");
+
+    if (buyBtn) {
+      buyBtn.addEventListener("click", async () => {
+        if (!confirm(`Initiate Switchboard purchase for ₦${price.toLocaleString()}? The seller will be notified and your funds will be held securely until you confirm the vehicle.`)) return;
+
+        buyBtn.disabled = true;
+        buyBtn.textContent = "Initiating...";
+
+        try {
+          const res = await fetch("/api/switchboard", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ listingId, agreedPriceNgn: price }),
+          });
+          const data = await res.json();
+
+          if (res.ok && data.ok) {
+            // Redirect to Paystack authorization URL
+            if (data.authorizationUrl) {
+              window.location.href = data.authorizationUrl;
+            } else {
+              window.location.href = `/switchboard/${data.transactionId}`;
+            }
+          } else {
+            statusEl.textContent = data.error || "Failed to initiate purchase.";
+            statusEl.style.display = "block";
+            statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
+            statusEl.style.color = "#C0392B";
+            statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+            buyBtn.disabled = false;
+            buyBtn.textContent = "Secure Deal";
+          }
+        } catch {
+          statusEl.textContent = "Network error. Please try again.";
+          statusEl.style.display = "block";
+          statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
+          statusEl.style.color = "#C0392B";
+          statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+          buyBtn.disabled = false;
+          buyBtn.textContent = "Secure Deal";
+        }
+      });
+    }
+  }
+
+
+</script>

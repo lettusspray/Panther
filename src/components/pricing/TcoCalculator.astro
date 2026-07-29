@@ -1,0 +1,305 @@
+---
+export interface Props {
+  makeSlug: string;
+}
+
+const { makeSlug } = Astro.props;
+---
+
+<div class="tco-section" id="tco-calculator">
+  <h3 class="tco-heading">Total Cost of Ownership</h3>
+  <p class="tco-sub">
+    Estimated annual cost including fuel, maintenance, insurance, and road tax.
+    <button class="tco-toggle" id="tco-toggle-btn" data-open="false" type="button">
+      <span class="tco-toggle-label">View breakdown</span>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="tco-chevron">
+        <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </p>
+
+  <div id="tco-body" class="tco-body" hidden>
+    <div class="tco-grid">
+      <label class="tco-field">
+        <span class="tco-field-label">State</span>
+        <select id="tco-state" class="tco-select">
+          <optgroup label="Nigeria">
+            <option value="lagos">Lagos</option>
+            <option value="fct">FCT (Abuja)</option>
+            <option value="rivers">Rivers</option>
+            <option value="kano">Kano</option>
+            <option value="oyo">Oyo</option>
+            <option value="delta">Delta</option>
+            <option value="edo">Edo</option>
+            <option value="kaduna">Kaduna</option>
+            <option value="anambra">Anambra</option>
+            <option value="imo">Imo</option>
+            <option value="enugu">Enugu</option>
+            <option value="kwara">Kwara</option>
+            <option value="abia">Abia</option>
+            <option value="adamawa">Adamawa</option>
+            <option value="akwa-ibom">Akwa Ibom</option>
+            <option value="bauchi">Bauchi</option>
+            <option value="bayelsa">Bayelsa</option>
+            <option value="benue">Benue</option>
+            <option value="borno">Borno</option>
+            <option value="cross-river">Cross River</option>
+            <option value="ebonyi">Ebonyi</option>
+            <option value="ekiti">Ekiti</option>
+            <option value="gombe">Gombe</option>
+            <option value="jigawa">Jigawa</option>
+            <option value="katsina">Katsina</option>
+            <option value="kebbi">Kebbi</option>
+            <option value="kogi">Kogi</option>
+            <option value="nasarawa">Nasarawa</option>
+            <option value="niger">Niger</option>
+            <option value="ogun">Ogun</option>
+            <option value="ondo">Ondo</option>
+            <option value="osun">Osun</option>
+            <option value="plateau">Plateau</option>
+            <option value="sokoto">Sokoto</option>
+            <option value="taraba">Taraba</option>
+            <option value="yobe">Yobe</option>
+            <option value="zamfara">Zamfara</option>
+          </optgroup>
+        </select>
+      </label>
+      <label class="tco-field">
+        <span class="tco-field-label">Annual Mileage</span>
+        <input type="number" id="tco-mileage" class="tco-input" value="15000" min="1000" max="100000" step="1000" />
+      </label>
+      <label class="tco-field">
+        <span class="tco-field-label">Fuel Type</span>
+        <select id="tco-fuel" class="tco-select">
+          <option value="petrol">Petrol</option>
+          <option value="diesel">Diesel</option>
+          <option value="ev">Electric</option>
+        </select>
+      </label>
+      <label class="tco-field">
+        <span class="tco-field-label">Transmission</span>
+        <select id="tco-transmission" class="tco-select">
+          <option value="manual">Manual</option>
+          <option value="automatic">Automatic</option>
+        </select>
+      </label>
+      <label class="tco-field tco-field-hidden">
+        <span class="tco-field-label">Vehicle Price (NGN)</span>
+        <input type="number" id="tco-price" class="tco-input" placeholder="Auto-detected" />
+      </label>
+    </div>
+
+    <div id="tco-results" class="tco-results" hidden>
+      <div class="tco-result-grid">
+        <div class="tco-result-card">
+          <span class="tco-result-label">Fuel Cost</span>
+          <span class="tco-result-value" id="tco-r-fuel">—</span>
+        </div>
+        <div class="tco-result-card">
+          <span class="tco-result-label">Maintenance</span>
+          <span class="tco-result-value" id="tco-r-maint">—</span>
+        </div>
+        <div class="tco-result-card">
+          <span class="tco-result-label">Insurance</span>
+          <span class="tco-result-value" id="tco-r-insure">—</span>
+        </div>
+        <div class="tco-result-card">
+          <span class="tco-result-label">Road Tax</span>
+          <span class="tco-result-value" id="tco-r-tax">—</span>
+        </div>
+        <div class="tco-result-card tco-result-card--total">
+          <span class="tco-result-label">Total / Year</span>
+          <span class="tco-result-value" id="tco-r-total">—</span>
+        </div>
+      </div>
+      <p class="tco-disclaimer">Estimates based on industry averages. Actual costs vary.</p>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ makeSlug }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("tco-toggle-btn");
+    const tcoBody = document.getElementById("tco-body");
+    const tcoResults = document.getElementById("tco-results");
+    const stateSel = document.getElementById("tco-state");
+    const mileageInput = document.getElementById("tco-mileage");
+    const fuelSel = document.getElementById("tco-fuel");
+    const transSel = document.getElementById("tco-transmission");
+    const priceInput = document.getElementById("tco-price");
+
+    if (!toggleBtn || !tcoBody) return;
+
+    toggleBtn.addEventListener("click", () => {
+      const open = toggleBtn.dataset.open === "true";
+      toggleBtn.dataset.open = String(!open);
+      tcoBody.hidden = open;
+      toggleBtn.querySelector(".tco-toggle-label").textContent = open ? "View breakdown" : "Hide breakdown";
+      if (!open) calculate();
+    });
+
+    function formatN(n) {
+      return "₦" + Number(n).toLocaleString();
+    }
+
+    async function calculate() {
+      const state = stateSel.value;
+      const mileage = parseInt(mileageInput.value) || 15000;
+      const fuel = fuelSel.value;
+      const trans = transSel.value;
+      const price = parseInt(priceInput.value) || 0;
+
+      try {
+        const res = await fetch("/api/tco/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            state,
+            annualMileageKm: mileage,
+            fuelType: fuel,
+            transmissionType: trans,
+            makeName: makeSlug,
+            landedCostNgn: price
+          })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById("tco-r-fuel").textContent = formatN(data.annualFuelCostNgn);
+        document.getElementById("tco-r-maint").textContent = formatN(data.estimatedAnnualMaintenanceNgn);
+        document.getElementById("tco-r-insure").textContent = formatN(data.estimatedAnnualInsuranceNgn);
+        document.getElementById("tco-r-tax").textContent = formatN(data.annualRoadTaxNgn);
+        document.getElementById("tco-r-total").textContent = formatN(data.totalAnnualRunningCostNgn);
+        tcoResults.hidden = false;
+      } catch {}
+    }
+
+    [stateSel, mileageInput, fuelSel, transSel, priceInput].forEach(el => {
+      if (el) el.addEventListener("change", calculate);
+    });
+  });
+</script>
+
+<style>
+  .tco-section {
+    margin-top: var(--space-8);
+    padding: var(--space-5);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 3%, #fff);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 10%, transparent);
+    border-radius: 8px;
+  }
+  .tco-heading {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .tco-sub {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-4);
+  }
+  .tco-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--panther-resting-hex);
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .tco-chevron {
+    transition: transform 200ms ease;
+  }
+  .tco-toggle[data-open="true"] .tco-chevron {
+    transform: rotate(180deg);
+  }
+  .tco-body {
+    margin-top: var(--space-4);
+  }
+  .tco-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .tco-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .tco-field-hidden {
+    display: none;
+  }
+  .tco-field-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .tco-select, .tco-input {
+    height: 36px;
+    padding: 0 var(--space-2);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+  .tco-results {
+    margin-top: var(--space-4);
+  }
+  .tco-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+  .tco-result-card {
+    padding: var(--space-3);
+    background: #fff;
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .tco-result-card--total {
+    background: var(--panther-resting-hex);
+    border-color: var(--panther-resting-hex);
+  }
+  .tco-result-card--total .tco-result-label,
+  .tco-result-card--total .tco-result-value {
+    color: #fff;
+  }
+  .tco-result-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .tco-result-value {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+  }
+  .tco-disclaimer {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+    margin: 0;
+  }
+</style>

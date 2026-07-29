@@ -1,0 +1,68 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../styles/global.css";
+---
+
+<BaseLayout
+  title="Vehicle Import Pricing"
+  posture="walking"
+  description="Calculate the true landed cost of any vehicle imported into Nigeria. 13-step statutory formula with live NCS rates."
+>
+  <section class={styles.hero}>
+    <h1 class={`${styles.heroTitle} font-sans`}>
+      What does it <em class={styles.heroTitleEm}>really</em> cost to import a vehicle into Nigeria?
+    </h1>
+    <p class={styles.heroSubtitle}>
+      Not the number your agent quoted. The statutory, auditable, naira-for-naira breakdown —
+      from FOB to final delivery at your port.
+    </p>
+  </section>
+
+  <section class={styles.explainer}>
+    <div class={styles.containerEyes}>
+      <h2 class={styles.explainerTitle}>The 13-Step Formula</h2>
+      <p class={styles.explainerIntro}>
+        Every landed cost is computed by applying Nigeria's statutory import charges
+        in exact order of operations. No approximations. No magic numbers.
+      </p>
+      <div class={styles.stepsGrid}>
+        {[
+          { num: "1", name: "FOB", desc: "Cohort wholesale value (USD)" },
+          { num: "2", name: "CIF", desc: "+ Freight + Insurance" },
+          { num: "3", name: "Naira Conversion", desc: "× Live NCS customs rate" },
+          { num: "4", name: "Import Duty", desc: "20% × CIF (₦)" },
+          { num: "5", name: "NAC Levy", desc: "5% × CIF (₦)" },
+          { num: "6", name: "Surcharge", desc: "7% × Import Duty" },
+          { num: "7", name: "CISS", desc: "1% × FOB (₦)" },
+          { num: "8", name: "ETLS", desc: "0.5% × CIF (₦)" },
+          { num: "9", name: "VAT Base", desc: "CIF + Duty + NAC + Surcharge + CISS + ETLS" },
+          { num: "10", name: "VAT", desc: "7.5% × VAT Base" },
+          { num: "11", name: "Total Statutory", desc: "Sum of Steps 4–10" },
+          { num: "12", name: "Non-Statutory", desc: "THC + Agent + Release + Docs" },
+          { num: "13", name: "Landed Cost", desc: "Floor → Ceiling range", final: true },
+        ].map((step) => (
+          <div class={`${styles.stepCard} ${step.final ? styles.stepFinal : ""}`}>
+            <span class={styles.stepNum}>{step.num}</span>
+            <span class={styles.stepName}>{step.name}</span>
+            <span class={styles.stepDesc}>{step.desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class={styles.selector}>
+    <h2 class={styles.selectorTitle}>Select a Make</h2>
+    <p class={styles.selectorSubtitle}>
+      Choose a manufacturer to begin exploring pricing by model and trim.
+    </p>
+    <div class={styles.makesGrid}>
+      {["Toyota", "Honda", "Mercedes-Benz", "BMW", "Hyundai", "Kia", "Lexus", "Ford", "Nissan", "Volkswagen"].map((name) => (
+        <a href={`/pricing/car/${name.toLowerCase().replace(/ /g, "-")}`} class={styles.makeCard}>
+          <span class={styles.makeName}>{name}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

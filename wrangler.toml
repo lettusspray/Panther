@@ -1,0 +1,89 @@
+name = "panther"
+compatibility_date = "2025-07-10"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Environment Variables ─────────────────────────────────────
+# Set secrets (API keys, tokens) in Cloudflare Dashboard →
+# Pages → panther → Settings → Environment variables.
+# DO NOT put secrets in wrangler.toml.
+[vars]
+ENVIRONMENT = "production"
+
+# Crawl4AI
+CRAWL4AI_API_URL = "https://crawl4ai-production-e503.up.railway.app"
+CRAWL4AI_API_KEY = "850da107bea2ec98bcf7dae7346aef1dd34e335b4e1c5eb02f4be1c06865dfc3"
+
+# Database
+# In production, HYPERDRIVE_CONNECTION_STRING is injected automatically
+# by the Hyperdrive binding configured in the Cloudflare Pages dashboard.
+# For local dev, set it in .env or a .dev.vars file.
+HYPERDRIVE_CONNECTION_STRING = ""
+
+# Auth
+BETTER_AUTH_URL = "https://panther.pages.dev"
+
+# Cloudflare Images
+CF_IMAGES_ACCOUNT = ""
+CF_IMAGES_API_TOKEN = ""
+
+# R2 (S3-compatible credentials for presigned upload URLs)
+R2_ACCOUNT_ID = ""
+R2_ACCESS_KEY_ID = ""
+R2_SECRET_ACCESS_KEY = ""
+R2_BUCKET_NAME = "panther-videos"
+R2_PUBLIC_URL = ""
+
+# ── R2 Bucket Bindings ────────────────────────────────────────
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "panther-images"
+
+[[r2_buckets]]
+binding = "VIDEOS_BUCKET"
+bucket_name = "panther-videos"
+
+# ── Queue Producers ───────────────────────────────────────────
+[[queues.producers]]
+queue = "ingestion-ontology"
+binding = "ONTOLOGY_QUEUE"
+
+[[queues.producers]]
+queue = "ingestion-pricing"
+binding = "PRICING_QUEUE"
+
+[[queues.producers]]
+queue = "etl-knowledge"
+binding = "KNOWLEDGE_QUEUE"
+
+[[queues.producers]]
+queue = "dead-letter"
+binding = "DEAD_LETTER_QUEUE"
+
+# ── Queue Consumers (Cron Workers) ────────────────────────────
+[[queues.consumers]]
+queue = "ingestion-ontology"
+max_batch_size = 100
+max_batch_timeout = 30
+max_retries = 3
+
+[[queues.consumers]]
+queue = "ingestion-pricing"
+max_batch_size = 50
+max_batch_timeout = 60
+max_retries = 3
+
+[[queues.consumers]]
+queue = "etl-knowledge"
+max_batch_size = 10
+max_batch_timeout = 120
+max_retries = 3
+
+[[queues.consumers]]
+queue = "dead-letter"
+max_batch_size = 25
+max_batch_timeout = 30
+max_retries = 1
+
+# ── Cron Triggers ─────────────────────────────────────────────
+[triggers]
+crons = ["0 2 * * *"]

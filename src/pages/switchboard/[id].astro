@@ -1,0 +1,397 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./switchboard.module.css";
+import "../../styles/global.css";
+import { db } from "../../lib/db";
+import { switchboardTransaction, listing, gvoTrim, gvoModel, gvoMake, gvoCategory, gvoDomain, user } from "../../lib/db/schema";
+import { eq } from "drizzle-orm";
+import { calculateSellerProceeds } from "../../lib/trust/switchboard";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/switchboard");
+
+const currentUser = Astro.locals.user;
+if (!currentUser?.id) return Astro.redirect("/auth/sign-in?returnTo=" + encodeURIComponent("/switchboard/" + id));
+
+// Fetch transaction with vehicle + seller info
+const [tx] = await db
+  .select({
+    id: switchboardTransaction.id,
+    status: switchboardTransaction.status,
+    agreedPriceNgn: switchboardTransaction.agreedPriceNgn,
+    platformFeeNgn: switchboardTransaction.platformFeeNgn,
+    feePayer: switchboardTransaction.feePayer,
+    initiatedAt: switchboardTransaction.initiatedAt,
+    completedAt: switchboardTransaction.completedAt,
+    listingId: switchboardTransaction.listingId,
+    buyerId: switchboardTransaction.buyerId,
+    sellerId: switchboardTransaction.sellerId,
+    trimName: gvoTrim.name,
+    modelName: gvoModel.name,
+    makeName: gvoMake.name,
+    domainSlug: gvoDomain.slug,
+    modelYear: listing.modelYear,
+    mileageKm: listing.mileageKm,
+    conditionReport: listing.conditionReport,
+    sellerName: user.name,
+  })
+  .from(switchboardTransaction)
+  .innerJoin(listing, eq(switchboardTransaction.listingId, listing.id))
+  .innerJoin(gvoTrim, eq(listing.trimId, gvoTrim.id))
+  .innerJoin(gvoModel, eq(gvoTrim.modelId, gvoModel.id))
+  .innerJoin(gvoMake, eq(gvoModel.makeId, gvoMake.id))
+  .innerJoin(gvoCategory, eq(gvoMake.categoryId, gvoCategory.id))
+  .innerJoin(gvoDomain, eq(gvoCategory.domainId, gvoDomain.id))
+  .innerJoin(user, eq(switchboardTransaction.sellerId, user.id))
+  .where(eq(switchboardTransaction.id, id))
+  .limit(1);
+
+if (!tx) return Astro.redirect("/switchboard");
+
+// Determine viewer role
+const isBuyer = currentUser.id === tx.buyerId;
+const isSeller = currentUser.id === tx.sellerId;
+if (!isBuyer && !isSeller) return Astro.redirect("/switchboard");
+
+// Price math
+const price = Number(tx.agreedPriceNgn);
+const fee = Number(tx.platformFeeNgn);
+const { sellerReceivesNgn } = calculateSellerProceeds(price);
+
+// Status stepper — linear progress through the escrow flow
+const STEPS = [
+  { key: "initiated", label: "Initiated" },
+  { key: "funds_held", label: "Funds Held" },
+  { key: "inspection_window", label: "Inspection" },
+  { key: "buyer_confirmed", label: "Buyer OK" },
+  { key: "seller_confirmed", label: "Seller OK" },
+  { key: "released", label: "Complete" },
+];
+
+const statusOrder = STEPS.map((s) => s.key);
+const currentIdx = statusOrder.indexOf(tx.status);
+const isRefunded = tx.status === "refunded";
+const isDisputed = tx.status === "disputed";
+const isTerminal = tx.status === "released" || isRefunded;
+const isPreRelease = !isTerminal && tx.status !== "disputed";
+
+// Condition report
+const condition = tx.conditionReport as Record<string, string> | null;
+const FIELD_LABELS: Record<string, string> = {
+  exterior_body: "Exterior Body",
+  paint_quality: "Paint Quality",
+  interior_upholstery: "Interior Upholstery",
+  dashboard_instrument_cluster: "Dashboard",
+  air_conditioning: "A/C",
+  electrical_system: "Electrical",
+  tire_condition: "Tires",
+  brake_system: "Brakes",
+  suspension: "Suspension",
+  engine_bay: "Engine Bay",
+  transmission: "Transmission",
+  exhaust_system: "Exhaust",
+  undercarriage: "Undercarriage",
+  frame_structural: "Frame",
+  has_accident_history: "Accident History",
+  seat_condition: "Seat",
+  chain_belt: "Chain/Belt",
+  spoke_integrity: "Spokes",
+  cold_start_smoke: "Cold-Start Smoke",
+  steering_mechanism: "Steering",
+};
+
+const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
+---
+
+<BaseLayout
+  title={`${vehicleName} — Transaction`}
+  posture="resting"
+  description={`Switchboard transaction for ${vehicleName}. Status: ${tx.status}.`}
+>
+  <div class={styles.page}>
+    {/* Breadcrumb */}
+    <nav style="margin-bottom: var(--space-6); font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex); display: flex; gap: var(--space-2);">
+      <a href="/switchboard" style="color: var(--panther-eyes-hex); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 200ms ease;">Transactions</a>
+      <span style="color: color-mix(in oklch, var(--panther-eyes-hex) 50%, transparent);">/</span>
+      <span style="color: var(--panther-resting-hex); font-weight: 500;">{vehicleName}</span>
+    </nav>
+
+    {/* Status Stepper */}
+    <div class={styles.stepper}>
+      {STEPS.map((step, i) => {
+        const isDone = currentIdx > i;
+        const isActive = currentIdx === i;
+        const isCurrent = step.key === tx.status;
+        return (
+          <>
+            {i > 0 && (
+              <div class={`${styles.stepperLine} ${isDone || isActive ? styles.stepperLineDone : ""}`} />
+            )}
+            <div class={`${styles.stepperStep} ${isActive ? styles.stepperActive : ""} ${isDone ? styles.stepperDone : ""}`}>
+              <div class={styles.stepperCircle}>
+                {isDone ? "✓" : i + 1}
+              </div>
+              <span class={styles.stepperLabel}>{step.label}</span>
+            </div>
+          </>
+        );
+      })}
+    </div>
+
+    {/* Status badge above grid */}
+    <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6);">
+      <span class={`${styles.statusBadge} ${
+        isRefunded ? styles.statusNeutral :
+        isDisputed ? styles.statusError :
+        isTerminal ? styles.statusSuccess :
+        currentIdx >= 3 ? styles.statusActive :
+        styles.statusInitiated
+      }`}>
+        {isRefunded ? "Refunded" : isDisputed ? "Under Dispute" : isTerminal ? "Complete" : tx.status.replace(/_/g, " ")}
+      </span>
+      <span style="font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+        {isBuyer ? "You're buying" : "You're selling"}
+      </span>
+    </div>
+
+    <div class={styles.contentGrid}>
+      {/* Left column — vehicle + condition */}
+      <div>
+        {/* Vehicle card */}
+        <div class={styles.vehicleCard}>
+          <div class={styles.vehicleName}>{vehicleName}</div>
+          <div class={styles.vehicleTrim}>{tx.trimName}</div>
+          <div style="display: flex; gap: var(--space-6); margin-top: var(--space-3); font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+            {tx.mileageKm && <span>{tx.mileageKm.toLocaleString()} km</span>}
+            <span>Listed by {tx.sellerName}</span>
+          </div>
+        </div>
+
+        {/* Condition Report */}
+        {condition && Object.keys(condition).length > 0 && (
+          <div class={styles.card} style="margin-bottom: var(--space-6);">
+            <h2 class={styles.sectionTitle}>Condition Report</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-2);">
+              {Object.entries(condition).map(([key, value]) => (
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: color-mix(in oklch, var(--panther-eyes-hex) 3%, #fff); border-radius: 6px;">
+                  <span style="font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+                    {FIELD_LABELS[key] ?? key}
+                  </span>
+                  <span style={`font-family: var(--font-sans); font-size: 13px; font-weight: 600; text-transform: capitalize; color: ${value === "good" ? "#27ae60" : value === "fair" ? "#f39c12" : value === "poor" ? "#C0392B" : "var(--panther-eyes-hex)"};`}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Info box — what this means */}
+        <div class={styles.infoBox}>
+          {isBuyer ? (
+            <>Your funds are held securely until you confirm the vehicle matches its listing. No cancellation fee — ever. If something isn't right, you can raise a dispute during the inspection window.</>
+          ) : (
+            <>The buyer's funds are held in escrow. Once both you and the buyer confirm, the funds (minus the platform fee) are transferred to your registered bank account. No cancellation fee — ever.</>
+          )}
+        </div>
+      </div>
+
+      {/* Right column — price + actions */}
+      <div>
+        {/* Price breakdown */}
+        <div class={styles.priceCard}>
+          <span class={styles.priceLabel}>Agreed Price</span>
+          <span class={styles.priceValue}>₦{price.toLocaleString()}</span>
+
+          <div class={styles.priceRow}>
+            <span class={styles.priceRowLabel}>Platform fee (2.5%)</span>
+            <span class={styles.priceRowValue}>−₦{fee.toLocaleString()}</span>
+          </div>
+          <div class={styles.priceRow}>
+            <span class={styles.priceRowLabel}>Fee paid by</span>
+            <span class={styles.priceRowValue}>{tx.feePayer === "seller" ? "Seller" : tx.feePayer === "buyer" ? "Buyer" : "Split"}</span>
+          </div>
+
+          <div class={styles.priceDivider} />
+
+          <div class={styles.priceTotal}>
+            <span>{isSeller ? "You receive" : "Seller receives"}</span>
+            <span>₦{sellerReceivesNgn.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div class={styles.card} style="margin-top: var(--space-6);">
+          <h2 class={styles.sectionTitle}>Timeline</h2>
+          <div class={styles.kvRow}>
+            <span class={styles.kvLabel}>Initiated</span>
+            <span class={styles.kvValue}>
+              {tx.initiatedAt ? new Date(tx.initiatedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+            </span>
+          </div>
+          {tx.completedAt && (
+            <div class={styles.kvRow}>
+              <span class={styles.kvLabel}>{isRefunded ? "Refunded" : "Completed"}</span>
+              <span class={styles.kvValue}>
+                {new Date(tx.completedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        {isPreRelease && (
+          <div class={styles.card} style="margin-top: var(--space-6);">
+            <h2 class={styles.sectionTitle}>Actions</h2>
+            <div class={styles.actions}>
+              {/* Confirm button — buyer or seller confirms */}
+              {(isBuyer || isSeller) && (tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
+                <button class={styles.btnConfirm} id="confirm-btn">
+                  {tx.status === "inspection_window"
+                    ? (isBuyer ? "Confirm Vehicle" : "Waiting for buyer")
+                    : tx.status === "buyer_confirmed"
+                      ? (isSeller ? "Confirm & Release Funds" : "Waiting for seller")
+                      : (isBuyer ? "Confirm Vehicle" : "Confirm & Release Funds")
+                  }
+                </button>
+              )}
+
+              {/* Cancel — full refund, zero fee */}
+              <button class={styles.btnCancel} id="cancel-btn">
+                Cancel Transaction
+              </button>
+              <p style="font-family: var(--font-sans); font-size: 12px; color: var(--panther-eyes-hex); text-align: center; margin-top: calc(-1 * var(--space-2));">
+                Full refund. No cancellation fee. Ever.
+              </p>
+
+              {/* Dispute */}
+              {(tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
+                <button class={styles.btnDanger} id="dispute-btn">
+                  Raise Dispute
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Terminal states */}
+        {isTerminal && (
+          <div class={styles.card} style="margin-top: var(--space-6);">
+            <h2 class={styles.sectionTitle}>{isRefunded ? "Refunded" : "Transaction Complete"}</h2>
+            <p style="font-family: var(--font-sans); font-size: 14px; color: var(--panther-eyes-hex); line-height: 1.5;">
+              {isRefunded
+                ? "The full amount has been returned to the buyer. No fees were charged."
+                : isSeller
+                  ? "The funds (minus platform fee) have been transferred to your registered bank account."
+                  : "The seller has received the funds. The transaction is complete."}
+            </p>
+          </div>
+        )}
+
+        {isDisputed && (
+          <div class={styles.card} style="margin-top: var(--space-6); border: 1px solid color-mix(in oklch, #C0392B 20%, transparent);">
+            <h2 class={styles.sectionTitle} style="color: #C0392B;">Dispute Active</h2>
+            <p style="font-family: var(--font-sans); font-size: 14px; color: var(--panther-eyes-hex); line-height: 1.5;">
+              A dispute has been raised. Both parties will be contacted to resolve this. Funds remain held in escrow until resolution.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Toast */}
+  <div id="toast" class={`${styles.toast} ${styles.toastSuccess}`}></div>
+</BaseLayout>
+
+<script define:vars={{ transactionId: tx.id, isSellerView: isSeller }}>
+  const toast = document.getElementById("toast");
+  let toastTimer;
+
+  function showToast(msg, isError = false) {
+    toast.textContent = msg;
+    toast.className = `toastVisible ${isError ? "toastError" : "toastSuccess"}`;
+    toast.style.opacity = "1";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.style.opacity = "0";
+    }, 3000);
+  }
+
+  // Confirm
+  const confirmBtn = document.getElementById("confirm-btn");
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", async () => {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Confirming...";
+      try {
+        const res = await fetch(`/api/switchboard/${transactionId}/confirm`, { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showToast(isSellerView ? "Confirmed. Funds released." : "Confirmed. Waiting for seller.");
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(data.error || "Failed to confirm.", true);
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = "Confirm";
+        }
+      } catch {
+        showToast("Network error. Please try again.", true);
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Confirm";
+      }
+    });
+  }
+
+  // Cancel
+  const cancelBtn = document.getElementById("cancel-btn");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", async () => {
+      if (!confirm("Cancel this transaction? You'll receive a full refund. No cancellation fee.")) return;
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = "Cancelling...";
+      try {
+        const res = await fetch(`/api/switchboard/${transactionId}/cancel`, { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showToast("Transaction cancelled. Full refund issued.");
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(data.error || "Failed to cancel.", true);
+          cancelBtn.disabled = false;
+          cancelBtn.textContent = "Cancel Transaction";
+        }
+      } catch {
+        showToast("Network error. Please try again.", true);
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = "Cancel Transaction";
+      }
+    });
+  }
+
+  // Dispute
+  const disputeBtn = document.getElementById("dispute-btn");
+  if (disputeBtn) {
+    disputeBtn.addEventListener("click", async () => {
+      if (!confirm("Raise a dispute? This will pause the transaction and both parties will be contacted.")) return;
+      disputeBtn.disabled = true;
+      disputeBtn.textContent = "Raising dispute...";
+      try {
+        const res = await fetch(`/api/switchboard/${transactionId}/dispute`, { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showToast("Dispute raised. Both parties will be contacted.");
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showToast(data.error || "Failed to raise dispute.", true);
+          disputeBtn.disabled = false;
+          disputeBtn.textContent = "Raise Dispute";
+        }
+      } catch {
+        showToast("Network error. Please try again.", true);
+        disputeBtn.disabled = false;
+        disputeBtn.textContent = "Raise Dispute";
+      }
+    });
+  }
+</script>

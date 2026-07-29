@@ -1,0 +1,224 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/global.css";
+---
+
+<BaseLayout title="Sign In" posture="walking">
+  <section class="auth-page">
+    <div class="auth-card">
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your Panther account</p>
+
+      <form id="sign-in-form" class="auth-form">
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            autocomplete="email"
+            class="form-input"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autocomplete="current-password"
+            class="form-input"
+            placeholder="Your password"
+          />
+        </div>
+
+        <div id="error-message" class="form-error" hidden></div>
+
+        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+      </form>
+
+      <p class="auth-alt">
+        Don't have an account? <a href="/auth/sign-up" id="sign-up-link">Create one</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 128px);
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--space-8);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--shadow-card);
+  }
+
+  .auth-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-1);
+  }
+
+  .auth-subtitle {
+    font-size: 14px;
+    color: var(--panther-eyes-hex);
+    margin-bottom: var(--space-8);
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+  }
+
+  .form-input {
+    padding: var(--space-3) var(--space-3);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 30%, transparent);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: var(--font-sans);
+    color: var(--panther-resting-hex);
+    background: #fff;
+    transition: border-color 200ms ease;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--panther-roaring-hex);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--panther-roaring-hex) 15%, transparent);
+  }
+
+  .form-input::placeholder {
+    color: var(--panther-eyes-hex);
+  }
+
+  .form-error {
+    padding: var(--space-3);
+    background: color-mix(in oklch, #dc2626 8%, #fff);
+    border: 1px solid color-mix(in oklch, #dc2626 30%, transparent);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #dc2626;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3) var(--space-6);
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    transition: all 200ms ease;
+  }
+
+  .btn-primary {
+    background: var(--panther-resting-hex);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: color-mix(in oklch, var(--panther-resting-hex) 85%, #000);
+  }
+
+  .btn-full {
+    width: 100%;
+    margin-top: var(--space-2);
+  }
+
+  .auth-alt {
+    text-align: center;
+    font-size: 14px;
+    color: var(--panther-eyes-hex);
+    margin-top: var(--space-6);
+  }
+
+  .auth-alt a {
+    color: var(--panther-roaring-hex);
+    font-weight: 500;
+  }
+
+  .auth-alt a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  const form = document.getElementById("sign-in-form") as HTMLFormElement;
+  const errorEl = document.getElementById("error-message") as HTMLDivElement;
+  const signUpLink = document.getElementById("sign-up-link") as HTMLAnchorElement;
+
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = params.get("returnTo");
+
+  // Preserve returnTo when linking to sign-up
+  if (signUpLink && returnTo) {
+    signUpLink.href = `/auth/sign-up?returnTo=${encodeURIComponent(returnTo)}`;
+  }
+
+  function getReturnUrl(): string {
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("returnTo");
+    if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      return decodeURIComponent(returnTo);
+    }
+    return "/";
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+
+    const email = (document.getElementById("email") as HTMLInputElement).value;
+    const password = (document.getElementById("password") as HTMLInputElement).value;
+
+    try {
+      const res = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        errorEl.textContent = data.error?.message ?? "Invalid email or password";
+        errorEl.hidden = false;
+        return;
+      }
+
+      window.location.href = getReturnUrl();
+    } catch {
+      errorEl.textContent = "Something went wrong. Please try again.";
+      errorEl.hidden = false;
+    }
+  });
+</script>

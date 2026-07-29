@@ -1,0 +1,427 @@
+---
+export interface Props {
+  maxRows?: number;
+}
+
+const { maxRows = 100 } = Astro.props;
+---
+
+<div class="bulk-section">
+  <div class="bulk-tabs">
+    <button class="bulk-tab bulk-tab--active" data-bulk-tab="csv">CSV Upload</button>
+    <button class="bulk-tab" data-bulk-tab="vins">VIN List</button>
+  </div>
+
+  <div class="bulk-panel" id="bulk-panel-csv">
+    <h3 class="bulk-panel-title">Upload CSV</h3>
+    <p class="bulk-panel-desc">
+      CSV must have headers. Required: <code>vin</code> or <code>make</code> + <code>model</code>.
+      Optional: <code>model_year</code>, <code>mileage_km</code>, <code>asking_price_ngn</code>,
+      <code>domain</code>, <code>trim</code>, and any <code>condition_*</code> fields.
+    </p>
+    <div class="bulk-dropzone" id="bulk-csv-dropzone">
+      <span class="bulk-dropzone-icon">📄</span>
+      <p class="bulk-dropzone-text">Drop CSV file here or click to browse</p>
+      <input type="file" id="bulk-csv-input" accept=".csv,.tsv,.txt" hidden />
+    </div>
+    <div id="bulk-csv-preview" class="bulk-preview" hidden>
+      <h4 class="bulk-preview-title">Preview (<span id="bulk-csv-count">0</span> rows)</h4>
+      <div class="bulk-table-wrap">
+        <table class="bulk-table">
+          <thead id="bulk-csv-head"></thead>
+          <tbody id="bulk-csv-body"></tbody>
+        </table>
+      </div>
+      <div class="bulk-actions">
+        <button class="bulk-create-btn" id="bulk-csv-create" disabled>Create All Listings</button>
+        <span class="bulk-status" id="bulk-csv-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bulk-panel" id="bulk-panel-vins" hidden>
+    <h3 class="bulk-panel-title">VIN List</h3>
+    <p class="bulk-panel-desc">
+      Paste one VIN per line. Each VIN will be decoded via NHTSA and a basic listing created.
+    </p>
+    <div class="bulk-defaults">
+      <label class="bulk-field">
+        <span class="bulk-field-label">Domain</span>
+        <select id="bulk-vin-domain" class="bulk-select">
+          <option value="car">Car</option>
+          <option value="motorcycle">Motorcycle</option>
+          <option value="tricycle">Tricycle</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </label>
+      <label class="bulk-field">
+        <span class="bulk-field-label">Default Mileage (km)</span>
+        <input type="number" id="bulk-vin-mileage" class="bulk-input" value="50000" min="0" />
+      </label>
+      <label class="bulk-field">
+        <span class="bulk-field-label">Default Price (NGN)</span>
+        <input type="number" id="bulk-vin-price" class="bulk-input" value="0" min="0" />
+      </label>
+    </div>
+    <label class="bulk-field">
+      <span class="bulk-field-label">VINs (one per line)</span>
+      <textarea id="bulk-vin-textarea" class="bulk-textarea" rows="8" placeholder="1HGCM82633A004352&#10;2HGCM82633A004353&#10;3HGCM82633A004354"></textarea>
+    </label>
+    <div class="bulk-actions">
+      <button class="bulk-create-btn" id="bulk-vin-create">Decode & Create</button>
+      <span class="bulk-status" id="bulk-vin-status"></span>
+    </div>
+    <div id="bulk-vin-results" class="bulk-results" hidden>
+      <table class="bulk-table">
+        <thead>
+          <tr><th>VIN</th><th>Result</th></tr>
+        </thead>
+        <tbody id="bulk-vin-results-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ maxRows }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    let csvData = [];
+
+    // --- Tab switching ---
+    document.querySelectorAll("[data-bulk-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-bulk-tab]").forEach((b) => b.classList.remove("bulk-tab--active"));
+        btn.classList.add("bulk-tab--active");
+        const tab = btn.dataset.bulkTab;
+        document.getElementById("bulk-panel-csv").hidden = tab !== "csv";
+        document.getElementById("bulk-panel-vins").hidden = tab !== "vins";
+      });
+    });
+
+    // --- CSV Upload ---
+    const csvDropzone = document.getElementById("bulk-csv-dropzone");
+    const csvInput = document.getElementById("bulk-csv-input");
+    const csvPreview = document.getElementById("bulk-csv-preview");
+    const csvCount = document.getElementById("bulk-csv-count");
+    const csvHead = document.getElementById("bulk-csv-head");
+    const csvBody = document.getElementById("bulk-csv-body");
+    const csvCreate = document.getElementById("bulk-csv-create");
+    const csvStatus = document.getElementById("bulk-csv-status");
+
+    csvDropzone.addEventListener("click", () => csvInput.click());
+
+    csvDropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      csvDropzone.classList.add("bulk-dropzone--over");
+    });
+    csvDropzone.addEventListener("dragleave", () => {
+      csvDropzone.classList.remove("bulk-dropzone--over");
+    });
+    csvDropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      csvDropzone.classList.remove("bulk-dropzone--over");
+      const file = e.dataTransfer.files[0];
+      if (file) parseCsvFile(file);
+    });
+
+    csvInput.addEventListener("change", () => {
+      if (csvInput.files[0]) parseCsvFile(csvInput.files[0]);
+    });
+
+    function parseCsvFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split("\n").filter((l) => l.trim());
+        if (lines.length < 2) {
+          csvStatus.textContent = "CSV must have a header row and at least one data row.";
+          return;
+        }
+        const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+        const rows = [];
+        for (let i = 1; i < lines.length && i <= maxRows + 1; i++) {
+          const vals = lines[i].split(",").map((v) => v.trim());
+          if (vals.length >= headers.length) {
+            const row = {};
+            headers.forEach((h, j) => { row[h] = vals[j] || ""; });
+            rows.push(row);
+          }
+        }
+        csvData = rows;
+        renderCsvPreview(headers, rows);
+      };
+      reader.readAsText(file);
+    }
+
+    function renderCsvPreview(headers, rows) {
+      csvPreview.hidden = false;
+      csvCount.textContent = String(rows.length);
+
+      csvHead.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>`;
+      csvBody.innerHTML = rows.map((row) =>
+        `<tr>${headers.map((h) => `<td>${(row[h] || "")}</td>`).join("")}</tr>`
+      ).join("");
+
+      csvCreate.disabled = rows.length === 0;
+    }
+
+    csvCreate.addEventListener("click", async () => {
+      csvCreate.disabled = true;
+      csvStatus.textContent = `Creating ${csvData.length} listings...`;
+
+      try {
+        const res = await fetch("/api/listings/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rows: csvData })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          csvStatus.textContent = `Created ${result.created}, failed ${result.failed}`;
+        } else {
+          csvStatus.textContent = result.error || "Failed to create";
+        }
+      } catch {
+        csvStatus.textContent = "Network error";
+      }
+    });
+
+    // --- VIN List ---
+    const vinCreate = document.getElementById("bulk-vin-create");
+    const vinTextarea = document.getElementById("bulk-vin-textarea");
+    const vinDomain = document.getElementById("bulk-vin-domain");
+    const vinMileage = document.getElementById("bulk-vin-mileage");
+    const vinPrice = document.getElementById("bulk-vin-price");
+    const vinStatus = document.getElementById("bulk-vin-status");
+    const vinResults = document.getElementById("bulk-vin-results");
+    const vinResultsBody = document.getElementById("bulk-vin-results-body");
+
+    vinCreate.addEventListener("click", async () => {
+      const vins = vinTextarea.value.split("\n").map((v) => v.trim().toUpperCase()).filter((v) => v.length === 17);
+      if (vins.length === 0) {
+        vinStatus.textContent = "Enter at least one valid 17-character VIN.";
+        return;
+      }
+      if (vins.length > maxRows) {
+        vinStatus.textContent = `Max ${maxRows} VINs per batch.`;
+        return;
+      }
+
+      vinCreate.disabled = true;
+      vinStatus.textContent = `Processing ${vins.length} VINs...`;
+      vinResults.hidden = false;
+      vinResultsBody.innerHTML = vins.map((v) => `<tr><td>${v}</td><td>Processing...</td></tr>`).join("");
+
+      const domain = vinDomain.value;
+      const defaultMileage = parseInt(vinMileage.value) || 50000;
+      const defaultPrice = parseInt(vinPrice.value) || 0;
+
+      const rows = vins.map((vin) => ({
+        vin,
+        domain,
+        mileage_km: String(defaultMileage),
+        asking_price_ngn: String(defaultPrice),
+      }));
+
+      try {
+        const res = await fetch("/api/listings/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rows })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          vinStatus.textContent = `Created ${result.created}, failed ${result.failed}`;
+          vinResultsBody.innerHTML = vins.map((v, i) => {
+            const err = result.errors?.find((e) => e.vin === v || e.row === i);
+            return `<tr><td>${v}</td><td>${err ? "Failed: " + err.error : "Created"}</td></tr>`;
+          }).join("");
+        } else {
+          vinStatus.textContent = result.error || "Failed";
+        }
+      } catch {
+        vinStatus.textContent = "Network error";
+      } finally {
+        vinCreate.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .bulk-section {
+    margin-top: var(--space-6);
+  }
+  .bulk-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: var(--space-5);
+    border-bottom: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+  }
+  .bulk-tab {
+    padding: var(--space-3) var(--space-5);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--panther-eyes-hex);
+    margin-bottom: -1px;
+    transition: all 150ms ease;
+  }
+  .bulk-tab--active {
+    color: var(--panther-resting-hex);
+    border-bottom-color: var(--panther-resting-hex);
+  }
+  .bulk-panel {
+    margin-bottom: var(--space-6);
+  }
+  .bulk-panel-title {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .bulk-panel-desc {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-4);
+  }
+  .bulk-panel-desc code {
+    background: color-mix(in oklch, var(--panther-eyes-hex) 8%, #fff);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .bulk-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    border: 2px dashed color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .bulk-dropzone:hover, .bulk-dropzone--over {
+    border-color: var(--panther-resting-hex);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 4%, #fff);
+  }
+  .bulk-dropzone-icon {
+    font-size: 32px;
+    margin-bottom: var(--space-2);
+  }
+  .bulk-dropzone-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+    margin: 0;
+  }
+  .bulk-preview {
+    margin-top: var(--space-4);
+  }
+  .bulk-preview-title {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-3);
+  }
+  .bulk-table-wrap {
+    overflow-x: auto;
+    margin-bottom: var(--space-3);
+  }
+  .bulk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: 12px;
+  }
+  .bulk-table th {
+    text-align: left;
+    padding: var(--space-2);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 6%, #fff);
+    color: var(--panther-eyes-hex);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+  }
+  .bulk-table td {
+    padding: var(--space-2);
+    border-bottom: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 8%, transparent);
+    color: var(--panther-resting-hex);
+  }
+  .bulk-defaults {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .bulk-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .bulk-field-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .bulk-select, .bulk-input, .bulk-textarea {
+    padding: var(--space-2);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+  .bulk-textarea {
+    resize: vertical;
+    font-family: monospace;
+    font-size: 12px;
+  }
+  .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+  .bulk-create-btn {
+    height: 40px;
+    padding: 0 var(--space-5);
+    background: var(--panther-resting-hex);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .bulk-create-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .bulk-status {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+  }
+  .bulk-results {
+    margin-top: var(--space-4);
+  }
+
+  @media (max-width: 640px) {
+    .bulk-defaults { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,232 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/global.css";
+
+const user = Astro.locals.user;
+const session = Astro.locals.session;
+---
+
+<BaseLayout title="Dashboard" posture="walking">
+  <section class="dashboard-page">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Dashboard</h1>
+      <p class="dashboard-subtitle">Welcome, {user.name ?? "there"}</p>
+    </div>
+
+    <div class="dashboard-grid">
+      <a href="/listings/new" class="dash-card">
+        <div class="dash-card-icon">+</div>
+        <h3 class="dash-card-title">Create Listing</h3>
+        <p class="dash-card-text">List a vehicle for sale with a structured condition report</p>
+      </a>
+
+      <a href="/pricing" class="dash-card">
+        <div class="dash-card-icon">#</div>
+        <h3 class="dash-card-title">Pricing Engine</h3>
+        <p class="dash-card-text">Check the 13-step landed cost for any vehicle</p>
+      </a>
+
+      <a href="/vehicles" class="dash-card">
+        <div class="dash-card-icon">&gt;</div>
+        <h3 class="dash-card-title">Browse Vehicles</h3>
+        <p class="dash-card-text">Explore specs, knowledge warnings, and pricing across makes</p>
+      </a>
+
+      <a href="/listings" class="dash-card">
+        <div class="dash-card-icon">~</div>
+        <h3 class="dash-card-title">View Listings</h3>
+        <p class="dash-card-text">Browse active vehicle listings with condition reports</p>
+      </a>
+
+      <a href="/switchboard" class="dash-card">
+        <div class="dash-card-icon">$</div>
+        <h3 class="dash-card-title">Transactions</h3>
+        <p class="dash-card-text">Your Switchboard escrow transactions and history</p>
+      </a>
+    </div>
+
+    <div class="dashboard-section">
+      <h2 class="section-title">Account</h2>
+      <div class="account-info">
+        <div class="account-row">
+          <span class="account-label">Email</span>
+          <span class="account-value">{user.email}</span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Phone</span>
+          <span class="account-value">{user.phone ?? "Not verified"}</span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Member since</span>
+          <span class="account-value">{new Date(user.createdAt).toLocaleDateString("en-NG", { year: "numeric", month: "long", day: "numeric" })}</span>
+        </div>
+      </div>
+
+      <button id="sign-out-btn" class="btn btn-secondary btn-sign-out">Sign Out</button>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .dashboard-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .dashboard-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .dashboard-title {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-1);
+  }
+
+  .dashboard-subtitle {
+    font-size: 15px;
+    color: var(--panther-eyes-hex);
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+  }
+
+  .dash-card {
+    padding: var(--space-6);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 12px;
+    transition: all 200ms ease;
+    text-decoration: none;
+  }
+
+  .dash-card:hover {
+    border-color: var(--panther-roaring-hex);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+  }
+
+  .dash-card-icon {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--panther-roaring-hex);
+    margin-bottom: var(--space-3);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in oklch, var(--panther-roaring-hex) 10%, #fff);
+    border-radius: 8px;
+  }
+
+  .dash-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-1);
+  }
+
+  .dash-card-text {
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    line-height: 1.5;
+  }
+
+  .dashboard-section {
+    border-top: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    padding-top: var(--space-6);
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-4);
+  }
+
+  .account-info {
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+  }
+
+  .account-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 10%, transparent);
+  }
+
+  .account-row:last-child {
+    border-bottom: none;
+  }
+
+  .account-label {
+    font-size: 14px;
+    color: var(--panther-eyes-hex);
+  }
+
+  .account-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3) var(--space-6);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    transition: all 200ms ease;
+  }
+
+  .btn-secondary {
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 30%, transparent);
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--panther-eyes-hex);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 5%, #fff);
+  }
+
+  .btn-sign-out {
+    color: #dc2626;
+    border-color: color-mix(in oklch, #dc2626 30%, transparent);
+  }
+
+  .btn-sign-out:hover {
+    background: color-mix(in oklch, #dc2626 5%, #fff);
+    border-color: #dc2626;
+  }
+
+  @media (max-width: 640px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const btn = document.getElementById("sign-out-btn");
+  btn?.addEventListener("click", async () => {
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" });
+      window.location.href = "/";
+    } catch {
+      window.location.href = "/";
+    }
+  });
+</script>

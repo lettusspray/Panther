@@ -1,0 +1,111 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../styles/global.css";
+
+const { domain, make, model } = Astro.params;
+
+const title = domain && make && model
+  ? `${model.replace(/-/g, " ")} Pricing`
+  : "Pricing";
+---
+
+<BaseLayout
+  title={title}
+  posture="walking"
+  description={`Landed cost breakdown for ${model?.replace(/-/g, " ") ?? "vehicle"} models imported into Nigeria.`}
+>
+  <section class={styles.hero}>
+    <div class={styles.containerWalking}>
+      <nav class={styles.breadcrumb}>
+        <a href="/pricing">Pricing</a>
+        <span class={styles.breadcrumbSep}>/</span>
+        <a href={`/pricing/${domain}`}>{domain?.replace(/-/g, " ")}</a>
+        <span class={styles.breadcrumbSep}>/</span>
+        <span class={styles.breadcrumbCurrent}>{make?.replace(/-/g, " ")}</span>
+      </nav>
+      <h1 class={styles.heroTitle}>
+        {model?.replace(/-/g, " ") ?? "Model"}
+      </h1>
+      <p class={styles.heroSubtitle}>
+        Select a model year to see the full 13-step landed-cost breakdown.
+      </p>
+    </div>
+  </section>
+
+  <section class={styles.modelsSection}>
+    <div class={styles.containerWalking}>
+      <div class="skeleton" style="height: 48px; width: 100%; margin-bottom: 16px;" id="trims-loading-1"></div>
+      <div class="skeleton" style="height: 48px; width: 100%; margin-bottom: 16px;" id="trims-loading-2"></div>
+      <div class="skeleton" style="height: 48px; width: 100%;" id="trims-loading-3"></div>
+      <div id="trims-container" style="display: none;"></div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  async function loadTrims() {
+    const path = window.location.pathname;
+    const parts = path.split("/").filter(Boolean);
+    if (parts.length < 4) return;
+
+    const [, , domainSlug, makeSlug, modelSlug] = parts;
+
+    try {
+      const domainsRes = await fetch("/api/pricing/gvo/domains");
+      const domains = await domainsRes.json();
+      const domain = domains.find((d: any) => d.slug === domainSlug);
+      if (!domain) return;
+
+      const catsRes = await fetch(`/api/pricing/gvo/categories/${domain.id}`);
+      const categories = await catsRes.json();
+
+      let makeId: string | null = null;
+      for (const cat of categories) {
+        const makesRes = await fetch(`/api/pricing/gvo/makes/${cat.id}`);
+        const makes = await makesRes.json();
+        const found = makes.find((m: any) => m.slug === makeSlug);
+        if (found) { makeId = found.id; break; }
+      }
+      if (!makeId) return;
+
+      const modelsRes = await fetch(`/api/pricing/gvo/models/${makeId}`);
+      const models = await modelsRes.json();
+      const model = models.find((m: any) => m.slug === modelSlug);
+      if (!model) return;
+
+      const trimsRes = await fetch(`/api/pricing/gvo/trims/${model.id}`);
+      const trims = await trimsRes.json();
+
+      const container = document.getElementById("trims-container");
+      const l1 = document.getElementById("trims-loading-1");
+      const l2 = document.getElementById("trims-loading-2");
+      const l3 = document.getElementById("trims-loading-3");
+      if (!container || !l1 || !l2 || !l3) return;
+
+      l1.style.display = "none";
+      l2.style.display = "none";
+      l3.style.display = "none";
+      container.style.display = "block";
+
+      if (trims.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:48px;color:#6F767D;">No trims available for this model yet.</p>';
+        return;
+      }
+
+      container.innerHTML = `<div class="${styles.trimsGrid}">${
+        trims.map((trim: any) => `
+          <a href="/pricing/${domainSlug}/${makeSlug}/${modelSlug}/${trim.slug}" class="${styles.trimCard}">
+            <div class="${styles.trimName}">${trim.name}</div>
+            ${trim.engine ? `<div class="${styles.trimDetail}">${trim.engine}</div>` : ""}
+            ${trim.transmission ? `<div class="${styles.trimDetail}">${trim.transmission}</div>` : ""}
+          </a>
+        `).join("")
+      }</div>`;
+    } catch (err) {
+      console.error("Failed to load trims:", err);
+    }
+  }
+
+  loadTrims();
+</script>

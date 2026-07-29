@@ -1,0 +1,139 @@
+.hero {
+  padding: var(--space-12) 0 var(--space-6);
+}
+
+.breadcrumb {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  margin-bottom: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumb a {
+  color: var(--panther-eyes-hex);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 200ms ease;
+}
+
+.breadcrumb a:hover {
+  text-decoration-color: var(--panther-eyes-hex);
+}
+
+.breadcrumbSep {
+  color: color-mix(in oklch, var(--panther-eyes-hex) 50%, transparent);
+}
+
+.breadcrumbCurrent {
+  color: var(--panther-resting-hex);
+  font-weight: 500;
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 40px);
+  color: var(--panther-resting-hex);
+  margin-bottom: var(--space-2);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+.heroSubtitle {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--panther-eyes-hex);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+.modelsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-6);
+  max-width: 1280px;
+  margin: var(--space-8) auto 0;
+  padding: 0 var(--space-8) var(--space-24);
+}
+
+.modelCard {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  text-decoration: none;
+  transition: box-shadow 300ms var(--ease-posture), transform 300ms var(--ease-posture);
+}
+
+.modelCard:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: scale(1.01);
+}
+
+.modelImagePlaceholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--panther-walking-hex) 15%, #fff) 0%, color-mix(in oklch, var(--panther-eyes-hex) 8%, #fff) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modelInitial {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: color-mix(in oklch, var(--panther-walking-hex) 40%, var(--panther-eyes-hex));
+  user-select: none;
+}
+
+.modelInfo {
+  padding: var(--space-4);
+}
+
+.modelName {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin-bottom: var(--space-1);
+}
+
+.modelYears {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+.modelActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.modelLink {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--panther-roaring-hex);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-12);
+  color: var(--panther-eyes-hex);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-8);
+}

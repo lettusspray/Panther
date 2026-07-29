@@ -1,0 +1,107 @@
+---
+export interface Props {
+  label: string;
+  variant?: "primary" | "secondary" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
+  type?: "button" | "submit";
+  disabled?: boolean;
+  loading?: boolean;
+  class?: string;
+  id?: string;
+}
+
+const { label, variant = "primary", size = "md", type = "button", disabled = false, loading = false, id } = Astro.props;
+
+const variantClass = `btn-${variant}`;
+const sizeClass = `btn-${size}`;
+---
+
+<button
+  type={type}
+  class={`btn ${variantClass} ${sizeClass} ${loading ? "btn-loading" : ""} ${Astro.props.class || ""}`}
+  disabled={disabled || loading}
+  id={id}
+>
+  {loading ? <span class="btn-spinner"></span> : null}
+  <span class="btn-label">{loading ? "Please wait..." : label}</span>
+</button>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 200ms var(--ease-micro);
+    text-decoration: none;
+    line-height: 1;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
+  }
+  .btn-primary {
+    background: var(--panther-resting-hex);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.2);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--panther-resting-hex);
+    border: 1px solid var(--panther-resting-hex);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--panther-resting-hex) 8%, #fff);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--panther-eyes-hex);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--panther-eyes-hex) 6%, #fff);
+  }
+  .btn-danger {
+    background: #C0392B;
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: #A93226;
+  }
+  .btn-sm {
+    height: 32px;
+    padding: 0 var(--space-3);
+    font-size: 12px;
+  }
+  .btn-md {
+    height: 44px;
+    padding: 0 var(--space-5);
+    font-size: 14px;
+  }
+  .btn-lg {
+    height: 52px;
+    padding: 0 var(--space-7);
+    font-size: 16px;
+  }
+  .btn-loading {
+    position: relative;
+  }
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btnSpin 600ms linear infinite;
+  }
+  @keyframes btnSpin {
+    to { transform: rotate(360deg); }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../styles/global.css";
+---
+
+<BaseLayout title="Panther" posture="roaring">
+  <section class={styles.hero}>
+    <div class={styles.heroTitle}>
+      We don't sell cars.<br />
+      We reveal the truth about them.
+    </div>
+    <p class={styles.heroSubtitle}>
+      The trusted pricing and transaction platform for Nigerian vehicle buyers and sellers.
+      Built on math. Anchored in trust.
+    </p>
+    <div class={styles.heroActions}>
+      <a href="/pricing" class={`${styles.btnLg} ${styles.btnPrimary}`}>Begin</a>
+      <a href="/vehicles" class={`${styles.btnLg} ${styles.btnSecondary}`}>Browse Vehicles</a>
+    </div>
+  </section>
+
+  <section class={styles.valueProps}>
+    <div class={styles.sectionTitle}>How Panther works</div>
+    <div class={styles.propsGrid}>
+      <div class={styles.propCard}>
+        <div class={styles.propNumber}>01</div>
+        <h3 class={styles.propTitle}>Transparent Pricing</h3>
+        <p class={styles.propText}>
+          Every price is backed by the 13-step statutory formula.
+          Import duty, NAC levy, CISS, ETLS, VAT — all calculated from live data.
+          No black boxes.
+        </p>
+      </div>
+      <div class={styles.propCard}>
+        <div class={styles.propNumber}>02</div>
+        <h3 class={styles.propTitle}>Structured Condition Reports</h3>
+        <p class={styles.propText}>
+          Category-specific toggle forms. Cars, motorcycles, tricycles, commercial vehicles —
+          each gets its own inspection schema. No free-text guessing.
+        </p>
+      </div>
+      <div class={styles.propCard}>
+        <div class={styles.propNumber}>03</div>
+        <h3 class={styles.propTitle}>Switchboard Escrow</h3>
+        <p class={styles.propText}>
+          Pay on delivery, digitised. Funds held in escrow until both parties confirm.
+          No cancellation fees. No traps. Just trust.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class={styles.ctaSection}>
+    <h2 class={styles.ctaTitle}>
+      What is a 2015 Toyota Camry really worth in Nigeria?
+    </h2>
+    <p class={styles.ctaText}>
+      Find the landed cost. From FOB to final delivery — every naira accounted for.
+    </p>
+    <a href="/pricing/toyota/camry" class={`${styles.btnLg} ${styles.btnPrimary}`}>Check Price</a>
+  </section>
+</BaseLayout>

@@ -1,0 +1,78 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../styles/global.css";
+import { db } from "../../lib/db";
+import { listing, gvoTrim, gvoModel, gvoMake, user } from "../../lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+const listings = await db
+  .select({
+    id: listing.id,
+    modelYear: listing.modelYear,
+    mileageKm: listing.mileageKm,
+    askingPriceNgn: listing.askingPriceNgn,
+    status: listing.status,
+    createdAt: listing.createdAt,
+    trimName: gvoTrim.name,
+    modelName: gvoModel.name,
+    makeName: gvoMake.name,
+    sellerName: user.name,
+  })
+  .from(listing)
+  .innerJoin(gvoTrim, eq(listing.trimId, gvoTrim.id))
+  .innerJoin(gvoModel, eq(gvoTrim.modelId, gvoModel.id))
+  .innerJoin(gvoMake, eq(gvoModel.makeId, gvoMake.id))
+  .innerJoin(user, eq(listing.sellerId, user.id))
+  .where(eq(listing.status, "active"))
+  .orderBy(desc(listing.createdAt))
+  .limit(50);
+---
+
+<BaseLayout
+  title="Vehicle Listings"
+  posture="walking"
+  description="Browse active vehicle listings on Panther. Transparent pricing, structured condition reports."
+>
+  <section class={styles.hero}>
+    <h1 class={styles.heroTitle}>Active Listings</h1>
+    <p class={styles.heroSubtitle}>
+      Every listing includes a structured condition report and transparent pricing breakdown.
+    </p>
+    <a href="/listings/new" class={styles.ctaBtn}>List a Vehicle</a>
+  </section>
+
+  {listings.length === 0 ? (
+    <div class={styles.emptyState}>
+      <p>No active listings yet.</p>
+      <a href="/listings/new" class={styles.emptyLink}>Be the first to list a vehicle.</a>
+    </div>
+  ) : (
+    <div class={styles.listingsGrid}>
+      {listings.map((item) => (
+        <a href={`/listings/${item.id}`} class={styles.listingCard}>
+          <div class={styles.cardPlaceholder}>
+            <span class={styles.cardInitial}>{item.makeName.charAt(0)}</span>
+          </div>
+          <div class={styles.cardBody}>
+            <h2 class={styles.cardTitle}>
+              {item.modelYear} {item.makeName} {item.modelName}
+            </h2>
+            <p class={styles.cardTrim}>{item.trimName}</p>
+            <div class={styles.cardMeta}>
+              <span class={styles.cardMileage}>
+                {item.mileageKm.toLocaleString()} km
+              </span>
+              <span class={styles.cardPrice}>
+                ₦{Number(item.askingPriceNgn).toLocaleString()}
+              </span>
+            </div>
+            {item.sellerName && (
+              <p class={styles.cardSeller}>Listed by {item.sellerName}</p>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>

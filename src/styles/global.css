@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prata&display=swap");
+/* impeccable: overused-font Inter — Design system mandated per §VII. Deliberate choice. */
+
+:root {
+  /* ── Posture Colours (OKLCH + HEX) ─────────────────────────── */
+  --panther-resting-oklch: oklch(20% 0.02 30);
+  --panther-resting-hex: #34312E;
+  --panther-walking-oklch: oklch(62% 0.08 210);
+  --panther-walking-hex: #9BAEBF;
+  --panther-eyes-oklch: oklch(45% 0.03 225);
+  --panther-eyes-hex: #6F767D;
+  --panther-roaring-oklch: oklch(50% 0.18 30);
+  --panther-roaring-hex: #CB823F;
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-serif: "Prata", "Alike Angular", Georgia, serif;
+  --font-sans: "Inter", "Arial", "Helvetica Neue", sans-serif;
+
+  /* ── Spacing (8px base unit) ───────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --space-40: 160px;
+  --space-48: 192px;
+
+  /* ── Easing ────────────────────────────────────────────────── */
+  --ease-posture: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-micro: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Shadows ───────────────────────────────────────────────── */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.16);
+}
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--panther-resting-hex);
+  background: #fff;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

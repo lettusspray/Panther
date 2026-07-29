@@ -1,0 +1,1258 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./new.module.css";
+import "../../styles/global.css";
+import { getConditionFields } from "../../lib/listings/condition-reports";
+import ConditionReportForm from "../../components/listings/ConditionReportForm.astro";
+import PhotoUploader from "../../components/listings/PhotoUploader.astro";
+---
+
+<BaseLayout
+  title="List a Vehicle"
+  posture="walking"
+  description="List your vehicle on Panther. GVO-verified identification, structured condition reports, transparent pricing."
+>
+  <section class={styles.hero}>
+    <h1 class={styles.heroTitle}>List a Vehicle</h1>
+    <p class={styles.heroSubtitle}>
+      Every vehicle on Panther is identified through the Global Vehicle Ontology —
+      no free-text, no guesswork. Accurate condition reports increase your lead quality by 5x.
+    </p>
+  </section>
+
+  <div class={styles.formContainer}>
+    {/* Progress Steps */}
+      <div class={styles.progress}>
+      <div class={`${styles.progressStep} ${styles.progressActive}`} data-step="1">
+        <span class={styles.progressNum}>1</span>
+        <span class={styles.progressLabel}>Vehicle</span>
+      </div>
+      <div class={styles.progressDivider}></div>
+      <div class={styles.progressStep} data-step="2">
+        <span class={styles.progressNum}>2</span>
+        <span class={styles.progressLabel}>Identify</span>
+      </div>
+      <div class={styles.progressDivider}></div>
+      <div class={styles.progressStep} data-step="3">
+        <span class={styles.progressNum}>3</span>
+        <span class={styles.progressLabel}>Condition</span>
+      </div>
+      <div class={styles.progressDivider}></div>
+      <div class={styles.progressStep} data-step="4">
+        <span class={styles.progressNum}>4</span>
+        <span class={styles.progressLabel}>Photos</span>
+      </div>
+      <div class={styles.progressDivider}></div>
+      <div class={styles.progressStep} data-step="5">
+        <span class={styles.progressNum}>5</span>
+        <span class={styles.progressLabel}>Review</span>
+      </div>
+    </div>
+
+    {/* Step 1: Domain Selection */}
+    <div class={`${styles.step} ${styles.stepActive}`} data-step="1">
+      <h2 class={styles.stepTitle}>What type of vehicle?</h2>
+      <p class={styles.stepDesc}>Select the domain that best describes your vehicle.</p>
+      <div class={styles.domainGrid}>
+        <button class={styles.domainBtn} data-domain="car" data-slug="car">
+          <span class={styles.domainEmoji}>🚗</span>
+          <span class={styles.domainName}>Car</span>
+          <span class={styles.domainDesc}>Sedans, SUVs, pickups, coupes</span>
+        </button>
+        <button class={styles.domainBtn} data-domain="motorcycle" data-slug="motorcycle">
+          <span class={styles.domainEmoji}>🏍️</span>
+          <span class={styles.domainName}>Motorcycle</span>
+          <span class={styles.domainDesc}>Sport, cruiser, touring, commuter</span>
+        </button>
+        <button class={styles.domainBtn} data-domain="tricycle" data-slug="tricycle">
+          <span class={styles.domainEmoji}>🛺</span>
+          <span class={styles.domainName}>Tricycle (Keke)</span>
+          <span class={styles.domainDesc}>Passenger and cargo tricycles</span>
+        </button>
+        <button class={styles.domainBtn} data-domain="commercial" data-slug="commercial">
+          <span class={styles.domainEmoji}>🚛</span>
+          <span class={styles.domainName}>Commercial</span>
+          <span class={styles.domainDesc}>Trucks, buses, heavy-duty vehicles</span>
+        </button>
+      </div>
+    </div>
+
+    {/* Step 2: GVO Cascading Selectors + VIN */}
+    <div class={styles.step} data-step="2">
+      <h2 class={styles.stepTitle}>Identify the vehicle</h2>
+      <p class={styles.stepDesc}>Enter VIN for instant auto-population, or select through the Global Vehicle Ontology.</p>
+      <p class={styles.bulkHint}>Listing many vehicles? <a href="/listings/bulk">Use bulk upload →</a></p>
+
+      {/* VIN Decode Section */}
+      <div class={styles.vinSection}>
+        <div class={styles.vinRow}>
+          <input type="text" class={styles.vinInput} id="vin-input" placeholder="Enter 17-character VIN (e.g. 1HGCM82633A123456)" maxlength="17" autocomplete="off" />
+          <button type="button" class={styles.vinDecodeBtn} id="vin-decode-btn">Decode VIN</button>
+        </div>
+        <div class={styles.vinStatus} id="vin-status"></div>
+        <div class={styles.vinDivider}><span>or browse the catalog</span></div>
+      </div>
+
+      <div class={styles.selectorsGrid}>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Make</label>
+          <select id="make-select" class={styles.fieldSelect}>
+            <option value="">Select make...</option>
+          </select>
+        </div>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Model</label>
+          <select id="model-select" class={styles.fieldSelect} disabled>
+            <option value="">Select make first...</option>
+          </select>
+        </div>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Trim</label>
+          <select id="trim-select" class={styles.fieldSelect} disabled>
+            <option value="">Select model first...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class={styles.selectedVehicle} id="selected-vehicle" style="display: none;">
+        <span class={styles.selectedLabel}>Selected:</span>
+        <span class={styles.selectedText} id="selected-vehicle-text"></span>
+      </div>
+
+      <div class={styles.gvoRequestArea}>
+        <button type="button" class={styles.gvoRequestBtn} id="gvo-request-btn">
+          Can't find your vehicle?
+        </button>
+        <div class={styles.gvoRequestForm} id="gvo-request-form" hidden>
+          <p class={styles.gvoRequestText}>
+            Enter your vehicle details. We'll try to look it up in automotive databases. If not found, you can continue with custom details or submit a request to add it.
+          </p>
+          <input type="text" class={styles.fieldInput} id="gvo-request-domain" hidden value="">
+          <div class={styles.fieldGroup}>
+            <label class={styles.fieldLabel}>Make</label>
+            <input type="text" class={styles.fieldInput} id="gvo-request-make" placeholder="e.g. Toyota, Bajaj, MAN" />
+          </div>
+          <div class={styles.fieldGroup}>
+            <label class={styles.fieldLabel}>Model</label>
+            <input type="text" class={styles.fieldInput} id="gvo-request-model" placeholder="e.g. Camry, CT 100, TGS" />
+          </div>
+          <div class={styles.fieldGroup}>
+            <label class={styles.fieldLabel}>Trim / Variant <span class={styles.fieldOptional}>(optional)</span></label>
+            <input type="text" class={styles.fieldInput} id="gvo-request-trim" placeholder="e.g. LE, Standard" />
+          </div>
+          <div class={styles.gvoLookupActions}>
+            <button type="button" class={styles.gvoLookupBtn} id="gvo-lookup-btn">Look up vehicle</button>
+            <span class={styles.gvoLookupOr}>or</span>
+            <button type="button" class={styles.gvoCustomBtn} id="gvo-custom-btn">Continue with custom details</button>
+          </div>
+          <p class={styles.gvoLookupStatus} id="gvo-lookup-status" hidden></p>
+          <div class={styles.gvoRequestDivider}><span>or submit a request</span></div>
+          <div class={styles.fieldGroup}>
+            <label class={styles.fieldLabel}>Notes <span class={styles.fieldOptional}>(optional)</span></label>
+            <textarea class={styles.fieldTextarea} id="gvo-request-notes" rows={2} placeholder="Any additional details to help identify the vehicle."></textarea>
+          </div>
+          <button type="button" class={styles.gvoRequestSubmit} id="gvo-request-submit">Submit Request</button>
+          <p class={styles.gvoRequestStatus} id="gvo-request-status" hidden></p>
+        </div>
+      </div>
+
+      <div class={styles.stepActions}>
+        <button class={styles.btnSecondary} data-goto="1">Back</button>
+        <button class={styles.btnPrimary} id="step2-next" disabled>Continue</button>
+      </div>
+    </div>
+
+    {/* Step 3: Vehicle Details + Condition Report */}
+    <div class={styles.step} data-step="3">
+      <h2 class={styles.stepTitle}>Vehicle details & condition</h2>
+      <p class={styles.stepDesc}>
+        Provide accurate details. Honest disclosure is a sales advantage — it increases lead quality by 5x.
+      </p>
+
+      <div class={styles.detailsGrid}>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Model Year</label>
+          <select id="year-select" class={styles.fieldSelect}>
+            <option value="">Select year...</option>
+          </select>
+        </div>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Mileage (km)</label>
+          <input type="number" id="mileage-input" class={styles.fieldInput} min="0" placeholder="e.g. 85000" />
+        </div>
+        <div class={styles.fieldGroup}>
+          <label class={styles.fieldLabel}>Asking Price (₦)</label>
+          <input type="number" id="price-input" class={styles.fieldInput} min="1" placeholder="e.g. 4500000" />
+        </div>
+      </div>
+
+      {/* Condition Report — dynamically populated based on domain */}
+      <ConditionReportForm fields={getConditionFields("car")} containerId="condition-fields" />
+
+      <div class={styles.stepActions}>
+        <button class={styles.btnSecondary} data-goto="2">Back</button>
+        <button class={styles.btnPrimary} id="step3-next">Add Photos</button>
+      </div>
+    </div>
+
+    {/* Step 4: Photos + Video — Cars & Bids-inspired guidance */}
+    <div class={styles.step} data-step="4">
+      <h2 class={styles.stepTitle}>Add photos of your vehicle</h2>
+      <p class={styles.stepDesc}>
+        Good photos sell vehicles. Listings with 6+ clear photos get 5x more buyer interest.
+        Disclosure helps you sell — buyers want to see what they're getting.
+      </p>
+
+      <PhotoUploader />
+
+      {/* ── Video Section — Aggressively Pushed, Not Required ── */}
+      <div class={styles.videoSection}>
+        <div class={styles.videoPromo}>
+          <span class={styles.videoPromoIcon}>🎥</span>
+          <span class={styles.videoPromoTitle}>Add a walkaround video</span>
+          <span class={styles.videoPromoDesc}>
+            Listings with a walkaround video sell 2x faster. Buyers want to see the car in motion — engine start, interior walkthrough, exterior sweep.
+          </span>
+        </div>
+
+        <div id="video-count" class={styles.photoCount} style="display: none;">
+          <span class={styles.photoCountStrong} id="video-count-num">0</span> videos added
+        </div>
+
+        <div id="video-preview" class={styles.photoPreviewGrid}></div>
+
+        <div class={styles.videoUploadArea} id="video-upload-area">
+          <div class={styles.photoUploadIcon}>🎬</div>
+          <p class={styles.photoUploadText}>Add a walkaround video</p>
+          <p class={styles.photoUploadHint}>MP4 or WebM — max 100MB, 2 minutes max</p>
+          <input type="file" id="video-input" accept="video/mp4,video/webm" style="display: none;" />
+        </div>
+
+        <p class={styles.photoActivationNote}>
+          Videos are optional but strongly encouraged. Tag them with the angle they cover.
+        </p>
+      </div>
+
+      <div class={styles.stepActions}>
+        <button class={styles.btnSecondary} data-goto="3">Back</button>
+        <button class={styles.btnPrimary} id="step4-next">Review Listing</button>
+      </div>
+    </div>
+
+    {/* Step 5: Review & Activate */}
+    <div class={styles.step} data-step="5">
+      <h2 class={styles.stepTitle}>Review your listing</h2>
+      <p class={styles.stepDesc}>Verify everything is correct before publishing.</p>
+
+      <div class={styles.reviewCard}>
+        <div class={styles.reviewSection}>
+          <h3 class={styles.reviewLabel}>Vehicle</h3>
+          <p class={styles.reviewValue} id="review-vehicle"></p>
+        </div>
+        <div class={styles.reviewSection}>
+          <h3 class={styles.reviewLabel}>Details</h3>
+          <div id="review-details" class={styles.reviewDetails}></div>
+        </div>
+        <div class={styles.reviewSection}>
+          <h3 class={styles.reviewLabel}>Photos</h3>
+          <div id="review-photos" class={styles.reviewDetails}></div>
+        </div>
+        <div class={styles.reviewSection}>
+          <h3 class={styles.reviewLabel}>Condition Summary</h3>
+          <div id="review-condition" class={styles.reviewCondition}></div>
+        </div>
+      </div>
+
+      <div id="activation-status"></div>
+
+      <div class={styles.activationActions}>
+        <button class={styles.btnActivate} id="activate-btn">Activate Listing</button>
+        <button class={styles.btnDraft} id="draft-btn">Save as Draft</button>
+      </div>
+
+      <div id="submit-status" class={styles.submitStatus} style="display: none;"></div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // ── State ────────────────────────────────────────────────────────
+  let currentStep = 1;
+  let selectedDomain = "";
+  let selectedDomainSlug = "";
+  let selectedMake = "";
+  let selectedModel = "";
+  let selectedTrim = "";
+  let selectedTrimId = "";
+  let isCustomVehicle = false;
+  let customMake = "";
+  let customModel = "";
+  let customTrim = "";
+  let selectedPhotos: Array<{ file: File; tag: string; uploadedUrl?: string; uploading?: boolean; uploadError?: string }> = [];
+  let selectedVideos: Array<{ file: File; tag: string; uploadedUrl?: string; uploading?: boolean; uploadError?: string }> = [];
+  let createdListingId = "";
+
+  // ── DOM References ──────────────────────────────────────────────
+  const steps = document.querySelectorAll<HTMLElement>("[data-step]");
+  const progressSteps = document.querySelectorAll<HTMLElement>(".progress [data-step]");
+  const progressDividers = document.querySelectorAll<HTMLElement>(".progressDivider");
+  const domainBtns = document.querySelectorAll<HTMLElement>("[data-domain]");
+  const makeSelect = document.getElementById("make-select") as HTMLSelectElement;
+  const modelSelect = document.getElementById("model-select") as HTMLSelectElement;
+  const trimSelect = document.getElementById("trim-select") as HTMLSelectElement;
+  const yearSelect = document.getElementById("year-select") as HTMLSelectElement;
+  const mileageInput = document.getElementById("mileage-input") as HTMLInputElement;
+  const priceInput = document.getElementById("price-input") as HTMLInputElement;
+  const conditionContainer = document.getElementById("condition-fields")!;
+  const selectedVehicleEl = document.getElementById("selected-vehicle")!;
+  const selectedVehicleText = document.getElementById("selected-vehicle-text")!;
+  const step2Next = document.getElementById("step2-next") as HTMLButtonElement;
+  const step3Next = document.getElementById("step3-next") as HTMLButtonElement;
+  const step4Next = document.getElementById("step4-next") as HTMLButtonElement;
+  const activateBtn = document.getElementById("activate-btn") as HTMLButtonElement;
+  const draftBtn = document.getElementById("draft-btn") as HTMLButtonElement;
+  const submitStatus = document.getElementById("submit-status")!;
+  const videoInput = document.getElementById("video-input") as HTMLInputElement;
+  const videoUploadArea = document.getElementById("video-upload-area")!;
+  const videoPreview = document.getElementById("video-preview")!;
+  const videoCount = document.getElementById("video-count")!;
+  const videoCountNum = document.getElementById("video-count-num")!;
+  const activationStatus = document.getElementById("activation-status")!;
+
+  // ── Step Navigation ─────────────────────────────────────────────
+  function goToStep(step: number) {
+    currentStep = step;
+    steps.forEach((el) => {
+      el.classList.toggle("stepActive", Number(el.dataset.step) === step);
+    });
+    progressSteps.forEach((el) => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle("progressActive", s === step);
+      el.classList.toggle("progressDone", s < step);
+    });
+    progressDividers.forEach((el, i) => {
+      el.classList.toggle("progressDone", i < step - 1);
+    });
+
+    if (step === 5) populateReview();
+  }
+
+  document.querySelectorAll("[data-goto]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      goToStep(Number(btn.getAttribute("data-goto")));
+    });
+  });
+
+  // ── Step 1: Domain Selection ────────────────────────────────────
+  domainBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedDomain = btn.getAttribute("data-domain")!;
+      selectedDomainSlug = btn.getAttribute("data-slug")!;
+      domainBtns.forEach((b) => b.classList.remove("domainSelected"));
+      btn.classList.add("domainSelected");
+      loadMakes();
+      goToStep(2);
+    });
+  });
+
+  // ── VIN Decode ─────────────────────────────────────────────────
+  const vinInput = document.getElementById("vin-input") as HTMLInputElement | null;
+  const vinDecodeBtn = document.getElementById("vin-decode-btn") as HTMLButtonElement | null;
+  const vinStatus = document.getElementById("vin-status");
+
+  if (vinInput && vinDecodeBtn && vinStatus) {
+    const decodeVin = async () => {
+      const vin = vinInput.value.trim().toUpperCase();
+      if (vin.length < 11) {
+        vinStatus.textContent = "VIN must be at least 11 characters.";
+        vinStatus.className = styles.vinStatusError || "vinStatusError";
+        vinStatus.style.display = "block";
+        return;
+      }
+
+      vinDecodeBtn.disabled = true;
+      vinDecodeBtn.textContent = "Decoding...";
+      vinStatus.textContent = "Decoding VIN...";
+      vinStatus.className = "vinStatusPending";
+      vinStatus.style.display = "block";
+
+      try {
+        const res = await fetch("/api/vin/decode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vin, domain: selectedDomain || "car" }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok && data.trimId) {
+          selectedTrimId = data.trimId;
+          selectedMake = data.make;
+          selectedModel = data.model;
+          selectedTrim = data.trim || data.model;
+
+          // Update the selectors to reflect the decoded vehicle
+          selectedVehicleEl.style.display = "flex";
+          selectedVehicleText.textContent = `${data.make} ${data.model}${data.trim ? " — " + data.trim : ""} (VIN ${vin.slice(0, 8)}…)`;
+          step2Next.disabled = false;
+
+          // Auto-populate year
+          if (data.year) {
+            yearSelect.innerHTML = `<option value="${data.year}">${data.year}</option>`;
+            yearSelect.value = String(data.year);
+          }
+
+          vinStatus.textContent = `Decoded: ${data.make} ${data.model} ${data.trim || ""} (${data.year || "year unknown"})`;
+          vinStatus.className = styles.vinStatusOk || "vinStatusOk";
+          vinInput.disabled = true;
+          vinDecodeBtn.textContent = "Decoded ✓";
+          vinDecodeBtn.disabled = true;
+        } else if (res.ok && data.ok && !data.trimId) {
+          // VIN decoded but GVO lookup failed — populate as custom
+          customMake = data.make;
+          customModel = data.model;
+          customTrim = data.trim || "";
+          isCustomVehicle = true;
+
+          selectedVehicleEl.style.display = "flex";
+          selectedVehicleText.textContent = `${data.make} ${data.model}${data.trim ? " — " + data.trim : ""} (VIN decoded, custom entry)`;
+          step2Next.disabled = false;
+
+          if (data.year) {
+            yearSelect.innerHTML = `<option value="${data.year}">${data.year}</option>`;
+            yearSelect.value = String(data.year);
+          }
+
+          vinStatus.textContent = `Found: ${data.make} ${data.model} ${data.trim || ""}. Not in GVO yet — will save as custom entry.`;
+          vinStatus.className = "vinStatusWarn";
+          vinInput.disabled = true;
+          vinDecodeBtn.textContent = "Found ✓";
+          vinDecodeBtn.disabled = true;
+        } else {
+          vinStatus.textContent = data.error || "Could not decode VIN. Try selecting manually below.";
+          vinStatus.className = styles.vinStatusError || "vinStatusError";
+          vinDecodeBtn.disabled = false;
+          vinDecodeBtn.textContent = "Decode VIN";
+        }
+      } catch {
+        vinStatus.textContent = "Network error. Try again or select manually.";
+        vinStatus.className = styles.vinStatusError || "vinStatusError";
+        vinDecodeBtn.disabled = false;
+        vinDecodeBtn.textContent = "Decode VIN";
+      }
+    };
+
+    vinDecodeBtn.addEventListener("click", decodeVin);
+    vinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); decodeVin(); }
+    });
+  }
+
+  // ── Step 2: GVO Cascading Selectors ─────────────────────────────
+  async function loadMakes() {
+    makeSelect.innerHTML = '<option value="">Loading makes...</option>';
+    makeSelect.disabled = true;
+    modelSelect.innerHTML = '<option value="">Select make first...</option>';
+    modelSelect.disabled = true;
+    trimSelect.innerHTML = '<option value="">Select model first...</option>';
+    trimSelect.disabled = true;
+    step2Next.disabled = true;
+    selectedVehicleEl.style.display = "none";
+
+    try {
+      const domainsRes = await fetch("/api/pricing/gvo/domains");
+      const domains = await domainsRes.json();
+      const domain = domains.find((d: { slug: string }) => d.slug === selectedDomainSlug);
+      if (!domain) return;
+
+      const catsRes = await fetch(`/api/pricing/gvo/categories/${domain.id}`);
+      const categories = await catsRes.json();
+
+      let allMakes: Array<{ id: string; name: string; slug: string }> = [];
+      for (const cat of categories) {
+        const makesRes = await fetch(`/api/pricing/gvo/makes/${cat.id}`);
+        const makes = await makesRes.json();
+        allMakes.push(...makes);
+      }
+
+      const uniqueMakes = Array.from(
+        new Map(allMakes.map((m: { name: string }) => [m.name, m])).values(),
+      );
+
+      makeSelect.innerHTML = '<option value="">Select make...</option>';
+      for (const make of uniqueMakes) {
+        const opt = document.createElement("option");
+        opt.value = make.id;
+        opt.textContent = make.name;
+        makeSelect.appendChild(opt);
+      }
+      makeSelect.disabled = false;
+    } catch (err) {
+      console.error("Failed to load makes:", err);
+      makeSelect.innerHTML = '<option value="">Failed to load makes</option>';
+    }
+  }
+
+  makeSelect.addEventListener("change", async () => {
+    const makeId = makeSelect.value;
+    if (!makeId) {
+      modelSelect.innerHTML = '<option value="">Select make first...</option>';
+      modelSelect.disabled = true;
+      trimSelect.innerHTML = '<option value="">Select model first...</option>';
+      trimSelect.disabled = true;
+      step2Next.disabled = true;
+      selectedVehicleEl.style.display = "none";
+      return;
+    }
+
+    selectedMake = makeSelect.options[makeSelect.selectedIndex].text;
+    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+    modelSelect.disabled = true;
+    trimSelect.innerHTML = '<option value="">Select model first...</option>';
+    trimSelect.disabled = true;
+    step2Next.disabled = true;
+
+    try {
+      const res = await fetch(`/api/pricing/gvo/models/${makeId}`);
+      const models = await res.json();
+      modelSelect.innerHTML = '<option value="">Select model...</option>';
+      for (const model of models) {
+        const opt = document.createElement("option");
+        opt.value = model.id;
+        opt.textContent = model.name;
+        opt.dataset.firstYear = model.firstModelYear ?? "";
+        opt.dataset.lastYear = model.lastModelYear ?? "";
+        modelSelect.appendChild(opt);
+      }
+      modelSelect.disabled = false;
+    } catch (err) {
+      console.error("Failed to load models:", err);
+    }
+  });
+
+  modelSelect.addEventListener("change", async () => {
+    const modelId = modelSelect.value;
+    if (!modelId) {
+      trimSelect.innerHTML = '<option value="">Select model first...</option>';
+      trimSelect.disabled = true;
+      step2Next.disabled = true;
+      selectedVehicleEl.style.display = "none";
+      return;
+    }
+
+    selectedModel = modelSelect.options[modelSelect.selectedIndex].text;
+    trimSelect.innerHTML = '<option value="">Loading trims...</option>';
+    trimSelect.disabled = true;
+    step2Next.disabled = true;
+
+    try {
+      const res = await fetch(`/api/pricing/gvo/trims/${modelId}`);
+      const trims = await res.json();
+      trimSelect.innerHTML = '<option value="">Select trim...</option>';
+      for (const trim of trims) {
+        const opt = document.createElement("option");
+        opt.value = trim.id;
+        opt.textContent = trim.name + (trim.engine ? ` (${trim.engine})` : "");
+        trimSelect.appendChild(opt);
+      }
+      trimSelect.disabled = false;
+    } catch (err) {
+      console.error("Failed to load trims:", err);
+    }
+  });
+
+  trimSelect.addEventListener("change", () => {
+    const trimId = trimSelect.value;
+    if (!trimId) {
+      step2Next.disabled = true;
+      selectedVehicleEl.style.display = "none";
+      return;
+    }
+
+    selectedTrimId = trimId;
+    selectedTrim = trimSelect.options[trimSelect.selectedIndex].text;
+
+    selectedVehicleEl.style.display = "flex";
+    selectedVehicleText.textContent = `${selectedMake} ${selectedModel} — ${selectedTrim}`;
+    step2Next.disabled = false;
+
+    const modelOpt = modelSelect.options[modelSelect.selectedIndex];
+    const firstYear = Number(modelOpt.dataset.firstYear) || 1990;
+    const lastYear = Number(modelOpt.dataset.lastYear) || new Date().getFullYear();
+    yearSelect.innerHTML = '<option value="">Select year...</option>';
+    for (let y = lastYear; y >= firstYear; y--) {
+      const opt = document.createElement("option");
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearSelect.appendChild(opt);
+    }
+  });
+
+  // ── Step 3: Condition Report Fields ─────────────────────────────
+  const TOGGLE_OPTIONS = ["good", "fair", "poor", "absent"];
+
+  const CONDITION_SCHEMAS: Record<string, Array<{ key: string; label: string; type: string; options?: string[]; required: boolean }>> = {
+    car: [
+      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
+      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
+      { key: "interior_upholstery", label: "Interior Upholstery", type: "toggle", required: true },
+      { key: "dashboard_instrument_cluster", label: "Dashboard & Instrument Cluster", type: "toggle", required: true },
+      { key: "air_conditioning", label: "Air Conditioning", type: "toggle", required: true },
+      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
+      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
+      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
+      { key: "suspension", label: "Suspension", type: "toggle", required: true },
+      { key: "engine_bay", label: "Engine Bay", type: "toggle", required: true },
+      { key: "transmission", label: "Transmission", type: "toggle", required: true },
+      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
+      { key: "undercarriage", label: "Undercarriage", type: "toggle", required: true },
+      { key: "frame_structural", label: "Frame / Structural Integrity", type: "toggle", required: true },
+      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
+      { key: "trunk_space", label: "Trunk Space", type: "toggle", required: true },
+      { key: "windshield_glass", label: "Windshield & Glass", type: "toggle", required: true },
+    ],
+    motorcycle: [
+      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
+      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
+      { key: "seat_condition", label: "Seat Condition", type: "toggle", required: true },
+      { key: "chain_belt", label: "Chain / Belt Condition", type: "toggle", required: true },
+      { key: "spoke_integrity", label: "Spoke Integrity", type: "toggle", required: true },
+      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
+      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
+      { key: "suspension", label: "Suspension", type: "toggle", required: true },
+      { key: "engine_bay", label: "Engine Condition", type: "toggle", required: true },
+      { key: "transmission", label: "Transmission / Gearbox", type: "toggle", required: true },
+      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
+      { key: "cold_start_smoke", label: "Cold-Start Smoke Colour", type: "select", options: ["none", "white", "blue", "black"], required: true },
+      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
+      { key: "frame_structural", label: "Frame / Chassis Integrity", type: "toggle", required: true },
+      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
+    ],
+    tricycle: [
+      { key: "exterior_body", label: "Body / Canopy Condition", type: "toggle", required: true },
+      { key: "seat_condition", label: "Seat Condition", type: "toggle", required: true },
+      { key: "tire_condition", label: "Tire Condition (3 wheels)", type: "toggle", required: true },
+      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
+      { key: "engine_bay", label: "Engine Condition", type: "toggle", required: true },
+      { key: "chain_belt", label: "Chain / Belt Condition", type: "toggle", required: true },
+      { key: "spoke_integrity", label: "Spoke Integrity", type: "toggle", required: true },
+      { key: "steering_mechanism", label: "Steering / Handlebar Mechanism", type: "toggle", required: true },
+      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
+      { key: "cold_start_smoke", label: "Cold-Start Smoke Colour", type: "select", options: ["none", "white", "blue", "black"], required: true },
+      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
+    ],
+    commercial: [
+      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
+      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
+      { key: "interior_upholstery", label: "Interior Upholstery", type: "toggle", required: true },
+      { key: "dashboard_instrument_cluster", label: "Dashboard & Instrument Cluster", type: "toggle", required: true },
+      { key: "air_conditioning", label: "Air Conditioning", type: "toggle", required: true },
+      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
+      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
+      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
+      { key: "suspension", label: "Suspension", type: "toggle", required: true },
+      { key: "engine_bay", label: "Engine Bay", type: "toggle", required: true },
+      { key: "transmission", label: "Transmission", type: "toggle", required: true },
+      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
+      { key: "undercarriage", label: "Undercarriage", type: "toggle", required: true },
+      { key: "frame_structural", label: "Frame / Structural Integrity", type: "toggle", required: true },
+      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
+      { key: "engine_hours", label: "Engine Hours (Critical)", type: "hours", required: true },
+      { key: "chassis_crossmember", label: "Chassis Crossmember Integrity", type: "toggle", required: true },
+      { key: "air_brake_pressure_hold", label: "Air Brake Pressure Hold Test", type: "toggle", required: true },
+      { key: "cargo_area", label: "Cargo Area / Bed Condition", type: "toggle", required: true },
+    ],
+  };
+
+  function buildConditionFields() {
+    const fields = CONDITION_SCHEMAS[selectedDomain] ?? CONDITION_SCHEMAS.car;
+    conditionContainer.innerHTML = "";
+
+    for (const field of fields) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "conditionField";
+
+      const label = document.createElement("label");
+      label.className = "conditionLabel";
+      label.textContent = field.label + (field.required ? " *" : "");
+      wrapper.appendChild(label);
+
+      if (field.type === "toggle") {
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "toggleGroup";
+        for (const opt of TOGGLE_OPTIONS) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "toggleBtn";
+          btn.dataset.field = field.key;
+          btn.dataset.value = opt;
+          btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          btn.addEventListener("click", () => {
+            btnGroup.querySelectorAll(".toggleBtn").forEach((b) => b.classList.remove("toggleActive"));
+            btn.classList.add("toggleActive");
+          });
+          btnGroup.appendChild(btn);
+        }
+        wrapper.appendChild(btnGroup);
+      } else if (field.type === "select") {
+        const select = document.createElement("select");
+        select.className = "fieldSelect";
+        select.dataset.field = field.key;
+        select.innerHTML = '<option value="">Select...</option>';
+        for (const opt of field.options ?? []) {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          select.appendChild(option);
+        }
+        wrapper.appendChild(select);
+      } else if (field.type === "hours") {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "fieldInput";
+        input.dataset.field = field.key;
+        input.min = "0";
+        input.placeholder = "e.g. 12000";
+        wrapper.appendChild(input);
+      }
+
+      conditionContainer.appendChild(wrapper);
+    }
+  }
+
+  step3Next.addEventListener("click", () => {
+    if (!yearSelect.value || !mileageInput.value || !priceInput.value) {
+      alert("Please fill in model year, mileage, and asking price.");
+      return;
+    }
+    goToStep(4);
+  });
+
+  // ── Video Upload ──────────────────────────────────────────────
+  videoUploadArea.addEventListener("click", () => videoInput.click());
+
+  videoInput.addEventListener("change", () => {
+    const files = videoInput.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("video/")) continue;
+      if (file.size > 100 * 1024 * 1024) {
+        alert(`${file.name} exceeds 100MB limit.`);
+        continue;
+      }
+      const idx = selectedVideos.length;
+      selectedVideos.push({ file, tag: "", uploading: true });
+      renderVideoPreview();
+
+      uploadVideoToServer(file)
+        .then((url) => {
+          selectedVideos[idx].uploadedUrl = url;
+          selectedVideos[idx].uploading = false;
+          renderVideoPreview();
+        })
+        .catch((err) => {
+          selectedVideos[idx].uploading = false;
+          selectedVideos[idx].uploadError = err.message;
+          renderVideoPreview();
+        });
+    }
+    videoInput.value = "";
+  });
+
+  const PHOTO_TAGS = [
+    { value: "", label: "Select angle..." },
+    { value: "front", label: "Front" },
+    { value: "rear", label: "Rear" },
+    { value: "side", label: "Side" },
+    { value: "interior", label: "Interior" },
+    { value: "dashboard", label: "Dashboard" },
+    { value: "engine_bay", label: "Engine Bay" },
+  ];
+
+  function renderVideoPreview() {
+    videoPreview.innerHTML = "";
+    if (selectedVideos.length > 0) {
+      videoCount.style.display = "flex";
+      videoCountNum.textContent = String(selectedVideos.length);
+    } else {
+      videoCount.style.display = "none";
+    }
+
+    selectedVideos.forEach((entry, idx) => {
+      const div = document.createElement("div");
+      div.className = "photoPreviewItem";
+
+      if (entry.uploadError) {
+        div.style.border = "2px solid #C0392B";
+      }
+
+      if (entry.uploading) {
+        const spinner = document.createElement("div");
+        Object.assign(spinner.style, {
+          position: "absolute",
+          inset: "0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,0.8)",
+          zIndex: "2",
+          fontSize: "24px",
+          color: "var(--panther-eyes-hex)",
+        });
+        spinner.textContent = "⏳";
+        div.appendChild(spinner);
+      }
+
+      const vid = document.createElement("video");
+      vid.src = entry.uploadedUrl || URL.createObjectURL(entry.file);
+      vid.muted = true;
+      vid.loop = true;
+      vid.style.width = "100%";
+      vid.style.height = "100%";
+      vid.style.objectFit = "cover";
+      vid.addEventListener("mouseenter", () => vid.play());
+      vid.addEventListener("mouseleave", () => vid.pause());
+      div.appendChild(vid);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "photoPreviewRemove";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => {
+        selectedVideos.splice(idx, 1);
+        renderVideoPreview();
+      });
+      div.appendChild(removeBtn);
+
+      const tagSelect = document.createElement("select");
+      Object.assign(tagSelect.style, {
+        position: "absolute",
+        bottom: "0",
+        left: "0",
+        width: "100%",
+        height: "30px",
+        padding: "0 8px",
+        border: "none",
+        borderTop: "1px solid rgba(0,0,0,0.1)",
+        borderRadius: "0 0 8px 8px",
+        fontFamily: "var(--font-sans)",
+        fontSize: "11px",
+        background: "rgba(255,255,255,0.95)",
+        color: "var(--panther-resting-hex)",
+        cursor: "pointer",
+      });
+      const VIDEO_TAGS = [
+        { value: "", label: "Select angle..." },
+        { value: "exterior_walkaround", label: "Exterior Walkaround" },
+        { value: "interior_walkthrough", label: "Interior Walkthrough" },
+        { value: "engine_start", label: "Engine Start & Idle" },
+        { value: "drive_test", label: "Drive Test" },
+      ];
+      for (const opt of VIDEO_TAGS) {
+        const option = document.createElement("option");
+        option.value = opt.value;
+        option.textContent = opt.label;
+        if (entry.tag === opt.value) option.selected = true;
+        tagSelect.appendChild(option);
+      }
+      tagSelect.addEventListener("change", () => {
+        selectedVideos[idx] = { ...selectedVideos[idx], tag: tagSelect.value };
+      });
+      div.appendChild(tagSelect);
+
+      videoPreview.appendChild(div);
+    });
+  }
+
+  step4Next.addEventListener("click", () => goToStep(5));
+
+  // ── Step 5: Review & Activate ───────────────────────────────────
+  function collectConditionData() {
+    if (window.__collectConditionData) return window.__collectConditionData();
+    const data = {};
+    conditionContainer.querySelectorAll(".toggleActive").forEach((btn) => {
+      data[btn.getAttribute("data-field")] = btn.getAttribute("data-value");
+    });
+    conditionContainer.querySelectorAll("select").forEach((sel) => {
+      if (sel.dataset.field && sel.value) data[sel.dataset.field] = sel.value;
+    });
+    conditionContainer.querySelectorAll("input[type='number']").forEach((inp) => {
+      if (inp.dataset.field && inp.value) data[inp.dataset.field] = inp.value;
+    });
+    return data;
+  }
+
+  function populateReview() {
+    const vehicleEl = document.getElementById("review-vehicle")!;
+    const detailsEl = document.getElementById("review-details")!;
+    const photosEl = document.getElementById("review-photos")!;
+    const conditionEl = document.getElementById("review-condition")!;
+    const activationStatusEl = document.getElementById("activation-status")!;
+
+    vehicleEl.textContent = isCustomVehicle
+      ? `${customMake} ${customModel}${customTrim ? " — " + customTrim : ""} (custom entry)`
+      : `${selectedMake} ${selectedModel} — ${selectedTrim}`;
+
+    detailsEl.innerHTML = `
+      <div class="reviewRow"><span>Domain</span><span>${selectedDomain}</span></div>
+      <div class="reviewRow"><span>Model Year</span><span>${yearSelect.value}</span></div>
+      <div class="reviewRow"><span>Mileage</span><span>${Number(mileageInput.value).toLocaleString()} km</span></div>
+      <div class="reviewRow"><span>Asking Price</span><span>₦${Number(priceInput.value).toLocaleString()}</span></div>
+    `;
+
+    const photoData = window.__photoUploader ? window.__photoUploader.getData() : selectedPhotos.filter((p) => p.tag && p.uploadedUrl).map((p) => ({ tag: p.tag, url: p.uploadedUrl }));
+    const photoCount = photoData.length;
+    const taggedCount = photoData.length;
+    const videoCount = selectedVideos.length;
+    const videoTaggedCount = selectedVideos.filter((p) => p.tag).length;
+    photosEl.innerHTML = `
+      <div class="reviewRow"><span>Photos</span><span>${photoCount} total, ${taggedCount} tagged</span></div>
+      <div class="reviewRow"><span>Videos</span><span>${videoCount} total, ${videoTaggedCount} tagged${videoCount > 0 ? "" : " — add one to boost interest"}</span></div>
+    `;
+
+    const conditionData = collectConditionData();
+    const total = Object.keys(conditionData).length;
+    const goodCount = Object.values(conditionData).filter((v) => v === "good").length;
+    const fairCount = Object.values(conditionData).filter((v) => v === "fair").length;
+    const poorCount = Object.values(conditionData).filter((v) => v === "poor").length;
+
+    conditionEl.innerHTML = `
+      <div class="reviewRow"><span>Total fields</span><span>${total}</span></div>
+      <div class="reviewRow"><span>Good</span><span>${goodCount}</span></div>
+      <div class="reviewRow"><span>Fair</span><span>${fairCount}</span></div>
+      <div class="reviewRow"><span>Poor</span><span>${poorCount}</span></div>
+    `;
+
+    const untaggedCount = 0;
+    const canActivate = photoCount >= 4;
+    const videoMissing = selectedVideos.length === 0;
+    if (canActivate) {
+      const videoPrompt = videoMissing
+        ? '<p style="margin-top:var(--space-2);font-family:var(--font-sans);font-size:13px;color:var(--panther-eyes-hex)">💡 Add a walkaround video from the previous step to sell 2x faster.</p>'
+        : "";
+      activationStatusEl.innerHTML = `
+        <div class="activationReady">
+          <p class="activationReadyTitle">Ready to activate</p>
+          <p class="activationReadyDesc">You have ${selectedPhotos.length} tagged photo(s). Activate to go live.</p>
+          ${videoPrompt}
+        </div>
+      `;
+      activateBtn.disabled = false;
+    } else {
+      const missing = selectedPhotos.length < 4
+        ? `Add at least ${4 - selectedPhotos.length} more photo(s) to activate.`
+        : `${untaggedCount} photo(s) need an angle tag.`;
+      activationStatusEl.innerHTML = `
+        <div class="activationIncomplete">
+          <p class="activationIncompleteTitle">Cannot activate yet</p>
+          <p class="activationIncompleteDesc">${missing} Save as draft and come back later.</p>
+        </div>
+      `;
+      activateBtn.disabled = true;
+    }
+  }
+
+  // ── Submit: Create Listing + Optional Activate ──────────────────
+  async function createListingData() {
+    const conditionData = collectConditionData();
+    const photoData = window.__photoUploader ? window.__photoUploader.getData() : selectedPhotos
+      .filter((p) => p.tag && p.uploadedUrl)
+      .map((p) => ({ tag: p.tag, url: p.uploadedUrl }));
+    const images = photoData;
+    const videos = selectedVideos
+      .filter((p) => p.tag && p.uploadedUrl)
+      .map((p) => ({ tag: p.tag, url: p.uploadedUrl }));
+
+    const body: Record<string, unknown> = {
+      modelYear: Number(yearSelect.value),
+      mileageKm: Number(mileageInput.value),
+      askingPriceNgn: Number(priceInput.value),
+      conditionReport: conditionData,
+      images,
+      videos,
+    };
+
+    if (isCustomVehicle) {
+      body.customMake = customMake;
+      body.customModel = customModel;
+      if (customTrim) body.customTrim = customTrim;
+    } else {
+      body.trimId = selectedTrimId;
+    }
+
+    const res = await fetch("/api/listings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  async function activateListingData(listingId: string): Promise<{ ok: boolean; error?: string }> {
+    const res = await fetch(`/api/listings/${listingId}/activate`, { method: "POST" });
+    return res.json();
+  }
+
+  function showStatus(msg: string, type: "success" | "error") {
+    submitStatus.style.display = "block";
+    submitStatus.textContent = msg;
+    submitStatus.className = type === "success"
+      ? `submitStatus submitSuccess`
+      : `submitStatus submitError`;
+  }
+
+  activateBtn.addEventListener("click", async () => {
+    if (!confirm("Activate this listing? It will be visible to buyers immediately.")) return;
+
+    activateBtn.disabled = true;
+    activateBtn.textContent = "Creating listing...";
+    draftBtn.disabled = true;
+
+    try {
+      const createResult = await createListingData();
+      if (!createResult.ok) {
+        showStatus(createResult.error || "Failed to create listing.", "error");
+        activateBtn.disabled = false;
+        activateBtn.textContent = "Activate Listing";
+        draftBtn.disabled = false;
+        return;
+      }
+
+      createdListingId = createResult.listingId!;
+      activateBtn.textContent = "Activating...";
+
+      const activateResult = await activateListingData(createdListingId);
+      if (activateResult.ok) {
+        showStatus("Listing activated! Redirecting...", "success");
+        setTimeout(() => {
+          window.location.href = `/listings/${createdListingId}`;
+        }, 1200);
+      } else {
+        showStatus(
+          `Listing saved as draft. ${activateResult.error || "Could not activate yet."}`,
+          "error",
+        );
+        activateBtn.textContent = "Activate Listing";
+        activateBtn.disabled = false;
+        draftBtn.disabled = false;
+      }
+    } catch {
+      showStatus("Network error. Please try again.", "error");
+      activateBtn.disabled = false;
+      activateBtn.textContent = "Activate Listing";
+      draftBtn.disabled = false;
+    }
+  });
+
+  draftBtn.addEventListener("click", async () => {
+    draftBtn.disabled = true;
+    draftBtn.textContent = "Saving...";
+    activateBtn.disabled = true;
+
+    try {
+      const result = await createListingData();
+      if (result.ok) {
+        showStatus(`Listing saved as draft. You can activate it later from your dashboard.`, "success");
+        draftBtn.textContent = "Saved";
+      } else {
+        showStatus(result.error || "Failed to save listing.", "error");
+        draftBtn.disabled = false;
+        draftBtn.textContent = "Save as Draft";
+        activateBtn.disabled = false;
+      }
+    } catch {
+      showStatus("Network error. Please try again.", "error");
+      draftBtn.disabled = false;
+      draftBtn.textContent = "Save as Draft";
+      activateBtn.disabled = false;
+    }
+  });
+
+  // GVO Request — "Can't find your vehicle?"
+  const gvoRequestBtn = document.getElementById("gvo-request-btn");
+  const gvoRequestForm = document.getElementById("gvo-request-form");
+  const gvoRequestDomain = document.getElementById("gvo-request-domain") as HTMLInputElement | null;
+  const domainBtns = document.querySelectorAll("[data-domain]");
+
+  if (gvoRequestBtn && gvoRequestForm) {
+    gvoRequestBtn.addEventListener("click", () => {
+      const expanded = gvoRequestBtn.getAttribute("aria-expanded") === "true";
+      gvoRequestBtn.setAttribute("aria-expanded", String(!expanded));
+      gvoRequestForm.hidden = expanded;
+    });
+
+    domainBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const domain = btn.getAttribute("data-domain");
+        if (gvoRequestDomain && domain) gvoRequestDomain.value = domain;
+      });
+    });
+  }
+
+  const gvoRequestMake = document.getElementById("gvo-request-make") as HTMLInputElement | null;
+  const gvoRequestModel = document.getElementById("gvo-request-model") as HTMLInputElement | null;
+  const gvoRequestTrim = document.getElementById("gvo-request-trim") as HTMLInputElement | null;
+  const gvoRequestNotes = document.getElementById("gvo-request-notes") as HTMLTextAreaElement | null;
+  const gvoRequestStatus = document.getElementById("gvo-request-status");
+  const gvoLookupStatus = document.getElementById("gvo-lookup-status");
+  const gvoLookupBtn = document.getElementById("gvo-lookup-btn") as HTMLButtonElement | null;
+  const gvoCustomBtn = document.getElementById("gvo-custom-btn") as HTMLButtonElement | null;
+
+  function setGvoFormDisabled(disabled: boolean) {
+    if (gvoRequestMake) gvoRequestMake.disabled = disabled;
+    if (gvoRequestModel) gvoRequestModel.disabled = disabled;
+    if (gvoRequestTrim) gvoRequestTrim.disabled = disabled;
+    if (gvoLookupBtn) gvoLookupBtn.disabled = disabled;
+    if (gvoCustomBtn) gvoCustomBtn.disabled = disabled;
+  }
+
+  // Look up vehicle via NHTSA API
+  if (gvoLookupBtn && gvoRequestMake && gvoRequestModel && gvoLookupStatus && gvoRequestDomain) {
+    gvoLookupBtn.addEventListener("click", async () => {
+      const domain = gvoRequestDomain.value;
+      if (!domain) {
+        gvoLookupStatus.textContent = "Please select a vehicle domain first (Step 1).";
+        gvoLookupStatus.hidden = false;
+        gvoLookupStatus.style.color = "#C0392B";
+        return;
+      }
+      const makeName = gvoRequestMake.value.trim();
+      const modelName = gvoRequestModel.value.trim();
+      if (!makeName || !modelName) {
+        gvoLookupStatus.textContent = "Make and model are required.";
+        gvoLookupStatus.hidden = false;
+        gvoLookupStatus.style.color = "#C0392B";
+        return;
+      }
+
+      gvoLookupBtn.disabled = true;
+      gvoLookupBtn.textContent = "Looking up...";
+
+      try {
+        const res = await fetch("/api/gvo/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domain,
+            makeName,
+            modelName,
+            trimName: gvoRequestTrim?.value.trim() || "",
+            vehicleType: domain,
+          }),
+        });
+        const data = await res.json();
+        if (data.found && data.trimId) {
+          gvoLookupStatus.textContent = `Found: ${data.makeName} ${data.modelName}. Adding to GVO...`;
+          gvoLookupStatus.style.color = "#2E7D32";
+          gvoLookupStatus.hidden = false;
+
+          customMake = data.makeName;
+          customModel = data.modelName;
+          customTrim = gvoRequestTrim?.value.trim() || data.modelName;
+          selectedTrimId = data.trimId;
+          isCustomVehicle = false;
+
+          selectedVehicleEl.style.display = "flex";
+          selectedVehicleText.textContent = `${customMake} ${customModel} — ${customTrim}`;
+          step2Next.disabled = false;
+          gvoRequestForm.hidden = true;
+          gvoRequestBtn.style.display = "none";
+        } else {
+          gvoLookupStatus.textContent = `Could not find "${makeName} ${modelName}" in databases. You can continue with custom details or submit a request.`;
+          gvoLookupStatus.style.color = "#8B6914";
+          gvoLookupStatus.hidden = false;
+        }
+      } catch {
+        gvoLookupStatus.textContent = "Network error during lookup.";
+        gvoLookupStatus.style.color = "#C0392B";
+        gvoLookupStatus.hidden = false;
+      }
+
+      gvoLookupBtn.disabled = false;
+      gvoLookupBtn.textContent = "Look up vehicle";
+    });
+  }
+
+  // Continue with custom details (no GVO lookup found)
+  if (gvoCustomBtn && gvoRequestMake && gvoRequestModel) {
+    gvoCustomBtn.addEventListener("click", () => {
+      const makeName = gvoRequestMake.value.trim();
+      const modelName = gvoRequestModel.value.trim();
+      if (!makeName || !modelName) {
+        if (gvoLookupStatus) {
+          gvoLookupStatus.textContent = "Make and model are required.";
+          gvoLookupStatus.hidden = false;
+          gvoLookupStatus.style.color = "#C0392B";
+        }
+        return;
+      }
+
+      customMake = makeName;
+      customModel = modelName;
+      customTrim = gvoRequestTrim?.value.trim() || "";
+      isCustomVehicle = true;
+      selectedTrimId = "";
+
+      selectedVehicleEl.style.display = "flex";
+      selectedVehicleText.textContent = `${customMake} ${customModel}${customTrim ? " — " + customTrim : ""} (custom entry)`;
+      step2Next.disabled = false;
+      gvoRequestForm.hidden = true;
+      gvoRequestBtn.style.display = "none";
+    });
+  }
+
+  // Submit GVO request (existing mechanism)
+  const gvoRequestSubmit = document.getElementById("gvo-request-submit");
+  if (gvoRequestSubmit && gvoRequestMake && gvoRequestModel && gvoRequestStatus && gvoRequestDomain) {
+    gvoRequestSubmit.addEventListener("click", async () => {
+      const domain = gvoRequestDomain.value;
+      if (!domain) {
+        gvoRequestStatus.textContent = "Please select a vehicle domain first (Step 1).";
+        gvoRequestStatus.hidden = false;
+        gvoRequestStatus.style.color = "#C0392B";
+        return;
+      }
+      const makeName = gvoRequestMake.value.trim();
+      const modelName = gvoRequestModel.value.trim();
+      if (!makeName || !modelName) {
+        gvoRequestStatus.textContent = "Make and model are required.";
+        gvoRequestStatus.hidden = false;
+        gvoRequestStatus.style.color = "#C0392B";
+        return;
+      }
+
+      gvoRequestSubmit.disabled = true;
+      gvoRequestSubmit.textContent = "Submitting...";
+
+      try {
+        const res = await fetch("/api/gvo/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domain,
+            makeName,
+            modelName,
+            trimName: gvoRequestTrim?.value.trim() || "",
+            notes: gvoRequestNotes?.value.trim() || "",
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          gvoRequestStatus.textContent = "Request submitted. We'll review and add this vehicle.";
+          gvoRequestStatus.style.color = "#2E7D32";
+          gvoRequestSubmit.hidden = true;
+          setGvoFormDisabled(true);
+        } else {
+          gvoRequestStatus.textContent = data.error || "Failed to submit request.";
+          gvoRequestStatus.style.color = "#C0392B";
+          gvoRequestSubmit.disabled = false;
+          gvoRequestSubmit.textContent = "Submit Request";
+        }
+      } catch {
+        gvoRequestStatus.textContent = "Network error. Please try again.";
+        gvoRequestStatus.style.color = "#C0392B";
+        gvoRequestSubmit.disabled = false;
+        gvoRequestSubmit.textContent = "Submit Request";
+      }
+      gvoRequestStatus.hidden = false;
+    });
+  }
+</script>

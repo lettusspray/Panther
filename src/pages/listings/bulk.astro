@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BulkUploadForm from "../../components/listings/BulkUploadForm.astro";
+import styles from "./bulk.module.css";
+import "../../styles/global.css";
+---
+
+<BaseLayout
+  title="Bulk Upload Listings"
+  posture="walking"
+  description="Upload multiple vehicle listings at once via CSV or VIN list."
+>
+  <section class={styles.hero}>
+    <h1 class={styles.heroTitle}>Bulk Upload Listings</h1>
+    <p class={styles.heroSubtitle}>
+      Upload a CSV file with listing data, or paste a list of VINs to decode and create listings automatically.
+    </p>
+  </section>
+
+  <div class={styles.container}>
+    <BulkUploadForm />
+  </div>
+</BaseLayout>

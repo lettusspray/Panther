@@ -1,0 +1,124 @@
+---
+export interface Props {
+  specs: Record<string, unknown> | null;
+  warnings: string[];
+}
+
+const { specs, warnings } = Astro.props;
+---
+
+{specs && (
+  <div class="kh-section">
+    <h3 class="kh-title">Vehicle Insights</h3>
+    <div class="kh-specs">
+      {specs.fuel_type && (
+        <div class="kh-spec-row"><span class="kh-label">Fuel</span><span class="kh-value">{String(specs.fuel_type)}</span></div>
+      )}
+      {specs.engine_displacement_cc && (
+        <div class="kh-spec-row"><span class="kh-label">Engine</span><span class="kh-value">{String(specs.engine_displacement_cc)} cc</span></div>
+      )}
+      {specs.power_hp && (
+        <div class="kh-spec-row"><span class="kh-label">Power</span><span class="kh-value">{String(specs.power_hp)} hp</span></div>
+      )}
+      {specs.transmission_type && (
+        <div class="kh-spec-row"><span class="kh-label">Transmission</span><span class="kh-value">{String(specs.transmission_type)}</span></div>
+      )}
+      {specs.drivetrain && (
+        <div class="kh-spec-row"><span class="kh-label">Drivetrain</span><span class="kh-value">{String(specs.drivetrain)}</span></div>
+      )}
+      {specs.fuel_consumption_litres_per_100km && (
+        <div class="kh-spec-row"><span class="kh-label">Consumption</span><span class="kh-value">{String(specs.fuel_consumption_litres_per_100km)} L/100km</span></div>
+      )}
+      {specs.battery_usable_kwh && (
+        <div class="kh-spec-row"><span class="kh-label">Battery</span><span class="kh-value">{String(specs.battery_usable_kwh)} kWh</span></div>
+      )}
+      {specs.range_km && (
+        <div class="kh-spec-row"><span class="kh-label">Range</span><span class="kh-value">{String(specs.range_km)} km</span></div>
+      )}
+      {specs.ncap_stars && (
+        <div class="kh-spec-row"><span class="kh-label">Safety</span><span class="kh-value">{String(specs.ncap_stars)} ★ NCAP</span></div>
+      )}
+      {specs.acceleration_0_100_sec && (
+        <div class="kh-spec-row"><span class="kh-label">0-100 km/h</span><span class="kh-value">{String(specs.acceleration_0_100_sec)}s</span></div>
+      )}
+      {specs.top_speed_kmh && (
+        <div class="kh-spec-row"><span class="kh-label">Top Speed</span><span class="kh-value">{String(specs.top_speed_kmh)} km/h</span></div>
+      )}
+      {specs.curb_weight_kg && (
+        <div class="kh-spec-row"><span class="kh-label">Curb Weight</span><span class="kh-value">{String(specs.curb_weight_kg)} kg</span></div>
+      )}
+      {specs.body_type && (
+        <div class="kh-spec-row"><span class="kh-label">Body Type</span><span class="kh-value">{String(specs.body_type)}</span></div>
+      )}
+    </div>
+  </div>
+)}
+
+{warnings.length > 0 && (
+  <div class="kh-section">
+    <h3 class="kh-title">Buyer Warnings</h3>
+    <div class="kh-warnings">
+      {warnings.map((w) => (
+        <div class="kh-warning">{w}</div>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .kh-section {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    background: color-mix(in oklch, var(--panther-eyes-hex) 4%, #fff);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+    border-radius: 8px;
+  }
+  .kh-title {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-3);
+  }
+  .kh-specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .kh-spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in oklch, var(--panther-walking-hex) 5%, #fff);
+    border-radius: 4px;
+  }
+  .kh-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .kh-value {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+  }
+  .kh-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .kh-warning {
+    padding: var(--space-3);
+    background: color-mix(in oklch, var(--panther-walking-hex) 5%, #fff);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--panther-resting-hex);
+  }
+</style>

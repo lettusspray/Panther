@@ -1,0 +1,84 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../../styles/global.css";
+import { db } from "../../../lib/db";
+import { gvoDomain, gvoCategory, gvoMake } from "../../../lib/db/schema";
+import { eq } from "drizzle-orm";
+
+const { domain } = Astro.params;
+if (!domain) return Astro.redirect("/vehicles");
+
+const [domainRow] = await db
+  .select()
+  .from(gvoDomain)
+  .where(eq(gvoDomain.slug, domain))
+  .limit(1);
+
+if (!domainRow) return Astro.redirect("/vehicles");
+
+const categories = await db
+  .select()
+  .from(gvoCategory)
+  .where(eq(gvoCategory.domainId, domainRow.id));
+
+const categoryIds = categories.map((c) => c.id);
+const makes = categoryIds.length > 0
+  ? await db.select().from(gvoMake).where(
+      eq(gvoMake.categoryId, categoryIds[0]),
+    )
+  : [];
+
+// For simplicity, fetch makes across all categories in this domain
+const allMakes = [];
+for (const cat of categories) {
+  const catMakes = await db
+    .select()
+    .from(gvoMake)
+    .where(eq(gvoMake.categoryId, cat.id));
+  allMakes.push(...catMakes);
+}
+
+// Deduplicate by name
+const uniqueMakes = Array.from(
+  new Map(allMakes.map((m) => [m.name, m])).values(),
+);
+---
+
+<BaseLayout
+  title={`${domainRow.name} Makes`}
+  posture="walking"
+  description={`Browse ${domainRow.name.toLowerCase()} manufacturers available on Panther.`}
+>
+  <section class={styles.hero}>
+    <nav class={styles.breadcrumb}>
+      <a href="/vehicles">Vehicles</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{domainRow.name}</span>
+    </nav>
+    <h1 class={styles.heroTitle}>{domainRow.name}</h1>
+    <p class={styles.heroSubtitle}>
+      Select a manufacturer to explore models, specs, and pricing.
+    </p>
+  </section>
+
+  {uniqueMakes.length === 0 ? (
+    <div class={styles.emptyState}>
+      No makes available in this domain yet. The ontology is being populated.
+    </div>
+  ) : (
+    <div class={styles.makesGrid}>
+      {uniqueMakes.map((make) => (
+        <a href={`/vehicles/${domain}/${make.slug}`} class={styles.makeCard}>
+          <div class={styles.makeImagePlaceholder}>
+            <span class={styles.makeInitial}>{make.name.charAt(0)}</span>
+          </div>
+          <div class={styles.makeName}>{make.name}</div>
+          {make.origin && (
+            <div class={styles.makeOrigin}>{make.origin}</div>
+          )}
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>

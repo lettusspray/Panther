@@ -1,0 +1,113 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../../../styles/global.css";
+import { db } from "../../../../lib/db";
+import { gvoDomain, gvoCategory, gvoMake, gvoModel, gvoTrim, cohortPricing } from "../../../../lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
+
+const { domain, make } = Astro.params;
+if (!domain || !make) return Astro.redirect("/vehicles");
+
+const [domainRow] = await db
+  .select()
+  .from(gvoDomain)
+  .where(eq(gvoDomain.slug, domain))
+  .limit(1);
+
+if (!domainRow) return Astro.redirect("/vehicles");
+
+const categories = await db
+  .select()
+  .from(gvoCategory)
+  .where(eq(gvoCategory.domainId, domainRow.id));
+
+let makeRow: typeof gvoMake.$inferSelect | null = null;
+for (const cat of categories) {
+  const [found] = await db
+    .select()
+    .from(gvoMake)
+    .where(and(eq(gvoMake.categoryId, cat.id), eq(gvoMake.slug, make)))
+    .limit(1);
+  if (found) {
+    makeRow = found;
+    break;
+  }
+}
+
+if (!makeRow) return Astro.redirect(`/vehicles/${domain}`);
+
+const models = await db
+  .select()
+  .from(gvoModel)
+  .where(eq(gvoModel.makeId, makeRow.id))
+  .orderBy(gvoModel.name);
+
+const modelsWithPricing = await Promise.all(
+  models.map(async (model) => {
+    const pricing = await db
+      .select({
+        minYear: sql<number>`min(${cohortPricing.modelYear})`,
+        maxYear: sql<number>`max(${cohortPricing.modelYear})`,
+      })
+      .from(cohortPricing)
+      .innerJoin(gvoTrim, eq(cohortPricing.trimId, gvoTrim.id))
+      .where(eq(gvoTrim.modelId, model.id));
+
+    return {
+      ...model,
+      yearRange: pricing[0],
+    };
+  }),
+);
+---
+
+<BaseLayout
+  title={`${makeRow.name} Models`}
+  posture="walking"
+  description={`Browse ${makeRow.name} models available on Panther. Specs, pricing, and condition data.`}
+>
+  <section class={styles.hero}>
+    <nav class={styles.breadcrumb}>
+      <a href="/vehicles">Vehicles</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <a href={`/vehicles/${domain}`}>{domainRow.name}</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{makeRow.name}</span>
+    </nav>
+    <h1 class={styles.heroTitle}>{makeRow.name}</h1>
+    <p class={styles.heroSubtitle}>
+      Explore models, view specs, and check landed costs.
+    </p>
+  </section>
+
+  {models.length === 0 ? (
+    <div class={styles.emptyState}>
+      No models available for {makeRow.name} yet. The ontology is being populated.
+    </div>
+  ) : (
+    <div class={styles.modelsGrid}>
+      {modelsWithPricing.map((model) => (
+        <a href={`/vehicles/${domain}/${make}/${model.slug}`} class={styles.modelCard}>
+          <div class={styles.modelImagePlaceholder}>
+            <span class={styles.modelInitial}>{model.name.charAt(0)}</span>
+          </div>
+          <div class={styles.modelInfo}>
+            <h2 class={styles.modelName}>{model.name}</h2>
+            <p class={styles.modelYears}>
+              {model.firstModelYear && model.lastModelYear
+                ? `${model.firstModelYear} – ${model.lastModelYear}`
+                : model.firstModelYear
+                  ? `${model.firstModelYear} – present`
+                  : "Multiple generations"}
+            </p>
+            <div class={styles.modelActions}>
+              <span class={styles.modelLink}>View details</span>
+              <span class={styles.modelLink}>Check price →</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>

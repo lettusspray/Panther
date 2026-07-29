@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./index.module.css";
+import "../../styles/global.css";
+
+const domains = [
+  { slug: "car", name: "Cars", emoji: "🚗", desc: "Sedans, SUVs, pickups, and everything in between. Standard passenger vehicles imported into Nigeria." },
+  { slug: "motorcycle", name: "Motorcycles", emoji: "🏍️", desc: "Sport, cruiser, touring, and commuter motorcycles. From Kawasaki to Bajaj." },
+  { slug: "tricycle", name: "Tricycles (Keke)", emoji: "🛺", desc: "Passenger and cargo tricycles — the backbone of intra-city transport across Nigeria." },
+  { slug: "commercial", name: "Commercial Vehicles", emoji: "🚛", desc: "Trucks, buses, and heavy-duty vehicles built for work. Engine hours matter more than mileage." },
+];
+---
+
+<BaseLayout
+  title="Browse Vehicles"
+  posture="walking"
+  description="Explore the Global Vehicle Ontology. Browse by domain, make, model, and trim."
+>
+  <section class={styles.hero}>
+    <div class={styles.heroTitle}>
+      Explore the Ontology
+    </div>
+    <p class={styles.heroSubtitle}>
+      Every vehicle on Panther is identified through the Global Vehicle Ontology —
+      no free-text, no guesswork. Browse by domain.
+    </p>
+  </section>
+
+  <div class={styles.domainsGrid}>
+    {domains.map((domain) => (
+      <a href={`/vehicles/${domain.slug}`} class={styles.domainCard}>
+        <span class={styles.domainEmoji}>{domain.emoji}</span>
+        <h2 class={styles.domainName}>{domain.name}</h2>
+        <p class={styles.domainDesc}>{domain.desc}</p>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

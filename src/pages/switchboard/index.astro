@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./switchboard.module.css";
+import "../../styles/global.css";
+import { db } from "../../lib/db";
+import { switchboardTransaction, listing, gvoTrim, gvoModel, gvoMake, user } from "../../lib/db/schema";
+import { eq, or, desc } from "drizzle-orm";
+
+const currentUser = Astro.locals.user;
+if (!currentUser?.id) return Astro.redirect("/auth/sign-in?returnTo=/switchboard");
+
+const userId = currentUser.id as string;
+
+// Fetch all transactions where user is buyer or seller
+const transactions = await db
+  .select({
+    id: switchboardTransaction.id,
+    status: switchboardTransaction.status,
+    agreedPriceNgn: switchboardTransaction.agreedPriceNgn,
+    platformFeeNgn: switchboardTransaction.platformFeeNgn,
+    feePayer: switchboardTransaction.feePayer,
+    initiatedAt: switchboardTransaction.initiatedAt,
+    completedAt: switchboardTransaction.completedAt,
+    listingId: switchboardTransaction.listingId,
+    buyerId: switchboardTransaction.buyerId,
+    sellerId: switchboardTransaction.sellerId,
+    trimName: gvoTrim.name,
+    modelName: gvoModel.name,
+    makeName: gvoMake.name,
+    modelYear: listing.modelYear,
+  })
+  .from(switchboardTransaction)
+  .innerJoin(listing, eq(switchboardTransaction.listingId, listing.id))
+  .innerJoin(gvoTrim, eq(listing.trimId, gvoTrim.id))
+  .innerJoin(gvoModel, eq(gvoTrim.modelId, gvoModel.id))
+  .innerJoin(gvoMake, eq(gvoModel.makeId, gvoMake.id))
+  .where(
+    or(
+      eq(switchboardTransaction.buyerId, userId),
+      eq(switchboardTransaction.sellerId, userId),
+    ),
+  )
+  .orderBy(desc(switchboardTransaction.initiatedAt));
+
+function statusLabel(status: string) {
+  switch (status) {
+    case "initiated": return "Awaiting Payment";
+    case "funds_held": return "Funds Held";
+    case "inspection_window": return "Inspection Window";
+    case "buyer_confirmed": return "Buyer Confirmed";
+    case "seller_confirmed": return "Seller Confirmed";
+    case "disputed": return "Under Dispute";
+    case "released": return "Complete";
+    case "refunded": return "Refunded";
+    default: return status;
+  }
+}
+
+function statusClass(status: string) {
+  switch (status) {
+    case "released": return styles.statusSuccess;
+    case "refunded": return styles.statusNeutral;
+    case "disputed": return styles.statusError;
+    case "buyer_confirmed":
+    case "seller_confirmed": return styles.statusActive;
+    default: return styles.statusInitiated;
+  }
+}
+---
+
+<BaseLayout title="Transactions" posture="walking" description="Your Switchboard transaction history.">
+  <div class={styles.page}>
+    <div style="margin-bottom: var(--space-8);">
+      <h1 style="font-family: var(--font-serif); font-size: clamp(28px, 4vw, 40px); color: var(--panther-resting-hex); margin-bottom: var(--space-2);">
+        Transactions
+      </h1>
+      <p style="font-family: var(--font-sans); font-size: 15px; color: var(--panther-eyes-hex);">
+        Every transaction is protected by Switchboard escrow. No cancellation fee — ever.
+      </p>
+    </div>
+
+    {transactions.length === 0 ? (
+      <div class={styles.empty}>
+        <div class={styles.emptyTitle}>No transactions yet</div>
+        <p class={styles.emptyText}>
+          When you initiate a purchase through Switchboard, it will appear here.
+        </p>
+        <a href="/listings" class={styles.btnConfirm} style="display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 var(--space-8); text-decoration: none;">
+          Browse Listings
+        </a>
+      </div>
+    ) : (
+      <div class={styles.txList}>
+        {transactions.map((tx) => {
+          const isBuyer = tx.buyerId === userId;
+          const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
+          return (
+            <a href={`/switchboard/${tx.id}`} class={styles.txItem}>
+              <div class={styles.txInfo}>
+                <div class={styles.txVehicle}>{vehicleName}</div>
+                <div class={styles.txMeta}>
+                  <span>{tx.trimName}</span>
+                  <span class={styles.txMetaSep}>·</span>
+                  <span>{isBuyer ? "You're buying" : "You're selling"}</span>
+                  <span class={styles.txMetaSep}>·</span>
+                  <span>Initiated {tx.initiatedAt ? new Date(tx.initiatedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "—"}</span>
+                </div>
+              </div>
+              <div class={styles.txRight}>
+                <span class={styles.txPrice}>₦{Number(tx.agreedPriceNgn).toLocaleString()}</span>
+                <span class={`${styles.statusBadge} ${statusClass(tx.status)}`}>
+                  {statusLabel(tx.status)}
+                </span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</BaseLayout>

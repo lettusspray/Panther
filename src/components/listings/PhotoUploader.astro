@@ -1,0 +1,358 @@
+---
+export interface PhotoEntry {
+  file: File;
+  tag: string;
+  uploadedUrl?: string;
+  uploading?: boolean;
+  uploadError?: string;
+}
+
+export interface Props {
+  maxPhotos?: number;
+  maxFileSizeMb?: number;
+}
+
+const { maxPhotos = 20, maxFileSizeMb = 5 } = Astro.props;
+const maxBytes = maxFileSizeMb * 1024 * 1024;
+---
+
+<div class="pu-section">
+  <h3 class="pu-title">Add photos of your vehicle</h3>
+  <p class="pu-desc">Good photos sell vehicles. Listings with 6+ clear photos get 5x more buyer interest.</p>
+
+  <div class="pu-checklist">
+    <div class="pu-check-item"><span class="pu-check-num">1</span><span>Front — straight-on, full vehicle visible</span></div>
+    <div class="pu-check-item"><span class="pu-check-num">2</span><span>Rear — straight-on, badge visible</span></div>
+    <div class="pu-check-item"><span class="pu-check-num">3</span><span>Side profile — both sides if possible</span></div>
+    <div class="pu-check-item"><span class="pu-check-num">4</span><span>Interior — dashboard and seats visible</span></div>
+    <div class="pu-check-item"><span class="pu-check-num">5</span><span>Dashboard — instrument cluster close-up</span></div>
+    <div class="pu-check-item"><span class="pu-check-num">6</span><span>Engine bay — clean, straight-on</span></div>
+  </div>
+
+  <div id="pu-count" class="pu-count" hidden>
+    <strong id="pu-count-num">0</strong> photos added
+  </div>
+
+  <div id="pu-preview" class="pu-preview-grid"></div>
+
+  <div class="pu-upload-area" id="pu-upload-area">
+    <span class="pu-upload-icon">📷</span>
+    <p class="pu-upload-text">Click to add photos</p>
+    <p class="pu-upload-hint">JPEG, PNG, or WebP — max {maxFileSizeMb}MB each</p>
+    <input type="file" id="pu-input" accept="image/jpeg,image/png,image/webp" multiple hidden />
+  </div>
+
+  <p class="pu-note">At least 4 tagged photos required to activate listing.</p>
+</div>
+
+<script define:vars={{ maxPhotos, maxBytes }}>
+  class PhotoUploader {
+    photos = [];
+    container;
+    previewEl;
+    countEl;
+    countNumEl;
+    inputEl;
+    uploadArea;
+
+    constructor() {
+      this.container = document.getElementById("pu-preview");
+      this.countEl = document.getElementById("pu-count");
+      this.countNumEl = document.getElementById("pu-count-num");
+      this.inputEl = document.getElementById("pu-input");
+      this.uploadArea = document.getElementById("pu-upload-area");
+
+      if (!this.container || !this.uploadArea || !this.inputEl) return;
+
+      this.uploadArea.addEventListener("click", () => this.inputEl.click());
+      this.inputEl.addEventListener("change", () => this.handleFiles());
+
+      this.render();
+    }
+
+    async handleFiles() {
+      const files = Array.from(this.inputEl.files || []);
+      this.inputEl.value = "";
+
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) continue;
+        if (file.size > maxBytes) continue;
+        if (this.photos.length >= maxPhotos) break;
+
+        const idx = this.photos.length;
+        this.photos.push({ file, tag: "", uploading: true });
+        this.render();
+
+        this.upload(file).then((url) => {
+          this.photos[idx].uploadedUrl = url;
+          this.photos[idx].uploading = false;
+          this.render();
+        }).catch((err) => {
+          this.photos[idx].uploading = false;
+          this.photos[idx].uploadError = err.message;
+          this.render();
+        });
+      }
+    }
+
+    async upload(file) {
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: file.type })
+      });
+      if (!res.ok) throw new Error("Failed to get upload URL");
+      const { uploadUrl, deliveryUrl } = await res.json();
+      const form = new FormData();
+      form.append("file", file);
+      const uploadRes = await fetch(uploadUrl, { method: "POST", body: form });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      return deliveryUrl;
+    }
+
+    remove(index) {
+      this.photos.splice(index, 1);
+      this.render();
+      document.dispatchEvent(new CustomEvent("photos-updated", { detail: { count: this.photos.length } }));
+    }
+
+    render() {
+      if (!this.container) return;
+      this.container.innerHTML = "";
+
+      if (this.photos.length > 0) {
+        this.countEl.hidden = false;
+        this.countNumEl.textContent = String(this.photos.length);
+      } else {
+        this.countEl.hidden = true;
+      }
+
+      this.photos.forEach((entry, i) => {
+        const div = document.createElement("div");
+        div.className = "pu-preview-item";
+
+        if (entry.uploadError) {
+          div.innerHTML = `<div class="pu-preview-error">Upload failed: ${entry.uploadError}<br><button class="pu-retry-btn" data-idx="${i}">Retry</button></div>`;
+          div.querySelector(".pu-retry-btn")?.addEventListener("click", () => this.retry(i));
+        } else if (entry.uploading) {
+          div.innerHTML = `<div class="pu-preview-loading"><div class="pu-spinner"></div><span>Uploading...</span></div>`;
+        } else {
+          const img = document.createElement("img");
+          img.className = "pu-preview-img";
+          img.src = entry.uploadedUrl || URL.createObjectURL(entry.file);
+          img.alt = "Preview";
+          div.appendChild(img);
+        }
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "pu-remove-btn";
+        removeBtn.textContent = "×";
+        removeBtn.setAttribute("aria-label", "Remove photo");
+        removeBtn.addEventListener("click", () => this.remove(i));
+        div.appendChild(removeBtn);
+
+        this.container.appendChild(div);
+      });
+    }
+
+    async retry(idx) {
+      const entry = this.photos[idx];
+      if (!entry) return;
+      entry.uploading = true;
+      entry.uploadError = undefined;
+      this.render();
+      try {
+        const url = await this.upload(entry.file);
+        entry.uploadedUrl = url;
+        entry.uploading = false;
+        this.render();
+      } catch (err) {
+        entry.uploading = false;
+        entry.uploadError = err.message;
+        this.render();
+      }
+    }
+
+    getData() {
+      return this.photos
+        .filter((p) => p.uploadedUrl && !p.uploading)
+        .map((p) => ({ url: p.uploadedUrl, tag: p.tag }));
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    window.__photoUploader = new PhotoUploader();
+  });
+</script>
+
+<style>
+  .pu-section {
+    margin-top: var(--space-6);
+  }
+  .pu-title {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .pu-desc {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-4);
+  }
+  .pu-checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  .pu-check-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--panther-eyes-hex);
+  }
+  .pu-check-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--panther-eyes-hex) 12%, #fff);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    flex-shrink: 0;
+  }
+  .pu-count {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    margin-bottom: var(--space-3);
+  }
+  .pu-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .pu-preview-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 6px;
+    overflow: hidden;
+    background: color-mix(in oklch, var(--panther-eyes-hex) 6%, #fff);
+  }
+  .pu-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .pu-preview-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+  }
+  .pu-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-top-color: var(--panther-resting-hex);
+    border-radius: 50%;
+    animation: puSpin 600ms linear infinite;
+  }
+  @keyframes puSpin {
+    to { transform: rotate(360deg); }
+  }
+  .pu-preview-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: var(--space-2);
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    color: #C0392B;
+  }
+  .pu-retry-btn {
+    margin-top: var(--space-1);
+    padding: 2px 8px;
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid #C0392B;
+    border-radius: 3px;
+    color: #C0392B;
+    cursor: pointer;
+  }
+  .pu-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pu-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    border: 2px dashed color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 200ms ease;
+  }
+  .pu-upload-area:hover {
+    border-color: var(--panther-resting-hex);
+  }
+  .pu-upload-icon {
+    font-size: 28px;
+    margin-bottom: var(--space-2);
+  }
+  .pu-upload-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .pu-upload-hint {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+    margin: 0;
+  }
+  .pu-note {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+    margin-top: var(--space-2);
+  }
+
+  @media (max-width: 640px) {
+    .pu-checklist { grid-template-columns: 1fr; }
+  }
+</style>

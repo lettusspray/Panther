@@ -1,0 +1,169 @@
+---
+import type { ConditionField } from "../../lib/listings/condition-reports";
+
+export interface Props {
+  fields: ConditionField[];
+  containerId?: string;
+}
+
+const { fields, containerId = "condition-fields" } = Astro.props;
+
+const serialized = JSON.stringify(fields);
+---
+
+<div class="condition-section">
+  <h3 class="ctitle">Condition Report</h3>
+  <p class="cdesc">
+    Toggle the condition for each category. Rigid toggles only — no free text.
+  </p>
+  <div id={containerId} class="cgrid"></div>
+</div>
+
+<script define:vars={{ fields: serialized, containerId }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const parsedFields = JSON.parse(fields);
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const TOGGLE_OPTIONS = ["good", "fair", "poor", "absent"];
+
+    container.innerHTML = "";
+    for (const field of parsedFields) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "cfield";
+
+      const label = document.createElement("label");
+      label.className = "clabel";
+      label.textContent = field.label + (field.required ? " *" : "");
+      wrapper.appendChild(label);
+
+      if (field.type === "toggle") {
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "cgroup";
+        for (const opt of TOGGLE_OPTIONS) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "cbtn";
+          btn.dataset.field = field.key;
+          btn.dataset.value = opt;
+          btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          btn.addEventListener("click", () => {
+            btnGroup.querySelectorAll(".cbtn").forEach((b) => b.classList.remove("cactive"));
+            btn.classList.add("cactive");
+          });
+          btnGroup.appendChild(btn);
+        }
+        wrapper.appendChild(btnGroup);
+      } else if (field.type === "select") {
+        const select = document.createElement("select");
+        select.className = "cselect";
+        select.dataset.field = field.key;
+        select.innerHTML = '<option value="">Select...</option>';
+        for (const opt of field.options ?? []) {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          select.appendChild(option);
+        }
+        wrapper.appendChild(select);
+      } else if (field.type === "hours") {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "cinput";
+        input.dataset.field = field.key;
+        input.min = "0";
+        input.placeholder = "e.g. 12000";
+        wrapper.appendChild(input);
+      }
+
+      container.appendChild(wrapper);
+    }
+
+    window.__collectConditionData = function () {
+      const data = {};
+      container.querySelectorAll(".cactive").forEach((btn) => {
+        data[btn.getAttribute("data-field")] = btn.getAttribute("data-value");
+      });
+      container.querySelectorAll("select").forEach((sel) => {
+        if (sel.dataset.field && sel.value) data[sel.dataset.field] = sel.value;
+      });
+      container.querySelectorAll("input[type='number']").forEach((inp) => {
+        if (inp.dataset.field && inp.value) data[inp.dataset.field] = inp.value;
+      });
+      return data;
+    };
+  });
+</script>
+
+<style>
+  .condition-section {
+    margin-top: var(--space-6);
+  }
+  .ctitle {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .cdesc {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-4);
+  }
+  .cgrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+  .cfield {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+    border-radius: 6px;
+  }
+  .clabel {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--panther-resting-hex);
+  }
+  .cgroup {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .cbtn {
+    flex: 1;
+    height: 34px;
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--panther-eyes-hex);
+    transition: all 150ms ease;
+  }
+  .cbtn:hover {
+    border-color: var(--panther-resting-hex);
+    color: var(--panther-resting-hex);
+  }
+  .cactive {
+    background: var(--panther-resting-hex);
+    color: #fff;
+    border-color: var(--panther-resting-hex);
+  }
+  .cselect, .cinput {
+    height: 36px;
+    padding: 0 var(--space-2);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+</style>

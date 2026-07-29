@@ -1,0 +1,279 @@
+---
+import Button from "../ui/Button.astro";
+
+export interface Props {
+  listingId: string;
+}
+
+const { listingId } = Astro.props;
+---
+
+<div class="report-section">
+  <h3 class="report-heading">Something wrong with this listing?</h3>
+  <p class="report-sub">If the vehicle details, price, or images don't match the description, let us know. Your report is confidential.</p>
+  <button class="report-btn" id="report-btn" type="button">Report Listing</button>
+  <div id="report-modal" class="report-modal" hidden>
+    <div class="report-modal-backdrop"></div>
+    <div class="report-modal-content">
+      <div class="report-modal-header">
+        <h4>Report Listing</h4>
+        <button class="report-modal-close" id="report-close" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="report-modal-body">
+        <p class="report-modal-sub">Your report is confidential. The seller won't know who reported.</p>
+        <div id="report-success" class="report-success" hidden>
+          <p class="report-success-text">Report submitted. We'll review it within 24 hours.</p>
+        </div>
+        <div id="report-error" class="report-error" hidden>
+          <p class="report-error-text" id="report-error-msg"></p>
+        </div>
+        <div id="report-form">
+          <label class="report-field">
+            <span class="report-field-label">Reason</span>
+            <select id="report-reason" class="report-select" required>
+              <option value="">Select a reason...</option>
+              <optgroup label="Condition &amp; Description">
+                <option value="wrong_condition">Wrong condition report</option>
+                <option value="wrong_specs">Wrong specs (engine, transmission, etc.)</option>
+                <option value="wrong_mileage">Wrong mileage</option>
+                <option value="wrong_year">Wrong year</option>
+              </optgroup>
+              <optgroup label="Pricing &amp; Fraud">
+                <option value="price_mismatch">Price doesn't match agreed amount</option>
+                <option value="suspect_fraud">Suspect fraud or scam</option>
+                <option value="bait_and_switch">Bait and switch (different vehicle)</option>
+              </optgroup>
+              <optgroup label="Listing Quality">
+                <option value="duplicate">Duplicate listing</option>
+                <option value="wrong_category">Wrong category (should be elsewhere)</option>
+                <option value="low_quality">Low quality / incomplete listing</option>
+              </optgroup>
+              <optgroup label="Seller">
+                <option value="unresponsive">Seller unresponsive</option>
+                <option value="seller_wrong_id">Wrong seller identity</option>
+                <option value="other">Other issue</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="report-field">
+            <span class="report-field-label">Details (optional)</span>
+            <textarea id="report-details" class="report-textarea" rows="3" maxlength="1000" placeholder="Tell us more about the issue..."></textarea>
+          </label>
+          <span class="report-conf-note">Confidential — the seller won't see your identity or this message.</span>
+          <Button label="Submit Report" variant="danger" size="md" id="report-submit" loading={false} />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ listingId }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const reportBtn = document.getElementById("report-btn");
+    const modal = document.getElementById("report-modal");
+    const closeBtn = document.getElementById("report-close");
+    const backdrop = modal?.querySelector(".report-modal-backdrop");
+    const submitBtn = document.getElementById("report-submit");
+    const reasonEl = document.getElementById("report-reason");
+    const detailsEl = document.getElementById("report-details");
+    const formDiv = document.getElementById("report-form");
+    const successDiv = document.getElementById("report-success");
+    const errorDiv = document.getElementById("report-error");
+    const errorMsg = document.getElementById("report-error-msg");
+
+    if (!reportBtn || !modal || !closeBtn) return;
+
+    function openModal() {
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+    function closeModal() {
+      modal.hidden = true;
+      document.body.style.overflow = "";
+    }
+    reportBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    backdrop?.addEventListener("click", closeModal);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.hidden) closeModal();
+    });
+
+    submitBtn?.addEventListener("click", async () => {
+      const reason = reasonEl.value;
+      if (!reason) {
+        reasonEl.focus();
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+      try {
+        const res = await fetch(`/api/listings/${listingId}/report`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason, details: detailsEl.value })
+        });
+        if (res.ok) {
+          formDiv.hidden = true;
+          successDiv.hidden = false;
+        } else {
+          const data = await res.json();
+          errorMsg.textContent = data.error || "Submission failed. Try again.";
+          errorDiv.hidden = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit Report";
+        }
+      } catch {
+        errorMsg.textContent = "Network error. Check your connection.";
+        errorDiv.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Report";
+      }
+    });
+  });
+</script>
+
+<style>
+  .report-section {
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+  }
+  .report-heading {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0 0 var(--space-1);
+  }
+  .report-sub {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-3);
+  }
+  .report-btn {
+    background: transparent;
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    color: var(--panther-eyes-hex);
+    padding: var(--space-2) var(--space-4);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 12px;
+  }
+  .report-btn:hover {
+    background: color-mix(in oklch, var(--panther-eyes-hex) 6%, #fff);
+    border-color: var(--panther-eyes-hex);
+  }
+  .report-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .report-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+  }
+  .report-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+  .report-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
+  }
+  .report-modal-header h4 {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--panther-resting-hex);
+    margin: 0;
+  }
+  .report-modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--panther-eyes-hex);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .report-modal-body {
+    padding: var(--space-4) var(--space-5) var(--space-5);
+  }
+  .report-modal-sub {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-eyes-hex);
+    margin: 0 0 var(--space-4);
+  }
+  .report-success {
+    padding: var(--space-4);
+    background: color-mix(in oklch, #27ae60 8%, #fff);
+    border-radius: 6px;
+  }
+  .report-success-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e8449;
+    margin: 0;
+  }
+  .report-error {
+    padding: var(--space-3);
+    background: color-mix(in oklch, #C0392B 8%, #fff);
+    border-radius: 6px;
+    margin-bottom: var(--space-3);
+  }
+  .report-error-text {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: #A93226;
+    margin: 0;
+  }
+  .report-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
+  }
+  .report-field-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--panther-eyes-hex);
+  }
+  .report-select, .report-textarea {
+    padding: var(--space-2);
+    border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--panther-resting-hex);
+    background: #fff;
+  }
+  .report-textarea {
+    resize: vertical;
+  }
+  .report-conf-note {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--panther-eyes-hex);
+    margin-bottom: var(--space-3);
+  }
+</style>

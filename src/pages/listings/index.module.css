@@ -1,0 +1,148 @@
+.hero {
+  padding: var(--space-16) 0 var(--space-8);
+  text-align: center;
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 48px);
+  color: var(--panther-resting-hex);
+  margin-bottom: var(--space-3);
+}
+
+.heroSubtitle {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--panther-eyes-hex);
+  max-width: 500px;
+  margin: 0 auto var(--space-6);
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--space-8);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--panther-roaring-hex);
+  color: #fff;
+  text-decoration: none;
+  transition: all 200ms var(--ease-posture);
+}
+
+.ctaBtn:hover {
+  filter: brightness(0.95);
+  transform: scale(1.01);
+}
+
+/* ── Listings Grid ────────────────────────────────────────────── */
+.listingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-6);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-8) var(--space-24);
+}
+
+.listingCard {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  text-decoration: none;
+  transition: box-shadow 300ms var(--ease-posture), transform 300ms var(--ease-posture);
+}
+
+.listingCard:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: scale(1.01);
+}
+
+.cardPlaceholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--panther-walking-hex) 15%, #fff) 0%, color-mix(in oklch, var(--panther-eyes-hex) 8%, #fff) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardInitial {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: color-mix(in oklch, var(--panther-walking-hex) 40%, var(--panther-eyes-hex));
+  user-select: none;
+}
+
+.cardBody {
+  padding: var(--space-4);
+}
+
+.cardTitle {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin-bottom: var(--space-1);
+}
+
+.cardTrim {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  margin-bottom: var(--space-3);
+}
+
+.cardMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cardMileage {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+.cardPrice {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--panther-roaring-hex);
+}
+
+.cardSeller {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--panther-eyes-hex);
+  margin-top: var(--space-2);
+}
+
+/* ── Empty State ──────────────────────────────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: var(--space-16) var(--space-8);
+  color: var(--panther-eyes-hex);
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+
+.emptyLink {
+  display: inline-block;
+  margin-top: var(--space-4);
+  color: var(--panther-roaring-hex);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .listingsGrid {
+    grid-template-columns: 1fr;
+  }
+}
