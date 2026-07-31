@@ -1,0 +1,388 @@
+/* ── Walking Posture: Guided Curiosity ──────────────────────── */
+/* Sans-serif (Inter). Diagonal energy. Clean. */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Header ─────────────────────────────── */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  margin: 0 0 var(--space-1);
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.viewStorefrontBtn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--panther-eyes-hex);
+  border-radius: 6px;
+  color: var(--panther-resting-hex);
+  text-decoration: none;
+  transition: all 200ms ease;
+}
+
+.viewStorefrontBtn:hover {
+  background: oklch(45% 0.03 225 / 0.05);
+}
+
+/* ── Dealer Profile Prompt ──────────────── */
+
+.promptCard {
+  background: oklch(65% 0.18 150 / 0.08);
+  border: 1px solid oklch(65% 0.18 150 / 0.2);
+  border-radius: 12px;
+  padding: var(--space-6);
+}
+
+.promptContent {
+  max-width: 560px;
+}
+
+.promptTitle {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin: 0 0 var(--space-2);
+}
+
+.promptText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+}
+
+.promptBtn {
+  display: inline-flex;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-5);
+  border-radius: 8px;
+  background: var(--panther-resting-hex);
+  color: #fff;
+  text-decoration: none;
+}
+
+.promptBtn:hover {
+  filter: brightness(1.15);
+}
+
+/* ── Stats Grid ─────────────────────────── */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.statCard {
+  background: #fff;
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 10px;
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+
+.statLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--panther-eyes-hex);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Quick Action Grid ──────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 200ms ease;
+  background: #fff;
+}
+
+.card:hover {
+  border-color: var(--panther-eyes-hex);
+  box-shadow: 0 2px 8px oklch(0% 0 0 / 0.06);
+  transform: translateY(-1px);
+}
+
+.cardIcon {
+  font-size: 18px;
+  color: var(--panther-eyes-hex);
+}
+
+.cardTitle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+}
+
+.cardText {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--panther-eyes-hex);
+  line-height: 1.4;
+}
+
+/* ── Sections ───────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin: 0;
+}
+
+.emptyState {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+/* ── Listings ───────────────────────────── */
+
+.listingList {
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.listingRow {
+  display: grid;
+  grid-template-columns: 48px 1fr auto auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  border-bottom: 1px solid oklch(45% 0.03 225 / 0.08);
+  transition: background 200ms ease;
+}
+
+.listingRow:last-child {
+  border-bottom: none;
+}
+
+.listingRow:hover {
+  background: oklch(45% 0.03 225 / 0.03);
+}
+
+.listingThumb {
+  width: 48px;
+  height: 36px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: oklch(90% 0.01 225);
+}
+
+.listingThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.listingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.listingYear {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--panther-resting-hex);
+}
+
+.listingMeta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--panther-eyes-hex);
+}
+
+.listingPrice {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  white-space: nowrap;
+}
+
+.listingStatus {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.status_active {
+  background: oklch(65% 0.18 150 / 0.12);
+  color: oklch(45% 0.18 150);
+}
+
+.status_draft {
+  background: oklch(70% 0.05 225 / 0.12);
+  color: oklch(50% 0.05 225);
+}
+
+.status_sold {
+  background: oklch(50% 0.02 70 / 0.1);
+  color: var(--panther-resting-hex);
+}
+
+.status_removed {
+  background: oklch(50% 0.18 30 / 0.08);
+  color: oklch(45% 0.18 30);
+}
+
+.listingDate {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--panther-eyes-hex);
+  white-space: nowrap;
+}
+
+.viewAll {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 200ms ease;
+}
+
+.viewAll:hover {
+  text-decoration-color: var(--panther-eyes-hex);
+}
+
+/* ── Account ────────────────────────────── */
+
+.accountCard {
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.accountRow {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid oklch(45% 0.03 225 / 0.08);
+}
+
+.accountRow:last-child {
+  border-bottom: none;
+}
+
+.accountLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+.accountValue {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--panther-resting-hex);
+}
+
+/* ── Responsive ─────────────────────────── */
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .listingRow {
+    grid-template-columns: 40px 1fr auto;
+  }
+
+  .listingStatus,
+  .listingDate {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}

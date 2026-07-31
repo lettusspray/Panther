@@ -1,8 +1,9 @@
 ---
-import BaseLayout from "../../../../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./index.module.css";
-import "../../../../../styles/global.css";
-import { db } from "../../../../../lib/db";
+import "@/styles/global.css";
+import { db } from "@/lib/db";
 import {
   gvoDomain,
   gvoCategory,
@@ -11,10 +12,10 @@ import {
   gvoTrim,
   knowledgeEntry,
   cohortPricing,
-} from "../../../../../lib/db/schema";
+} from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { searchVehicleImages } from "../../../../../lib/images";
-import { getPartsAvailability } from "../../../../../lib/gvo/parts-availability";
+import { searchVehicleImages } from "@/lib/images";
+import { getPartsAvailability } from "@/lib/gvo/parts-availability";
 
 const { domain, make, model } = Astro.params;
 if (!domain || !make || !model) return Astro.redirect("/vehicles");
@@ -106,6 +107,8 @@ const attribution = [...new Set(images.map((img) => img.photographer).filter(Boo
   title={`${makeRow.name} ${modelRow.name}`}
   posture="eyes"
   description={`${makeRow.name} ${modelRow.name} — specs, pricing, and buyer warnings for the Nigerian market.`}
+  ogImage={images?.[0]?.url ?? undefined}
+  ogUrl={`https://panther.ng/vehicles/${domain}/${make}/${model}`}
 >
   <section class={styles.hero}>
     <nav class={styles.breadcrumb}>
@@ -276,7 +279,7 @@ const attribution = [...new Set(images.map((img) => img.photographer).filter(Boo
             {khSpecs.ncap_stars && (
               <div class={styles.specRow}>
                 <span class={styles.specLabel}>NCAP Safety</span>
-                <span class={styles.specValue}>{String(khSpecs.ncap_stars)} ★</span>
+                <span class={styles.specValue}><Icon name="star" size={14} /> {String(khSpecs.ncap_stars)}</span>
               </div>
             )}
             {khSpecs.battery_usable_kwh && (
@@ -302,7 +305,7 @@ const attribution = [...new Set(images.map((img) => img.photographer).filter(Boo
           <div class={styles.warningList}>
             {khWarnings.map((warn) => (
               <div class={styles.warningItem}>
-                <span>⚠️</span>
+                <Icon name="warning" size={20} class={styles.warningIcon} />
                 <p class={styles.warningText}>{warn}</p>
               </div>
             ))}

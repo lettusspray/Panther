@@ -1,52 +1,128 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Button from "@/components/ui/Button.astro";
 import styles from "./index.module.css";
-import "../../styles/global.css";
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the landed cost of a 2015 Toyota Camry in Nigeria?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The landed cost of a 2015 Toyota Camry in Nigeria ranges from approximately NGN 8-12 million depending on condition, trim, and port of entry. The price is computed from the 13-step statutory formula: FOB anchor + CIF + Import Duty (20%) + NAC Levy (5%) + Surcharge + CISS + ETLS + VAT (7.5%) + non-statutory port and clearing fees. Panther computes this live using current NCS exchange rates."
+      }
+    }
+  ]
+};
 ---
 
-<BaseLayout title="Panther" posture="roaring">
+<BaseLayout title="Panther — Trusted Vehicle Pricing in Nigeria" posture="roaring" theme="dark" jsonLd={[faqSchema]} ogUrl="https://panther.ng">
   <section class={styles.hero}>
-    <div class={styles.heroTitle}>
+    <h1 class={styles.heroTitle}>
       We don't sell cars.<br />
       We reveal the truth about them.
-    </div>
+    </h1>
     <p class={styles.heroSubtitle}>
-      The trusted pricing and transaction platform for Nigerian vehicle buyers and sellers.
-      Built on math. Anchored in trust.
+      Pricing is a 13-step statutory formula computed from live rates.
+      We show every step. All 774 LGAs.
     </p>
+    <div class={styles.heroBadges}>
+      <span class={styles.heroBadge}>
+        <span class={styles.badgeDot}></span>
+        Live data
+      </span>
+      <span class={styles.heroBadge}>
+        774 LGAs
+      </span>
+      <span class={styles.heroBadge}>
+        No cancel fees
+      </span>
+    </div>
     <div class={styles.heroActions}>
-      <a href="/pricing" class={`${styles.btnLg} ${styles.btnPrimary}`}>Begin</a>
-      <a href="/vehicles" class={`${styles.btnLg} ${styles.btnSecondary}`}>Browse Vehicles</a>
+      <Button label="Begin" href="/pricing" variant="primary" size="lg" />
+      <Button label="Explore Vehicles" href="/vehicles" variant="secondary" size="lg" />
+    </div>
+  </section>
+
+  <section class={styles.showWork}>
+    <h2 class={styles.sectionTitle}>The 13-step formula</h2>
+    <p class={styles.sectionSubtitle}>
+      Import duty, NAC levy, surcharge, CISS, ETLS, VAT.
+      Each computed from live statutory rates.
+    </p>
+    <div class={styles.formulaGrid}>
+      <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
+        <div class={styles.stepNumber}>Step 3</div>
+        <div class={styles.stepTitle}>Naira conversion</div>
+        <div class={styles.stepDesc}>CIF x NCS customs rate. Pulled live. NCS rate runs 20-50% above CBN retail.</div>
+      </div>
+      <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
+        <div class={styles.stepNumber}>Step 6</div>
+        <div class={styles.stepTitle}>Surcharge</div>
+        <div class={styles.stepDesc}>7% of Import Duty. Not 7% of CIF — the most common miscalculation in the formula.</div>
+      </div>
+      <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
+        <div class={styles.stepNumber}>Step 5</div>
+        <div class={styles.stepTitle}>NAC levy</div>
+        <div class={styles.stepDesc}>5% of CIF for used vehicles. Reduced from 15% under May 2026 NCS policy.</div>
+      </div>
+      <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
+        <div class={styles.stepNumber}>Step 7</div>
+        <div class={styles.stepTitle}>CISS / FCS</div>
+        <div class={styles.stepDesc}>1% of FOB in Naira. Configured from live NCS enforcement data.</div>
+      </div>
+    </div>
+    <div class={styles.freshnessBanner}>
+      <strong>Data freshness:</strong> If NCS or CBN rates go stale, the engine halts.
+      "Live market data temporarily unavailable."
     </div>
   </section>
 
   <section class={styles.valueProps}>
-    <div class={styles.sectionTitle}>How Panther works</div>
     <div class={styles.propsGrid}>
       <div class={styles.propCard}>
-        <div class={styles.propNumber}>01</div>
-        <h3 class={styles.propTitle}>Transparent Pricing</h3>
+        <h3 class={styles.propTitle}>Pricing</h3>
         <p class={styles.propText}>
-          Every price is backed by the 13-step statutory formula.
-          Import duty, NAC levy, CISS, ETLS, VAT — all calculated from live data.
-          No black boxes.
+          FOB anchor, CIF calculation, every statutory charge itemised.
+          The full methodology, not a single number.
         </p>
+        <a href="/pricing" class={styles.propCta}>See the method</a>
       </div>
       <div class={styles.propCard}>
-        <div class={styles.propNumber}>02</div>
-        <h3 class={styles.propTitle}>Structured Condition Reports</h3>
+        <h3 class={styles.propTitle}>Condition</h3>
         <p class={styles.propText}>
-          Category-specific toggle forms. Cars, motorcycles, tricycles, commercial vehicles —
-          each gets its own inspection schema. No free-text guessing.
+          Category-specific toggle forms. Cars, motorcycles, commercial —
+          each with its own schema. Free, front and centre, zero paywall.
         </p>
+        <a href="/vehicles" class={styles.propCta}>View listings</a>
       </div>
       <div class={styles.propCard}>
-        <div class={styles.propNumber}>03</div>
-        <h3 class={styles.propTitle}>Switchboard Escrow</h3>
+        <h3 class={styles.propTitle}>Switchboard</h3>
         <p class={styles.propText}>
-          Pay on delivery, digitised. Funds held in escrow until both parties confirm.
-          No cancellation fees. No traps. Just trust.
+          Pay on delivery, digitised. Funds held until both parties confirm.
+          No cancel fees.
         </p>
+        <a href="/switchboard" class={styles.propCta}>Escrow details</a>
+      </div>
+    </div>
+  </section>
+
+  <section class={styles.trustSection}>
+    <div class={styles.trustGrid}>
+      <div class={styles.trustItem}>
+        <div class={styles.trustLabel}>Live rates</div>
+        <div class={styles.trustDesc}>NCS and CBN rates pulled fresh. If stale, the engine halts.</div>
+      </div>
+      <div class={styles.trustItem}>
+        <div class={styles.trustLabel}>774 LGAs</div>
+        <div class={styles.trustDesc}>Nigeria is not Lagos. No city serves as a default proxy.</div>
+      </div>
+      <div class={styles.trustItem}>
+        <div class={styles.trustLabel}>No cancel fees</div>
+        <div class={styles.trustDesc}>Neither party pays if the deal falls through.</div>
       </div>
     </div>
   </section>
@@ -56,8 +132,11 @@ import "../../styles/global.css";
       What is a 2015 Toyota Camry really worth in Nigeria?
     </h2>
     <p class={styles.ctaText}>
-      Find the landed cost. From FOB to final delivery — every naira accounted for.
+      From FOB to final delivery. Every naira accounted for.
     </p>
-    <a href="/pricing/toyota/camry" class={`${styles.btnLg} ${styles.btnPrimary}`}>Check Price</a>
+    <div class={styles.ctaActions}>
+      <Button label="Get the range" href="/pricing/toyota/camry" variant="primary" size="lg" />
+      <Button label="All prices" href="/pricing" variant="tertiary" size="lg" />
+    </div>
   </section>
 </BaseLayout>

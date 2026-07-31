@@ -1,0 +1,109 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import styles from "./listings.module.css";
+import "@/styles/global.css";
+import { getDealerListings } from "../../lib/dealer";
+
+const user = Astro.locals.user;
+if (!user?.id) return Astro.redirect("/auth/sign-in");
+
+const listings = await getDealerListings(user.id as string);
+
+const formattedDate = (d: Date | null) =>
+  d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "";
+---
+
+<BaseLayout title="My Listings" posture="walking" ogUrl="https://panther.ng/dashboard/listings">
+  <div class={styles.page}>
+    <div class={styles.container}>
+      <div class={styles.header}>
+        <div>
+          <h1 class={styles.title}>My Listings</h1>
+          <p class={styles.subtitle}>{listings.length} total</p>
+        </div>
+        <a href="/listings/new" class={styles.createBtn}>New Listing</a>
+      </div>
+
+      {listings.length === 0 ? (
+        <div class={styles.emptyState}>
+          <p class={styles.emptyText}>No listings yet.</p>
+          <a href="/listings/new" class={styles.emptyBtn}>Create your first listing</a>
+        </div>
+      ) : (
+        <div class={styles.table}>
+          <div class={styles.tableHeader}>
+            <span class={styles.colVehicle}>Vehicle</span>
+            <span class={styles.colPrice}>Price</span>
+            <span class={styles.colStatus}>Status</span>
+            <span class={styles.colDate}>Created</span>
+            <span class={styles.colActions}>Actions</span>
+          </div>
+          {listings.map((l) => {
+            const imgs = l.images as { tag: string; url: string }[] | null;
+            const img = imgs?.[0];
+            return (
+              <div class={styles.tableRow} key={l.id}>
+                <div class={styles.colVehicle}>
+                  {img && <img class={styles.thumb} src={img.url} alt="" />}
+                  <span>{l.modelYear}</span>
+                </div>
+                <span class={styles.colPrice}>₦{Number(l.askingPriceNgn).toLocaleString()}</span>
+                <span class={`${styles.colStatus} ${styles[`status_${l.status}`]}`}>{l.status}</span>
+                <span class={styles.colDate}>{formattedDate(l.createdAt)}</span>
+                <div class={styles.colActions}>
+                  <a href={`/listings/${l.id}`} class="btn btn-tertiary btn-sm">View</a>
+                  {l.status === "draft" && (
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      data-activate={l.id}
+                    >
+                      Activate
+                    </button>
+                  )}
+                  {l.status === "active" && (
+                    <button
+                      class="btn btn-danger btn-sm"
+                      data-remove={l.id}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.addEventListener("click", async (e) => {
+    const target = e.target as HTMLButtonElement;
+
+    if (target.dataset.activate) {
+      if (!confirm("Activate this listing? It will be visible to buyers.")) return;
+      target.disabled = true;
+      target.textContent = "Activating...";
+      try {
+        const res = await fetch(`/api/listings/${target.dataset.activate}/activate`, { method: "POST" });
+        if (res.ok) location.reload();
+        else alert("Failed to activate");
+      } catch {
+        alert("Network error");
+      }
+    }
+
+    if (target.dataset.remove) {
+      if (!confirm("Remove this listing? It will no longer be visible.")) return;
+      try {
+        const res = await fetch(`/api/listings/${target.dataset.remove}/remove`, { method: "DELETE" });
+        if (res.ok) location.reload();
+        else alert("Failed to remove");
+      } catch {
+        alert("Network error");
+      }
+    }
+  });
+</script>

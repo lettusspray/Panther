@@ -1,3 +1,13 @@
+.freshnessBanner {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: var(--space-3) var(--space-4);
+  background: oklch(90% 0.06 70);
+  color: oklch(45% 0.18 50);
+}
+
 .hero {
   padding: var(--space-16) 0 var(--space-8);
   text-align: center;
@@ -30,15 +40,67 @@
   background: var(--panther-roaring-hex);
   color: #fff;
   text-decoration: none;
-  transition: all 200ms var(--ease-posture);
 }
 
 .ctaBtn:hover {
   filter: brightness(0.95);
-  transform: scale(1.01);
 }
 
-/* ── Listings Grid ────────────────────────────────────────────── */
+/* ── Filters ────────────────────────────────────────────────── */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-8) var(--space-5);
+  align-items: center;
+}
+
+.filterSearch {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: var(--space-3);
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--panther-resting-hex);
+}
+
+.filterSearch:focus {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 1px;
+}
+
+.filterSelect {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: var(--space-3);
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--panther-resting-hex);
+  min-width: 140px;
+}
+
+.filterSelect:focus {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 1px;
+}
+
+.filterCount {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--panther-eyes-hex);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* ── Listings Grid ──────────────────────────────────────────── */
+
 .listingsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -54,12 +116,10 @@
   box-shadow: var(--shadow-card);
   overflow: hidden;
   text-decoration: none;
-  transition: box-shadow 300ms var(--ease-posture), transform 300ms var(--ease-posture);
 }
 
 .listingCard:hover {
   box-shadow: var(--shadow-card-hover);
-  transform: scale(1.01);
 }
 
 .cardPlaceholder {
@@ -125,6 +185,7 @@
 }
 
 /* ── Empty State ──────────────────────────────────────────────── */
+
 .emptyState {
   text-align: center;
   padding: var(--space-16) var(--space-8);
@@ -142,6 +203,20 @@
 }
 
 @media (max-width: 768px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterSearch, .filterSelect {
+    width: 100%;
+  }
+
+  .filterCount {
+    text-align: center;
+    margin-left: 0;
+  }
+
   .listingsGrid {
     grid-template-columns: 1fr;
   }

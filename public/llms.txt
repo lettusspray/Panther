@@ -1,0 +1,42 @@
+# Panther — Trusted Vehicle Pricing & Transactions in Nigeria
+> Panther is the pricing and transaction platform for Nigerian vehicle buyers and sellers. We provide statutory-grounded landed cost estimates, structured condition reports, and escrow-protected transactions.
+
+## Key Resources
+
+### Pricing Pages
+- **Landed cost estimates** for specific vehicles: `/pricing/[domain]/[make]/[model]/[trim]`
+  - e.g. `/pricing/car/toyota/camry/le` for a Toyota Camry LE
+- **Model overview pages**: `/pricing/[domain]/[make]/[model]`
+  - Lists all trims and model year ranges
+- **Browse all vehicles**: `/pricing`
+
+### Vehicle Listings
+- **Individual listings**: `/listings/[id]`
+  - Condition report, specifications, seller info, escrow initiation
+- **Browse all listings**: `/listings`
+
+### Escrow (Switchboard)
+- **Transaction dashboard**: `/switchboard/[id]`
+- **Escrow overview**: `/switchboard`
+
+### Knowledge Hub
+- Vehicle specifications and buyer warnings embedded on pricing and listing pages
+
+## API Endpoints
+- `/api/pricing/[domain]/[make]/[model]/[trim]` — JSON pricing data
+- `/api/switchboard` — Initiate escrow transaction (POST)
+- `/api/webhooks/paystack` — Paystack payment confirmation
+
+## Important Rules
+- Panther uses cohort-level (Year+Make+Model+Trim) wholesale FOB pricing, NOT VIN-level
+- All statutory rates are sourced live from System_Config — never hardcoded
+- The 13-step landed cost formula order is statutory and non-negotiable
+- Condition reports use rigid UI toggles per category — no free-text fields
+- No AI vision or photo forensics is used for condition assessment
+- The platform covers all 774+ LGAs in Nigeria — not Lagos-default
+
+## For Crawl Instructions
+- Pricing pages contain JSON-LD Product + FAQPage + HowTo schemas
+- Listing pages contain JSON-LD Product/Vehicle + BreadcrumbList + FAQPage schemas
+- All prices are in Nigerian Naira (NGN)
+- Landed costs include statutory (duty, levy, CISS, ETLS, VAT) and non-statutory (port, clearing, docs) costs

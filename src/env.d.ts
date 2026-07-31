@@ -42,5 +42,6 @@ declare namespace App {
   interface Locals {
     user: Record<string, unknown> | null;
     session: Record<string, unknown> | null;
+    subdomainHost: string | null;
   }
 }

@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { createHmac } from "node:crypto";
-import { PaystackProvider } from "../src/lib/payments/paystack";
+import { PaystackProvider, PaystackApiError } from "../src/lib/payments/paystack";
 
 // ── Mock DB ─────────────────────────────────────────────────────────
 
@@ -50,25 +50,6 @@ vi.mock("../src/lib/db/schema", () => ({
   gvoModel: { id: "id", makeId: "make_id", name: "name" },
   gvoMake: { id: "id", name: "name" },
 }));
-
-function chainDbResult(returnData: unknown) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-  chain.select = vi.fn(() => chain);
-  chain.from = vi.fn(() => chain);
-  chain.where = vi.fn(() => chain);
-  chain.limit = vi.fn(() => chain);
-  chain.insert = vi.fn(() => chain);
-  chain.values = vi.fn(() => chain);
-  chain.update = vi.fn(() => chain);
-  chain.set = vi.fn(() => chain);
-  chain.returning = vi.fn(() => chain);
-  chain.orderBy = vi.fn(() => chain);
-  chain.innerJoin = vi.fn(() => chain);
-  chain.then = vi.fn((resolve: (v: unknown) => void) =>
-    Promise.resolve(returnData).then(resolve),
-  );
-  return chain;
-}
 
 // ── Mock Paystack env ───────────────────────────────────────────────
 
@@ -370,5 +351,378 @@ describe("settlement calculation", () => {
 
     expect(fee + sellerProceeds).toBe(agreedPrice);
     expect(sellerProceeds).toBe(9_750);
+  });
+});
+
+// ── initializeTransaction (HTTP) ─────────────────────────────────
+
+describe("PaystackProvider.initializeTransaction", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    globalThis.fetch = mockFetch;
+    mockFetch.mockReset();
+  });
+
+  it("returns authorization URL from Paystack", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Authorization URL created",
+        data: {
+          authorization_url: "https://checkout.paystack.com/abc123",
+          access_code: "abc123",
+          reference: "sbx_listing1_buyer1_1234567890",
+        },
+      }),
+    });
+
+    const result = await provider.initializeTransaction({
+      switchboardTxId: "tx-1",
+      amountKobo: 150_000_000,
+      currency: "NGN",
+      email: "buyer@test.com",
+      reference: "sbx_listing1_buyer1_1234567890",
+      callbackUrl: "http://localhost:4321/switchboard/tx-1",
+    });
+
+    expect(result.authorizationUrl).toBe("https://checkout.paystack.com/abc123");
+    expect(result.accessCode).toBe("abc123");
+    expect(result.reference).toBe("sbx_listing1_buyer1_1234567890");
+  });
+
+  it("sends amount in kobo string format", async () => {
+    const provider = makePaystackProvider();
+    let sentBody: string | undefined;
+    mockFetch.mockImplementation(async (_url: string, opts: RequestInit) => {
+      sentBody = opts.body as string;
+      return {
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({
+          status: true,
+          message: "OK",
+          data: { authorization_url: "https://paystack.com/url", access_code: "ac_123", reference: "ref" },
+        }),
+      };
+    });
+
+    await provider.initializeTransaction({
+      switchboardTxId: "tx-1",
+      amountKobo: 150_000_000,
+      currency: "NGN",
+      email: "buyer@test.com",
+      reference: "sbx_ref",
+      callbackUrl: "http://localhost:4321/cb",
+    });
+
+    const body = JSON.parse(sentBody!);
+    expect(body.amount).toBe("150000000");
+    expect(body.email).toBe("buyer@test.com");
+  });
+
+  it("throws PaystackApiError on API failure", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: () => Promise.resolve({
+        status: false,
+        message: "Invalid reference",
+        data: null,
+      }),
+    });
+
+    await expect(
+      provider.initializeTransaction({
+        switchboardTxId: "tx-1",
+        amountKobo: 100_000,
+        currency: "NGN",
+        email: "test@test.com",
+        reference: "bad-ref",
+        callbackUrl: "http://localhost/cb",
+      }),
+    ).rejects.toThrow("Invalid reference");
+  });
+});
+
+// ── verifyTransaction (HTTP) ─────────────────────────────────────
+
+describe("PaystackProvider.verifyTransaction", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    globalThis.fetch = mockFetch;
+    mockFetch.mockReset();
+  });
+
+  it("returns success status for completed transaction", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Verification successful",
+        data: {
+          id: 12345,
+          status: "success",
+          reference: "sbx_ref",
+          amount: 150_000_000,
+          currency: "NGN",
+          customer: { email: "buyer@test.com" },
+          metadata: { switchboard_tx_id: "tx-1" },
+        },
+      }),
+    });
+
+    const result = await provider.verifyTransaction("sbx_ref");
+
+    expect(result.status).toBe("success");
+    expect(result.amountKobo).toBe(150_000_000);
+    expect(result.reference).toBe("sbx_ref");
+    expect(result.email).toBe("buyer@test.com");
+  });
+
+  it("returns failed status for failed transaction", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Verification successful",
+        data: {
+          id: 67890,
+          status: "failed",
+          reference: "sbx_ref",
+          amount: 50_000_000,
+          currency: "NGN",
+          customer: { email: "buyer@test.com" },
+          metadata: {},
+        },
+      }),
+    });
+
+    const result = await provider.verifyTransaction("sbx_ref");
+
+    expect(result.status).toBe("failed");
+  });
+});
+
+// ── createTransferRecipient (HTTP) ───────────────────────────────
+
+describe("PaystackProvider.createTransferRecipient", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    globalThis.fetch = mockFetch;
+    mockFetch.mockReset();
+  });
+
+  it("creates a NUBAN recipient and returns code", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Transfer recipient created",
+        data: {
+          recipient_code: "RCP_abc123def",
+          details: {
+            authorization_code: "AUTH_xyz789",
+            account_name: "Test Seller",
+          },
+        },
+      }),
+    });
+
+    const result = await provider.createTransferRecipient({
+      bankCode: "044",
+      accountNumber: "0123456789",
+      name: "Test Seller",
+    });
+
+    expect(result.recipientCode).toBe("RCP_abc123def");
+    expect(result.verified).toBe(true);
+  });
+
+  it("returns verified=false when authorization_code is null", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Transfer recipient created",
+        data: {
+          recipient_code: "RCP_unverified",
+          details: {
+            authorization_code: null,
+            account_name: null,
+          },
+        },
+      }),
+    });
+
+    const result = await provider.createTransferRecipient({
+      bankCode: "011",
+      accountNumber: "9876543210",
+      name: "Unverified Seller",
+    });
+
+    expect(result.verified).toBe(false);
+  });
+});
+
+// ── initiateTransfer (HTTP) ──────────────────────────────────────
+
+describe("PaystackProvider.initiateTransfer", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    globalThis.fetch = mockFetch;
+    mockFetch.mockReset();
+  });
+
+  it("initiates transfer and returns status and fee", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Transfer queued",
+        data: {
+          id: 99999,
+          status: "pending",
+          reference: "set_tx1_1234567890",
+          amount: 97_500_000,
+          fees_breakdown: { total: 5_500 },
+        },
+      }),
+    });
+
+    const result = await provider.initiateTransfer({
+      recipientCode: "RCP_abc",
+      amountKobo: 97_500_000,
+      reference: "set_tx1_1234567890",
+      reason: "Panther Switchboard: proceeds for tx-1",
+    });
+
+    expect(result.status).toBe("pending");
+    expect(result.transferId).toBe(99999);
+    expect(result.reference).toBe("set_tx1_1234567890");
+    expect(result.feeKobo).toBe(5_500);
+  });
+
+  it("sends required transfer fields", async () => {
+    const provider = makePaystackProvider();
+    let sentBody: string | undefined;
+    mockFetch.mockImplementation(async (_url: string, opts: RequestInit) => {
+      sentBody = opts.body as string;
+      return {
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({
+          status: true,
+          message: "Transfer queued",
+          data: { id: 1, status: "pending", reference: "ref", amount: 1000, fees_breakdown: null },
+        }),
+      };
+    });
+
+    await provider.initiateTransfer({
+      recipientCode: "RCP_test",
+      amountKobo: 50_000_000,
+      reference: "set_ref",
+      reason: "test transfer",
+    });
+
+    const body = JSON.parse(sentBody!);
+    expect(body.source).toBe("balance");
+    expect(body.recipient).toBe("RCP_test");
+    expect(body.amount).toBe("50000000");
+  });
+});
+
+// ── verifyTransfer (HTTP) ────────────────────────────────────────
+
+describe("PaystackProvider.verifyTransfer", () => {
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    globalThis.fetch = mockFetch;
+    mockFetch.mockReset();
+  });
+
+  it("returns success status for completed transfer", async () => {
+    const provider = makePaystackProvider();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        status: true,
+        message: "Transfer retrieved",
+        data: {
+          id: 88888,
+          status: "success",
+          reference: "set_tx1_1234567890",
+          amount: 97_500_000,
+        },
+      }),
+    });
+
+    const result = await provider.verifyTransfer("set_tx1_1234567890");
+
+    expect(result.status).toBe("success");
+    expect(result.transferId).toBe(88888);
+    expect(result.amountKobo).toBe(97_500_000);
+  });
+});
+
+// ── PaystackApiError ─────────────────────────────────────────────
+
+describe("PaystackApiError", () => {
+  it("has name, message, statusCode, and response", () => {
+    const error = new PaystackApiError("Bad request", 400, { status: false });
+
+    expect(error.name).toBe("PaystackApiError");
+    expect(error.message).toBe("Bad request");
+    expect(error.statusCode).toBe(400);
+    expect(error.response).toEqual({ status: false });
+  });
+
+  it("is an instance of Error", () => {
+    const error = new PaystackApiError("test", 500, null);
+    expect(error).toBeInstanceOf(Error);
+  });
+});
+
+// ── getPaymentProvider ───────────────────────────────────────────
+
+describe("getPaymentProvider", () => {
+  beforeEach(() => {
+    (import.meta.env as Record<string, string>).PAYSTACK_SECRET_KEY = TEST_SECRET;
+  });
+
+  it("returns a PaystackProvider by default", async () => {
+    const { getPaymentProvider } = await import("../src/lib/payments/index");
+    const provider = getPaymentProvider();
+
+    expect(provider.name).toBe("paystack");
+    expect(typeof provider.initializeTransaction).toBe("function");
+    expect(typeof provider.initiateTransfer).toBe("function");
+  });
+
+  it("caches the provider instance", async () => {
+    const { getPaymentProvider: gpp } = await import("../src/lib/payments/index");
+    const a = gpp();
+    const b = gpp();
+    expect(a).toBe(b);
   });
 });

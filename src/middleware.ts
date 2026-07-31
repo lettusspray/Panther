@@ -1,11 +1,31 @@
 import { defineMiddleware } from "astro:middleware";
 import { auth } from "./lib/auth";
+import { getDealerBySubdomain } from "./lib/dealer";
+import { extractSubdomain, PANTHER_DOMAIN } from "./lib/dealer/subdomain";
 
 const PUBLIC_PATHS = ["/", "/pricing", "/api/health", "/auth/sign-in", "/auth/sign-up"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const path = url.pathname;
+  const host = url.hostname;
+
+  // Wildcard subdomain routing: *.panther.ng → dealer storefront
+  // Requires Cloudflare wildcard DNS record: *.panther.ng → this worker
+  const subdomain = extractSubdomain(host);
+  if (subdomain) {
+    const dealerProfile = await getDealerBySubdomain(subdomain);
+    if (dealerProfile) {
+      context.locals.subdomainHost = host;
+      return context.rewrite(`/dealers/${dealerProfile.slug}`);
+    }
+    // Subdomain not found — render 404
+    return context.rewrite("/404");
+  }
+  if (host !== PANTHER_DOMAIN) {
+    // Unknown host — render 404
+    return context.rewrite("/404");
+  }
 
   // Auth API routes and webhooks — pass through, never redirect
   // Webhooks are called by PSPs (Paystack) without session cookies
@@ -23,8 +43,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Vehicles and listings browse are public; creation/editing are protected
-  if (path.startsWith("/vehicles/") || (path.startsWith("/listings/") && path !== "/listings/new")) {
+  // Vehicles, listings browse, and dealer storefronts are public
+  if (
+    path.startsWith("/vehicles/") ||
+    path.startsWith("/dealers/") ||
+    (path.startsWith("/listings/") && path !== "/listings/new")
+  ) {
     return next();
   }
 

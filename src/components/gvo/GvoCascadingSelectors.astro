@@ -1,4 +1,6 @@
 ---
+import Button from "@/components/ui/Button.astro";
+
 export interface GvoSelectorsProps {
   stepNextId?: string;
   yearSelectId?: string;
@@ -35,9 +37,7 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
   </div>
 
   <div class="gvo-request-area">
-    <button type="button" class="gvo-request-toggle" id="gvo-request-toggle">
-      Can't find your vehicle?
-    </button>
+    <Button label="Can't find your vehicle?" type="button" variant="tertiary" size="sm" id="gvo-request-toggle" class="gvo-request-toggle" aria-expanded={false} />
     <div class="gvo-request-form" id="gvo-request-form" hidden>
       <p class="gvo-request-desc">
         Enter your vehicle details below.
@@ -56,9 +56,9 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
         <input type="text" class="field-input" id="gvo-custom-trim" placeholder="e.g. LE, Standard" />
       </div>
       <div class="gvo-lookup-actions">
-        <button type="button" class="gvo-lookup-btn" id="gvo-lookup-btn">Look up vehicle</button>
+        <Button label="Look up vehicle" type="button" variant="secondary" size="md" id="gvo-lookup-btn" class="gvo-lookup-btn" />
         <span class="gvo-lookup-or">or</span>
-        <button type="button" class="gvo-custom-btn" id="gvo-custom-btn">Continue with custom details</button>
+        <Button label="Continue with custom details" type="button" variant="secondary" size="md" id="gvo-custom-btn" class="gvo-custom-btn" />
       </div>
       <p class="gvo-lookup-status" id="gvo-lookup-status" hidden></p>
     </div>
@@ -249,8 +249,8 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
           return;
         }
 
+        lookupBtn.classList.add("is-loading");
         lookupBtn.disabled = true;
-        lookupBtn.textContent = "Looking up...";
         lookupStatus.hidden = true;
 
         try {
@@ -283,8 +283,8 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
           lookupStatus.className = "gvo-lookup-status gvo-lookup-status--error";
           lookupStatus.hidden = false;
         } finally {
+          lookupBtn.classList.remove("is-loading");
           lookupBtn.disabled = false;
-          lookupBtn.textContent = "Look up vehicle";
         }
       });
     }
@@ -334,10 +334,10 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     color: var(--panther-eyes-hex);
   }
   .field-select, .field-input {
-    height: 44px;
+    height: 48px;
     padding: 0 var(--space-3);
     border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
-    border-radius: 4px;
+    border-radius: 8px;
     font-family: var(--font-sans);
     font-size: 14px;
     color: var(--panther-resting-hex);
@@ -385,18 +385,7 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     border-top: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
   }
   .gvo-request-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    color: var(--panther-resting-hex);
-    text-decoration: underline;
-    text-underline-offset: 2px;
     padding: 0;
-  }
-  .gvo-request-toggle:hover {
-    color: var(--panther-roaring-hex);
   }
   .gvo-request-form {
     margin-top: var(--space-3);
@@ -417,41 +406,10 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     gap: var(--space-3);
     margin-top: var(--space-3);
   }
-  .gvo-lookup-btn {
-    height: 40px;
-    padding: 0 var(--space-5);
-    background: var(--panther-resting-hex);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .gvo-lookup-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
   .gvo-lookup-or {
     font-family: var(--font-sans);
     font-size: 12px;
     color: var(--panther-eyes-hex);
-  }
-  .gvo-custom-btn {
-    height: 40px;
-    padding: 0 var(--space-5);
-    background: transparent;
-    color: var(--panther-resting-hex);
-    border: 1px solid var(--panther-resting-hex);
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .gvo-custom-btn:hover {
-    background: color-mix(in oklch, var(--panther-resting-hex) 8%, #fff);
   }
   .gvo-lookup-status {
     font-family: var(--font-sans);

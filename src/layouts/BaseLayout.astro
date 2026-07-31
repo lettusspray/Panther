@@ -1,19 +1,34 @@
 ---
+import "../styles/postures.css";
+import Button from "@/components/ui/Button.astro";
+
 export interface Props {
   title: string;
   description?: string;
   posture?: "roaring" | "walking" | "eyes" | "resting";
+  theme?: "light" | "dark";
   jsonLd?: Record<string, unknown>[];
+  ogImage?: string;
+  ogUrl?: string;
+  ogType?: "website" | "article" | "profile";
 }
 
 const {
   title,
   description = "The trusted pricing and transaction platform for Nigerian vehicle buyers and sellers.",
   posture = "roaring",
+  theme = "light",
   jsonLd,
+  ogImage,
+  ogUrl,
+  ogType = "website",
 } = Astro.props;
 
+const siteName = "Panther";
+const fullTitle = ogType === "profile" ? title : `${title} | ${siteName}`;
+
 const postureClass = `posture-${posture}`;
+const themeClass = theme === "dark" ? "theme-dark" : "";
 const user = Astro.locals.user;
 ---
 
@@ -23,13 +38,24 @@ const user = Astro.locals.user;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
-    <title>{title} | Panther</title>
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogUrl && <meta property="og:url" content={ogUrl} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <title>{fullTitle}</title>
+    <link rel="canonical" href={ogUrl ?? "https://panther.ng"} />
     <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
     {jsonLd?.map((schema) => (
       <script type="application/ld+json" set:html={JSON.stringify(schema)} />
     ))}
   </head>
-  <body class={postureClass}>
+  <body class={postureClass + (themeClass ? ` ${themeClass}` : "")}>
     <header class="site-header">
       <div class="container-walking header-inner">
         <a href="/" class="logo font-serif">
@@ -45,9 +71,9 @@ const user = Astro.locals.user;
         </nav>
         <div class="header-actions">
           {user ? (
-            <a href="/dashboard" class="btn btn-secondary btn-sm">{user.name ?? "Dashboard"}</a>
+            <Button label={user.name ?? "Dashboard"} href="/dashboard" variant="secondary" size="sm" />
           ) : (
-            <a href="/auth/sign-in" class="btn btn-secondary btn-sm">Sign In</a>
+            <Button label="Sign In" href="/auth/sign-in" variant="secondary" size="sm" />
           )}
         </div>
       </div>
@@ -60,7 +86,7 @@ const user = Astro.locals.user;
     <footer class="site-footer">
       <div class="container-walking footer-inner">
         <p class="footer-text font-sans">
-          Panther — Trust is the product. Math is the foundation.
+          Panther
         </p>
         <div class="footer-links">
           <a href="/pricing">Pricing</a>
@@ -154,6 +180,38 @@ const user = Astro.locals.user;
         color: var(--panther-roaring-hex);
       }
 
+      /* ── Dark theme (§12): Roaring marketing zone only ─────── */
+      .theme-dark .site-header {
+        background: var(--dark-bg);
+        border-bottom-color: var(--dark-border);
+      }
+
+      .theme-dark .logo {
+        color: var(--dark-ink);
+      }
+
+      .theme-dark .nav-link {
+        color: var(--dark-body);
+      }
+
+      .theme-dark .nav-link:hover {
+        color: var(--dark-accent);
+      }
+
+      .theme-dark .site-footer {
+        background: color-mix(in oklch, var(--dark-bg) 100%, transparent);
+        border-top-color: var(--dark-border);
+      }
+
+      .theme-dark .footer-text,
+      .theme-dark .footer-links a {
+        color: var(--dark-muted);
+      }
+
+      .theme-dark .footer-links a:hover {
+        color: var(--dark-accent);
+      }
+
       @media (max-width: 768px) {
         .nav-list {
           gap: var(--space-4);
@@ -161,7 +219,7 @@ const user = Astro.locals.user;
 
         .footer-inner {
           flex-direction: column;
-          gap: var(--space-4);
+          gap: var(--space-3);
           text-align: center;
         }
       }

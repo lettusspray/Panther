@@ -2,13 +2,14 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BulkUploadForm from "../../components/listings/BulkUploadForm.astro";
 import styles from "./bulk.module.css";
-import "../../styles/global.css";
+import "@/styles/global.css";
 ---
 
 <BaseLayout
   title="Bulk Upload Listings"
   posture="walking"
   description="Upload multiple vehicle listings at once via CSV or VIN list."
+  ogUrl="https://panther.ng/listings/bulk"
 >
   <section class={styles.hero}>
     <h1 class={styles.heroTitle}>Bulk Upload Listings</h1>

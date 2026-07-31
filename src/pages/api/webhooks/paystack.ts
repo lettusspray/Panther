@@ -32,6 +32,11 @@ const STATUS_MAP: Record<string, SwitchboardStatus> = {
   "transfer.reversed": "funds_held", // stays — flag for manual review
 };
 
+// Events that auto-advance after the initial status transition.
+const AUTO_ADVANCE: Record<string, SwitchboardStatus> = {
+  "transaction.success": "inspection_window",
+};
+
 export const POST: APIRoute = async ({ request }) => {
   // ── Step 1: Raw body for HMAC-SHA512 verification ───────────────
   // CRITICAL: We MUST read the raw body bytes, NOT use request.json().
@@ -141,9 +146,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Update the transaction
+  // NOTE: providerRef was already set during initiateTransaction — do NOT
+  // overwrite it here. It's the sbx_... lookup key for future webhooks.
   const updates: Record<string, unknown> = {
     status: targetStatus,
-    providerRef: event.providerId,
     providerMetadata: event.rawPayload,
   };
 
@@ -155,6 +161,29 @@ export const POST: APIRoute = async ({ request }) => {
     .update(switchboardTransaction)
     .set(updates)
     .where(eq(switchboardTransaction.id, tx.id));
+
+  // Auto-advance: if this event triggers a follow-up state transition,
+  // apply it immediately. Currently used for payment confirmation →
+  // inspection window, since the payment has been successfully collected
+  // and there's no reason to wait.
+  const autoStatus = AUTO_ADVANCE[event.type];
+  if (autoStatus) {
+    const autoCheck = canTransition(targetStatus, autoStatus);
+    if (autoCheck.ok) {
+      const autoUpdates: Record<string, unknown> = { status: autoStatus };
+      if (autoStatus === "released" || autoStatus === "refunded") {
+        autoUpdates.completedAt = new Date();
+      }
+      await db
+        .update(switchboardTransaction)
+        .set(autoUpdates)
+        .where(eq(switchboardTransaction.id, tx.id));
+
+      console.log(
+        `[WEBHOOK] Switchboard tx=${tx.id}: ${targetStatus} → ${autoStatus} (auto-advance)`,
+      );
+    }
+  }
 
   console.log(
     `[WEBHOOK] Switchboard tx=${tx.id}: ${tx.status} → ${targetStatus} (event: ${event.type})`,

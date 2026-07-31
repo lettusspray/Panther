@@ -1,0 +1,359 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
+import styles from "./[slug].module.css";
+import "@/styles/global.css";
+import { getDealerBySlug, getDealerListings, getDealerReviews, getDealerStats } from "@/lib/dealer";
+import { getDealerCanonicalUrl } from "@/lib/dealer/subdomain";
+import { generateDealerJsonLd } from "@/lib/dealer/json-ld";
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect("/listings");
+
+const profile = await getDealerBySlug(slug);
+if (!profile) return Astro.redirect("/404");
+
+const [activeListings, soldListings, reviews, stats] = await Promise.all([
+  getDealerListings(profile.userId, "active"),
+  getDealerListings(profile.userId, ["sold", "removed"]),
+  getDealerReviews(profile.id),
+  getDealerStats(profile.userId),
+]);
+
+const subdomainHost = Astro.locals.subdomainHost;
+const canonicalUrl = getDealerCanonicalUrl(subdomainHost, slug);
+
+const pageUrl = canonicalUrl;
+const pageTitle = `${profile.businessName} — Vehicles for Sale in ${profile.city ?? "Nigeria"}`;
+const pageDesc = profile.about
+  ? `${profile.businessName}. ${profile.about.slice(0, 200)}`
+  : `${profile.businessName} — ${stats.active} vehicle${stats.active !== 1 ? "s" : ""} for sale${profile.city ? " in " + profile.city : ""}. Browse inventory, contact via WhatsApp, transact securely with Panther Switchboard escrow.`;
+const jsonLd = generateDealerJsonLd({
+  businessName: profile.businessName,
+  slug,
+  subdomainUrl: subdomainHost ? `https://${subdomainHost}` : undefined,
+  about: profile.about,
+  city: profile.city,
+  state: profile.state,
+  contactPhone: profile.contactPhone,
+  whatsappNumber: profile.whatsappNumber,
+  logo: profile.logo,
+  avgRating: stats.avgRating,
+  reviewCount: stats.reviewCount,
+  activeCount: stats.active,
+  soldCount: stats.sold,
+  googleBusinessUrl: profile.googleBusinessUrl,
+});
+
+const memberSince = profile.memberSince
+  ? new Date(profile.memberSince).toLocaleDateString("en-US", { year: "numeric", month: "long" })
+  : null;
+
+const formattedDate = (d: Date | null) =>
+  d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "";
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDesc}
+  posture="resting"
+  jsonLd={jsonLd}
+  ogImage={profile.bannerImage ?? profile.logo ?? undefined}
+  ogUrl={canonicalUrl}
+>
+  <div class={styles.page}>
+    <div class={styles.container}>
+      {/* Banner */}
+      <div class={styles.banner}>
+        {profile.bannerImage ? (
+          <img class={styles.bannerImg} src={profile.bannerImage} alt="" loading="eager" />
+        ) : (
+          <div class={styles.bannerFallback} />
+        )}
+      </div>
+
+      {/* Profile Header */}
+      <div class={styles.header}>
+        <div class={styles.headerMain}>
+          {profile.logo && (
+            <img class={styles.logo} src={profile.logo} alt={`${profile.businessName} logo`} loading="eager" />
+          )}
+          <div class={styles.headerInfo}>
+            <h1 class={styles.businessName}>
+              {profile.businessName}
+            </h1>
+            <p class={styles.aeoAnswer}>
+              Vehicle dealer{profile.city ? ` in ${profile.city}${profile.state ? ", " + profile.state : ""}` : " in Nigeria"}
+              {stats.active > 0 ? ` — ${stats.active} for sale` : ""}{stats.sold > 0 ? `, ${stats.sold} sold` : ""}.
+              {profile.whatsappNumber ? " Reachable on WhatsApp." : ""}
+              Panther Switchboard escrow.
+            </p>
+            <div class={styles.badges}>
+              {profile.isVerified && (
+                <span class={styles.badgeVerified}>Verified</span>
+              )}
+              {stats.avgRating && (
+                <span class={styles.badgeRating}>
+                  {stats.avgRating.toFixed(1)} <Icon name="star" size={14} />
+                </span>
+              )}
+              {profile.naddcRegistrationId && (
+                <span class={styles.badgeNaddc}>NADDC Registered</span>
+              )}
+            </div>
+            <div class={styles.meta}>
+              {profile.city && (
+                <span class={styles.metaItem}>
+                  {profile.city}{profile.state ? `, ${profile.state}` : ""}
+                </span>
+              )}
+              <span class={styles.metaItem}>
+                {stats.active} active
+              </span>
+              <span class={styles.metaItem}>
+                {stats.sold} sold
+              </span>
+              <span class={styles.metaItem}>
+                {stats.reviewCount} review{stats.reviewCount !== 1 ? "s" : ""}
+              </span>
+              {memberSince && (
+                <span class={styles.metaItem}>
+                  Since {memberSince}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact + Share Bar */}
+        <div class={styles.contactBar}>
+          {profile.contactPhone && (
+            <a href={`tel:${profile.contactPhone}`} class="btn btn-secondary btn-sm">
+              Call {profile.contactPhone}
+            </a>
+          )}
+          {profile.whatsappNumber && (
+            <a
+              href={`https://wa.me/${profile.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in a vehicle from your lot on Panther: ${pageUrl}`)}`}
+              class="btn btn-secondary btn-sm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
+            </a>
+          )}
+          <button
+            class="btn btn-secondary btn-sm"
+            id="share-btn"
+            data-url={pageUrl}
+            data-title={profile.businessName}
+          >
+            Share
+          </button>
+          {profile.googleBusinessUrl && (
+            <a href={profile.googleBusinessUrl} class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer">
+              Google Business
+            </a>
+          )}
+          {(profile.city || profile.state) && (
+            <a
+              href={`https://www.google.com/maps/search/${encodeURIComponent([profile.businessName, profile.city, profile.state, "Nigeria"].filter(Boolean).join(" "))}`}
+              class="btn btn-secondary btn-sm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on Maps
+            </a>
+          )}
+          {profile.inspectionAvailable && (
+            <span class={styles.contactTag}>Inspections</span>
+          )}
+          {profile.deliveryAvailable && (
+            <span class={styles.contactTag}>Delivery</span>
+          )}
+        </div>
+      </div>
+
+      {/* About */}
+      {profile.about && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>About</h2>
+          <p class={styles.aboutText}>{profile.about}</p>
+        </div>
+      )}
+
+      {/* Inventory Tabs */}
+      <div class={styles.section}>
+        <div class={styles.tabBar}>
+          <button class={`${styles.tab} ${styles.tabActive}`} data-tab="active">
+            For Sale ({stats.active})
+          </button>
+          {soldListings.length > 0 && (
+            <button class={styles.tab} data-tab="sold">
+              Sold ({soldListings.length})
+            </button>
+          )}
+          <div class={styles.tabSpacer} />
+          <a
+            href={`https://wa.me/${profile.whatsappNumber ? profile.whatsappNumber.replace(/[^0-9]/g, "") : ""}?text=${encodeURIComponent(`Hi, I'm interested in a vehicle from your lot: ${pageUrl}`)}`}
+            class="btn btn-primary btn-md"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Inquire via WhatsApp
+          </a>
+        </div>
+
+        {/* Active Listings */}
+        <div class={styles.tabPanel} data-panel="active">
+          {activeListings.length === 0 ? (
+            <p class={styles.emptyState}>No vehicles for sale.</p>
+          ) : (
+            <div class={styles.grid}>
+              {activeListings.map((l) => {
+                const imgs = l.images as { tag: string; url: string }[] | null;
+                const img = imgs?.[0];
+                return (
+                  <a href={`/listings/${l.id}`} class={styles.card} key={l.id}>
+                    <div class={styles.cardImageWrap}>
+                      {img ? (
+                        <img class={styles.cardImage} src={img.url} alt="" loading="lazy" />
+                      ) : (
+                        <div class={styles.cardImagePlaceholder} />
+                      )}
+                      <span class={styles.cardBadge}>Panther</span>
+                    </div>
+                    <div class={styles.cardBody}>
+                      <span class={styles.cardPrice}>
+                        ₦{Number(l.askingPriceNgn).toLocaleString()}
+                      </span>
+                      <span class={styles.cardTitle}>
+                        {l.modelYear}
+                      </span>
+                      {l.mileageKm && (
+                        <span class={styles.cardMileage}>
+                          {l.mileageKm.toLocaleString()} km
+                        </span>
+                      )}
+                      <span class={styles.cardDate}>
+                        Listed {formattedDate(l.createdAt)}
+                      </span>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Sold Listings */}
+        {soldListings.length > 0 && (
+          <div class={styles.tabPanel} data-panel="sold" style="display: none;">
+            <div class={styles.grid}>
+              {soldListings.map((l) => {
+                const imgs = l.images as { tag: string; url: string }[] | null;
+                const img = imgs?.[0];
+                return (
+                  <div class={`${styles.card} ${styles.cardSold}`} key={l.id}>
+                    <div class={styles.cardImageWrap}>
+                      {img ? (
+                        <img class={styles.cardImage} src={img.url} alt="" loading="lazy" />
+                      ) : (
+                        <div class={styles.cardImagePlaceholder} />
+                      )}
+                      <span class={styles.cardBadgeSold}>SOLD</span>
+                    </div>
+                    <div class={styles.cardBody}>
+                      <span class={styles.cardPrice}>
+                        ₦{Number(l.askingPriceNgn).toLocaleString()}
+                      </span>
+                      <span class={styles.cardTitle}>
+                        {l.modelYear}
+                      </span>
+                      {l.mileageKm && (
+                        <span class={styles.cardMileage}>
+                          {l.mileageKm.toLocaleString()} km
+                        </span>
+                      )}
+                      <span class={styles.cardSoldDate}>
+                        {l.status === "sold" ? "Sold" : "Unlisted"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Reviews */}
+      {reviews.length > 0 && (
+        <div class={styles.section}>
+          <h2 class={styles.sectionTitle}>
+            Reviews
+            {stats.avgRating && (
+              <span class={styles.sectionRating}>
+                {stats.avgRating.toFixed(1)} <Icon name="star" size={16} /> ({stats.reviewCount})
+              </span>
+            )}
+          </h2>
+          <div class={styles.reviewList}>
+            {reviews.map((r) => (
+              <div class={styles.reviewCard} key={r.id}>
+                <div class={styles.reviewHeader}>
+                  <span class={styles.reviewRating}>
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Icon name="star" size={16} class={i < r.rating ? styles.starOn : styles.starOff} />
+                    ))}
+                  </span>
+                  <span class={styles.reviewDate}>
+                    {formattedDate(r.createdAt)}
+                  </span>
+                </div>
+                {r.title && <h3 class={styles.reviewTitle}>{r.title}</h3>}
+                {r.body && <p class={styles.reviewBody}>{r.body}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Platform Fingerprint */}
+      <div class={styles.fingerprint}>
+        <span class={styles.fingerprintText}>
+          {profile.businessName} sells on <a href="https://panther.ng" class={styles.fingerprintLink}>Panther</a>.
+        </span>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll("[data-tab]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const tabName = tab.getAttribute("data-tab");
+      document.querySelectorAll("[data-tab]").forEach((t) => t.classList.remove("tabActive"));
+      document.querySelectorAll("[data-panel]").forEach((p) => {
+        (p as HTMLElement).style.display = "none";
+      });
+      tab.classList.add("tabActive");
+      const panel = document.querySelector(`[data-panel="${tabName}"]`);
+      if (panel) (panel as HTMLElement).style.display = "";
+    });
+  });
+
+  const shareBtn = document.getElementById("share-btn");
+  shareBtn?.addEventListener("click", async () => {
+    const url = shareBtn.getAttribute("data-url") ?? "";
+    const title = shareBtn.getAttribute("data-title") ?? "";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {}
+    } else {
+      const wa = `https://wa.me/?text=${encodeURIComponent(`${title} — ${url}`)}`;
+      window.open(wa, "_blank", "noopener");
+    }
+  });
+</script>

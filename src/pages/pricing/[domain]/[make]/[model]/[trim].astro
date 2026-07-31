@@ -1,13 +1,13 @@
 ---
-import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 import styles from "./[trim].module.css";
-import "../../../../styles/global.css";
-import { getTrimPricingData } from "../../../../lib/pricing/get-trim-pricing";
-import { db } from "../../../../lib/db";
-import { knowledgeEntry } from "../../../../lib/db/schema";
+import "@/styles/global.css";
+import { getTrimPricingData } from "@/lib/pricing/get-trim-pricing";
+import { db } from "@/lib/db";
+import { knowledgeEntry } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import KnowledgeHub from "../../../../components/pricing/KnowledgeHub.astro";
-import TcoCalculator from "../../../../components/pricing/TcoCalculator.astro";
+import KnowledgeHub from "@/components/pricing/KnowledgeHub.astro";
+import TcoCalculator from "@/components/pricing/TcoCalculator.astro";
 
 const { domain, make, model, trim } = Astro.params;
 if (!domain || !make || !model || !trim) return Astro.redirect("/pricing");
@@ -61,6 +61,7 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
   posture="eyes"
   description={pageDesc}
   jsonLd={jsonLd}
+  ogUrl={`https://panther.ng/pricing/${domain}/${make}/${model}/${trim}`}
 >
   <section class={styles.hero}>
     <nav class={styles.breadcrumb}>
@@ -90,25 +91,25 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Live market data temporarily unavailable</h1>
         <p class={styles.errorText}>Statutory rate data is stale. Pricing cannot be calculated until fresh data is available.</p>
-        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+        <a href="/pricing" class="btn btn-secondary btn-md">Browse Other Vehicles</a>
       </div>
     ) : noData ? (
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Pricing data not yet available for this vehicle</h1>
         <p class={styles.errorText}>This cohort hasn't been priced yet. Check back after the nightly pricing update, or browse available vehicles.</p>
-        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+        <a href="/pricing" class="btn btn-secondary btn-md">Browse Other Vehicles</a>
       </div>
     ) : notFound ? (
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Vehicle not found</h1>
         <p class={styles.errorText}>This vehicle doesn't exist in the Global Vehicle Ontology yet.</p>
-        <a href="/vehicles" class={styles.errorBtn}>Browse Vehicles</a>
+        <a href="/vehicles" class="btn btn-secondary btn-md">Browse Vehicles</a>
       </div>
     ) : (
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Something went wrong</h1>
         <p class={styles.errorText}>Could not load pricing data. Please try again.</p>
-        <a href="/pricing" class={styles.errorBtn}>Browse Other Vehicles</a>
+        <a href="/pricing" class="btn btn-secondary btn-md">Browse Other Vehicles</a>
       </div>
     )}
   </section>

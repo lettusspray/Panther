@@ -1,4 +1,6 @@
 ---
+import Button from "@/components/ui/Button.astro";
+
 export interface Props {
   formId: string;
 }
@@ -20,10 +22,7 @@ const { formId } = Astro.props;
         pattern="[A-HJ-NPR-Z0-9]{17}"
         autocomplete="off"
       />
-      <button type="button" id="vin-decode-btn" class="vin-decode-btn">
-        <span id="vin-btn-label">Decode VIN</span>
-        <span id="vin-btn-spinner" class="vin-spinner" hidden></span>
-      </button>
+      <Button label="Decode VIN" type="button" variant="secondary" size="md" id="vin-decode-btn" class="vin-decode-btn" />
     </div>
     <span class="vin-hint">Enter 17-character VIN to auto-populate vehicle details</span>
     <span id="vin-status" class="vin-status" hidden></span>
@@ -47,8 +46,6 @@ const { formId } = Astro.props;
   document.addEventListener("DOMContentLoaded", () => {
     const vinInput = document.getElementById("vin-input");
     const decodeBtn = document.getElementById("vin-decode-btn");
-    const btnLabel = document.getElementById("vin-btn-label");
-    const btnSpinner = document.getElementById("vin-btn-spinner");
     const vinStatus = document.getElementById("vin-status");
     const vinResult = document.getElementById("vin-result");
     const form = document.getElementById(formId);
@@ -64,8 +61,7 @@ const { formId } = Astro.props;
         return;
       }
       vinStatus.hidden = true;
-      btnLabel.hidden = true;
-      btnSpinner.hidden = false;
+      decodeBtn.classList.add("is-loading");
       decodeBtn.disabled = true;
       vinResult.hidden = true;
 
@@ -112,8 +108,7 @@ const { formId } = Astro.props;
         vinStatus.className = "vin-status vin-status--error";
         vinStatus.hidden = false;
       } finally {
-        btnLabel.hidden = false;
-        btnSpinner.hidden = true;
+        decodeBtn.classList.remove("is-loading");
         decodeBtn.disabled = false;
       }
     }
@@ -150,10 +145,10 @@ const { formId } = Astro.props;
   }
   .vin-input {
     flex: 1;
-    height: 44px;
+    height: 48px;
     padding: 0 var(--space-3);
     border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
-    border-radius: 4px;
+    border-radius: 8px;
     font-family: var(--font-sans);
     font-size: 14px;
     color: var(--panther-resting-hex);
@@ -164,37 +159,6 @@ const { formId } = Astro.props;
   .vin-input:focus {
     border-color: var(--panther-resting-hex);
     outline: none;
-  }
-  .vin-decode-btn {
-    height: 44px;
-    padding: 0 var(--space-4);
-    background: var(--panther-resting-hex);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  .vin-decode-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  .vin-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: vinSpin 600ms linear infinite;
-  }
-  @keyframes vinSpin {
-    to { transform: rotate(360deg); }
   }
   .vin-hint {
     font-family: var(--font-sans);

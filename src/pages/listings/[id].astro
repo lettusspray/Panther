@@ -1,13 +1,14 @@
 ---
-import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 import styles from "./[id].module.css";
-import "../../../styles/global.css";
-import { db } from "../../../lib/db";
-import { listing, gvoTrim, gvoModel, gvoMake, gvoDomain, gvoCategory, user, knowledgeEntry } from "../../../lib/db/schema";
+import "@/styles/global.css";
+import { db } from "@/lib/db";
+import { listing, gvoTrim, gvoModel, gvoMake, gvoDomain, gvoCategory, user, knowledgeEntry } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import ConditionReportDisplay from "../../../components/listings/ConditionReportDisplay.astro";
-import ReportListing from "../../../components/listings/ReportListing.astro";
-import KnowledgeHub from "../../../components/pricing/KnowledgeHub.astro";
+import ConditionReportDisplay from "@/components/listings/ConditionReportDisplay.astro";
+import ReportListing from "@/components/listings/ReportListing.astro";
+import KnowledgeHub from "@/components/pricing/KnowledgeHub.astro";
+import { generateListingJsonLd } from "@/lib/listings/json-ld";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/listings");
@@ -24,6 +25,8 @@ const [item] = await db
     status: listing.status,
     createdAt: listing.createdAt,
     trimName: gvoTrim.name,
+    engine: gvoTrim.engine,
+    transmission: gvoTrim.transmission,
     modelName: gvoModel.name,
     makeName: gvoMake.name,
     domainSlug: gvoDomain.slug,
@@ -59,9 +62,6 @@ const conditionSummary = condition
     }
   : null;
 
-
----
-
 const images = (item.images as Array<{ tag: string; url: string }> | null) ?? [];
 const videos = (item.videos as Array<{ tag: string; url: string }> | null) ?? [];
 
@@ -88,6 +88,21 @@ const displayTitle = displayTrim
   ? `${item.modelYear} ${displayMake} ${displayModel} — ${displayTrim}`
   : `${item.modelYear} ${displayMake} ${displayModel}`;
 
+const jsonLd = generateListingJsonLd({
+  id: item.id,
+  modelYear: item.modelYear,
+  make: displayMake,
+  model: displayModel,
+  trim: displayTrim || null,
+  mileageKm: item.mileageKm,
+  askingPriceNgn: Number(item.askingPriceNgn),
+  engine: item.engine,
+  transmission: item.transmission,
+  images: item.images as Array<{ tag: string; url: string }> | null,
+  createdAt: item.createdAt,
+  condition,
+});
+
 // Fetch Knowledge Hub for this listing
 let khWarnings: string[] = [];
 let khSpecs: Record<string, unknown> | null = null;
@@ -109,6 +124,9 @@ if (item.trimId) {
   title={displayTitle}
   posture="eyes"
   description={`${item.modelYear} ${displayMake} ${displayModel}${displayTrim ? " " + displayTrim : ""}. Condition report, pricing, and specifications.`}
+  jsonLd={jsonLd}
+  ogImage={images?.[0]?.url ?? undefined}
+  ogUrl={`https://panther.ng/listings/${item.id}`}
 >
   <section class={styles.hero}>
     <nav class={styles.breadcrumb}>
@@ -117,9 +135,13 @@ if (item.trimId) {
       <span class={styles.breadcrumbCurrent}>{item.modelYear} {displayMake} {displayModel}</span>
     </nav>
     <h1 class={styles.heroTitle}>
-      {item.modelYear} {displayMake} {displayModel}
+      What is the asking price for a {item.modelYear} {displayMake} {displayModel}{displayTrim ? " " + displayTrim : ""} in Nigeria?
     </h1>
-    <p class={styles.heroSubtitle}>{displayTrim}</p>
+    <p class={styles.heroAnswer}>
+      This {item.modelYear} {displayMake} {displayModel}{displayTrim ? " " + displayTrim : ""} is listed at{" "}
+      <strong class={styles.answerValue}>₦{Number(item.askingPriceNgn).toLocaleString()}</strong>
+      {" "}with {item.mileageKm ? `${item.mileageKm.toLocaleString()} km` : "unavailable mileage"}. Condition report, specifications, and Knowledge Hub data are available below.
+    </p>
   </section>
 
   <div class={styles.contentGrid}>
@@ -249,8 +271,8 @@ if (item.trimId) {
             <span style="font-weight: 500; color: var(--panther-resting-hex);">Seller</span>
           </div>
         </div>
-        <button class={styles.switchboardBtn} id="switchboard-buy-btn" style={`${!Astro.locals.user || Astro.locals.user.id === item.sellerId ? "display: none;" : ""}`}>
-          Secure Deal
+        <button class="btn btn-primary btn-lg btn-full" id="switchboard-buy-btn" style={`${!Astro.locals.user || Astro.locals.user.id === item.sellerId ? "display: none;" : ""}`}>
+          <span class="btn-label">Secure Deal</span>
         </button>
         <p id="switchboard-status" style="display: none; font-family: var(--font-sans); font-size: 13px; text-align: center; padding: var(--space-3); border-radius: 6px;"></p>
       </div>
@@ -258,6 +280,13 @@ if (item.trimId) {
       <!-- Report Listing — Constitution §IV.3, F2.0b -->
       <ReportListing listingId={item.id} />
     </div>
+  </div>
+
+  <!-- Platform Fingerprint -->
+  <div class={styles.fingerprint}>
+    <span class={styles.fingerprintText}>
+      Listed on <a href="https://panther.ng" class={styles.fingerprintLink}>Panther</a>.
+    </span>
   </div>
 </BaseLayout>
 
@@ -288,7 +317,8 @@ if (item.trimId) {
         if (!confirm(`Initiate Switchboard purchase for ₦${price.toLocaleString()}? The seller will be notified and your funds will be held securely until you confirm the vehicle.`)) return;
 
         buyBtn.disabled = true;
-        buyBtn.textContent = "Initiating...";
+        buyBtn.classList.add("is-loading");
+        buyBtn.querySelector(".btn-label").textContent = "Initiating...";
 
         try {
           const res = await fetch("/api/switchboard", {
@@ -311,8 +341,9 @@ if (item.trimId) {
             statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
             statusEl.style.color = "#C0392B";
             statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+            buyBtn.classList.remove("is-loading");
             buyBtn.disabled = false;
-            buyBtn.textContent = "Secure Deal";
+            buyBtn.querySelector(".btn-label").textContent = "Secure Deal";
           }
         } catch {
           statusEl.textContent = "Network error. Please try again.";
@@ -320,8 +351,9 @@ if (item.trimId) {
           statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
           statusEl.style.color = "#C0392B";
           statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+          buyBtn.classList.remove("is-loading");
           buyBtn.disabled = false;
-          buyBtn.textContent = "Secure Deal";
+          buyBtn.querySelector(".btn-label").textContent = "Secure Deal";
         }
       });
     }

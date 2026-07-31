@@ -1,11 +1,12 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./switchboard.module.css";
-import "../../styles/global.css";
-import { db } from "../../lib/db";
-import { switchboardTransaction, listing, gvoTrim, gvoModel, gvoMake, gvoCategory, gvoDomain, user } from "../../lib/db/schema";
+import "@/styles/global.css";
+import { db } from "@/lib/db";
+import { switchboardTransaction, listing, gvoTrim, gvoModel, gvoMake, gvoCategory, gvoDomain, user } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { calculateSellerProceeds } from "../../lib/trust/switchboard";
+import { calculateSellerProceeds } from "@/lib/trust/switchboard";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/switchboard");
@@ -107,6 +108,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
   title={`${vehicleName} — Transaction`}
   posture="resting"
   description={`Switchboard transaction for ${vehicleName}. Status: ${tx.status}.`}
+  ogUrl={`https://panther.ng/switchboard/${params.id}`}
 >
   <div class={styles.page}>
     {/* Breadcrumb */}
@@ -129,7 +131,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
             )}
             <div class={`${styles.stepperStep} ${isActive ? styles.stepperActive : ""} ${isDone ? styles.stepperDone : ""}`}>
               <div class={styles.stepperCircle}>
-                {isDone ? "✓" : i + 1}
+                {isDone ? <Icon name="check" size={14} /> : i + 1}
               </div>
               <span class={styles.stepperLabel}>{step.label}</span>
             </div>
@@ -246,19 +248,21 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
             <div class={styles.actions}>
               {/* Confirm button — buyer or seller confirms */}
               {(isBuyer || isSeller) && (tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
-                <button class={styles.btnConfirm} id="confirm-btn">
-                  {tx.status === "inspection_window"
-                    ? (isBuyer ? "Confirm Vehicle" : "Waiting for buyer")
-                    : tx.status === "buyer_confirmed"
-                      ? (isSeller ? "Confirm & Release Funds" : "Waiting for seller")
-                      : (isBuyer ? "Confirm Vehicle" : "Confirm & Release Funds")
-                  }
+                <button class="btn btn-primary btn-md btn-full" id="confirm-btn">
+                  <span class="btn-label">
+                    {tx.status === "inspection_window"
+                      ? (isBuyer ? "Confirm Vehicle" : "Waiting for buyer")
+                      : tx.status === "buyer_confirmed"
+                        ? (isSeller ? "Confirm & Release Funds" : "Waiting for seller")
+                        : (isBuyer ? "Confirm Vehicle" : "Confirm & Release Funds")
+                    }
+                  </span>
                 </button>
               )}
 
               {/* Cancel — full refund, zero fee */}
-              <button class={styles.btnCancel} id="cancel-btn">
-                Cancel Transaction
+              <button class="btn btn-secondary btn-md btn-full" id="cancel-btn">
+                <span class="btn-label">Cancel Transaction</span>
               </button>
               <p style="font-family: var(--font-sans); font-size: 12px; color: var(--panther-eyes-hex); text-align: center; margin-top: calc(-1 * var(--space-2));">
                 Full refund. No cancellation fee. Ever.
@@ -266,8 +270,8 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 
               {/* Dispute */}
               {(tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
-                <button class={styles.btnDanger} id="dispute-btn">
-                  Raise Dispute
+                <button class="btn btn-danger btn-md btn-full" id="dispute-btn">
+                  <span class="btn-label">Raise Dispute</span>
                 </button>
               )}
             </div>
@@ -318,12 +322,19 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
     }, 3000);
   }
 
+  function setBtnLabel(btn: HTMLButtonElement, text: string) {
+    const labelEl = btn.querySelector(".btn-label");
+    if (labelEl) labelEl.textContent = text;
+    else btn.textContent = text;
+  }
+
   // Confirm
-  const confirmBtn = document.getElementById("confirm-btn");
+  const confirmBtn = document.getElementById("confirm-btn") as HTMLButtonElement | null;
   if (confirmBtn) {
     confirmBtn.addEventListener("click", async () => {
       confirmBtn.disabled = true;
-      confirmBtn.textContent = "Confirming...";
+      confirmBtn.classList.add("is-loading");
+      setBtnLabel(confirmBtn, "Confirming...");
       try {
         const res = await fetch(`/api/switchboard/${transactionId}/confirm`, { method: "POST" });
         const data = await res.json();
@@ -332,24 +343,27 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
           setTimeout(() => window.location.reload(), 1500);
         } else {
           showToast(data.error || "Failed to confirm.", true);
+          confirmBtn.classList.remove("is-loading");
           confirmBtn.disabled = false;
-          confirmBtn.textContent = "Confirm";
+          setBtnLabel(confirmBtn, "Confirm");
         }
       } catch {
         showToast("Network error. Please try again.", true);
+        confirmBtn.classList.remove("is-loading");
         confirmBtn.disabled = false;
-        confirmBtn.textContent = "Confirm";
+        setBtnLabel(confirmBtn, "Confirm");
       }
     });
   }
 
   // Cancel
-  const cancelBtn = document.getElementById("cancel-btn");
+  const cancelBtn = document.getElementById("cancel-btn") as HTMLButtonElement | null;
   if (cancelBtn) {
     cancelBtn.addEventListener("click", async () => {
       if (!confirm("Cancel this transaction? You'll receive a full refund. No cancellation fee.")) return;
       cancelBtn.disabled = true;
-      cancelBtn.textContent = "Cancelling...";
+      cancelBtn.classList.add("is-loading");
+      setBtnLabel(cancelBtn, "Cancelling...");
       try {
         const res = await fetch(`/api/switchboard/${transactionId}/cancel`, { method: "POST" });
         const data = await res.json();
@@ -358,24 +372,27 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
           setTimeout(() => window.location.reload(), 1500);
         } else {
           showToast(data.error || "Failed to cancel.", true);
+          cancelBtn.classList.remove("is-loading");
           cancelBtn.disabled = false;
-          cancelBtn.textContent = "Cancel Transaction";
+          setBtnLabel(cancelBtn, "Cancel Transaction");
         }
       } catch {
         showToast("Network error. Please try again.", true);
+        cancelBtn.classList.remove("is-loading");
         cancelBtn.disabled = false;
-        cancelBtn.textContent = "Cancel Transaction";
+        setBtnLabel(cancelBtn, "Cancel Transaction");
       }
     });
   }
 
   // Dispute
-  const disputeBtn = document.getElementById("dispute-btn");
+  const disputeBtn = document.getElementById("dispute-btn") as HTMLButtonElement | null;
   if (disputeBtn) {
     disputeBtn.addEventListener("click", async () => {
       if (!confirm("Raise a dispute? This will pause the transaction and both parties will be contacted.")) return;
       disputeBtn.disabled = true;
-      disputeBtn.textContent = "Raising dispute...";
+      disputeBtn.classList.add("is-loading");
+      setBtnLabel(disputeBtn, "Raising dispute...");
       try {
         const res = await fetch(`/api/switchboard/${transactionId}/dispute`, { method: "POST" });
         const data = await res.json();
@@ -384,13 +401,15 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
           setTimeout(() => window.location.reload(), 1500);
         } else {
           showToast(data.error || "Failed to raise dispute.", true);
+          disputeBtn.classList.remove("is-loading");
           disputeBtn.disabled = false;
-          disputeBtn.textContent = "Raise Dispute";
+          setBtnLabel(disputeBtn, "Raise Dispute");
         }
       } catch {
         showToast("Network error. Please try again.", true);
+        disputeBtn.classList.remove("is-loading");
         disputeBtn.disabled = false;
-        disputeBtn.textContent = "Raise Dispute";
+        setBtnLabel(disputeBtn, "Raise Dispute");
       }
     });
   }

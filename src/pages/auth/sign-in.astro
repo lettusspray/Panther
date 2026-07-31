@@ -1,9 +1,10 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import "../../styles/global.css";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Button from "@/components/ui/Button.astro";
+import "@/styles/global.css";
 ---
 
-<BaseLayout title="Sign In" posture="walking">
+<BaseLayout title="Sign In" posture="walking" ogUrl="https://panther.ng/auth/sign-in">
   <section class="auth-page">
     <div class="auth-card">
       <h1 class="auth-title">Welcome back</h1>
@@ -38,7 +39,7 @@ import "../../styles/global.css";
 
         <div id="error-message" class="form-error" hidden></div>
 
-        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+        <Button label="Sign In" type="submit" variant="primary" full />
       </form>
 
       <p class="auth-alt">
@@ -126,32 +127,6 @@ import "../../styles/global.css";
     border-radius: 8px;
     font-size: 13px;
     color: #dc2626;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-3) var(--space-6);
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 500;
-    font-family: var(--font-sans);
-    transition: all 200ms ease;
-  }
-
-  .btn-primary {
-    background: var(--panther-resting-hex);
-    color: #fff;
-  }
-
-  .btn-primary:hover {
-    background: color-mix(in oklch, var(--panther-resting-hex) 85%, #000);
-  }
-
-  .btn-full {
-    width: 100%;
-    margin-top: var(--space-2);
   }
 
   .auth-alt {

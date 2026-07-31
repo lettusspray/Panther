@@ -1,20 +1,68 @@
 import { db } from "../db";
-import { listing } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { listing, dealer, user } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export interface ActivateListingResult {
   ok: boolean;
   error?: string;
   listingId?: string;
+  dealerSlug?: string;
+}
+
+function slug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 60);
+}
+
+async function ensureDealerProfile(userId: string): Promise<string | null> {
+  const existing = await db
+    .select({ id: dealer.id, slug: dealer.slug })
+    .from(dealer)
+    .where(eq(dealer.userId, userId))
+    .limit(1);
+
+  if (existing.length > 0) return existing[0].slug;
+
+  const [seller] = await db
+    .select({ name: user.name })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (!seller?.name) return null;
+
+  const baseSlug = slug(seller.name);
+  let finalSlug = baseSlug;
+
+  for (let attempt = 1; attempt < 100; attempt++) {
+    const taken = await db
+      .select({ id: dealer.id })
+      .from(dealer)
+      .where(eq(dealer.slug, finalSlug))
+      .limit(1);
+    if (taken.length === 0) break;
+    finalSlug = `${baseSlug}-${attempt}`;
+  }
+
+  await db.insert(dealer).values({
+    userId,
+    businessName: seller.name,
+    slug: finalSlug,
+  });
+
+  return finalSlug;
 }
 
 /**
  * Activate a draft listing → active.
  *
  * Constitution §IV.1 minimum viable listing:
- * - Domain + GVO identification (trim must exist) ✓ validated at creation
- * - Price > 0 ✓ validated at creation
- * - Condition report complete ✓ validated at creation
+ * - Domain + GVO identification (trim must exist) validated at creation
+ * - Price > 0 validated at creation
+ * - Condition report complete validated at creation
  * - ≥4 tagged images ← validated here (activation gate)
  *
  * Additional checks:
@@ -107,5 +155,7 @@ export async function activateListing(
     .set({ status: "active", updatedAt: new Date() })
     .where(eq(listing.id, listingId));
 
-  return { ok: true, listingId };
+  const dealerSlug = await ensureDealerProfile(userId);
+
+  return { ok: true, listingId, dealerSlug: dealerSlug ?? undefined };
 }

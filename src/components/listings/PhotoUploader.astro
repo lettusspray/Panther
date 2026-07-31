@@ -1,4 +1,6 @@
 ---
+import Icon from "@/components/ui/Icon.astro";
+
 export interface PhotoEntry {
   file: File;
   tag: string;
@@ -36,7 +38,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
   <div id="pu-preview" class="pu-preview-grid"></div>
 
   <div class="pu-upload-area" id="pu-upload-area">
-    <span class="pu-upload-icon">📷</span>
+    <span class="pu-upload-icon"><Icon name="camera" size={28} /></span>
     <p class="pu-upload-text">Click to add photos</p>
     <p class="pu-upload-hint">JPEG, PNG, or WebP — max {maxFileSizeMb}MB each</p>
     <input type="file" id="pu-input" accept="image/jpeg,image/png,image/webp" multiple hidden />
@@ -132,7 +134,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
         div.className = "pu-preview-item";
 
         if (entry.uploadError) {
-          div.innerHTML = `<div class="pu-preview-error">Upload failed: ${entry.uploadError}<br><button class="pu-retry-btn" data-idx="${i}">Retry</button></div>`;
+          div.innerHTML = `<div class="pu-preview-error">Upload failed: ${entry.uploadError}<br><button class="btn btn-secondary btn-sm pu-retry-btn" data-idx="${i}">Retry</button></div>`;
           div.querySelector(".pu-retry-btn")?.addEventListener("click", () => this.retry(i));
         } else if (entry.uploading) {
           div.innerHTML = `<div class="pu-preview-loading"><div class="pu-spinner"></div><span>Uploading...</span></div>`;
@@ -289,13 +291,6 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
   }
   .pu-retry-btn {
     margin-top: var(--space-1);
-    padding: 2px 8px;
-    font-size: 10px;
-    background: transparent;
-    border: 1px solid #C0392B;
-    border-radius: 3px;
-    color: #C0392B;
-    cursor: pointer;
   }
   .pu-remove-btn {
     position: absolute;

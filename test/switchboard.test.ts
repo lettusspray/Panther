@@ -61,6 +61,12 @@ import {
   calculateSellerProceeds,
   canTransition,
   refundTransaction,
+  initiateTransaction,
+  transitionTransaction,
+  getTransactionById,
+  getTransactionWithDetails,
+  getTransactionsByBuyer,
+  getTransactionsBySeller,
 } from "../src/lib/trust/switchboard";
 import type { SwitchboardStatus } from "../src/lib/trust/switchboard";
 
@@ -377,4 +383,242 @@ describe("fee/proceeds invariant", () => {
       expect(sellerReceivesNgn).toBeGreaterThanOrEqual(0);
     },
   );
+});
+
+// ── initiateTransaction ──────────────────────────────────────────
+
+describe("initiateTransaction", () => {
+  it("creates a transaction with status=initiated and feePayer=seller", async () => {
+    const created = { ...mockTx, id: "new-tx" };
+    chainDbResult([created]);
+    db.insert.mockReturnValue(chainDbResult([created]));
+
+    const result = await initiateTransaction({
+      listingId: "listing-1",
+      buyerId: "buyer-1",
+      sellerId: "seller-1",
+      agreedPriceNgn: 1_000_000,
+    });
+
+    expect(result.id).toBe("new-tx");
+    expect(result.status).toBe("initiated");
+    expect(result.feePayer).toBe("seller");
+  });
+
+  it("calculates and stores platform fee on creation", async () => {
+    const created = { ...mockTx, id: "tx-2", platformFeeNgn: "25000" };
+    db.insert.mockReturnValue(chainDbResult([created]));
+
+    const result = await initiateTransaction({
+      listingId: "listing-1",
+      buyerId: "buyer-1",
+      sellerId: "seller-1",
+      agreedPriceNgn: 1_000_000,
+    });
+
+    expect(Number(result.platformFeeNgn)).toBe(25_000);
+  });
+
+  it("accepts custom fee rate override", async () => {
+    const created = { ...mockTx, id: "tx-3", platformFeeNgn: "50000" };
+    db.insert.mockReturnValue(chainDbResult([created]));
+
+    const result = await initiateTransaction({
+      listingId: "listing-1",
+      buyerId: "buyer-1",
+      sellerId: "seller-1",
+      agreedPriceNgn: 1_000_000,
+      feeRate: 0.05,
+    });
+
+    expect(Number(result.platformFeeNgn)).toBe(50_000);
+  });
+});
+
+// ── transitionTransaction ────────────────────────────────────────
+
+describe("transitionTransaction", () => {
+  it("transitions from initiated to funds_held", async () => {
+    const updated = { ...mockTx, status: "funds_held" };
+    db.select.mockReturnValue(chainDbResult([mockTx]));
+    db.update.mockReturnValue(chainDbResult([updated]));
+
+    const result = await transitionTransaction("tx-1", "funds_held");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.transaction.status).toBe("funds_held");
+    }
+  });
+
+  it("returns error for nonexistent transaction", async () => {
+    db.select.mockReturnValue(chainDbResult([]));
+
+    const result = await transitionTransaction("nonexistent", "funds_held");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Transaction not found");
+    }
+  });
+
+  it("returns error for invalid transition", async () => {
+    db.select.mockReturnValue(chainDbResult([mockTx]));
+
+    const result = await transitionTransaction("tx-1", "released");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("Invalid transition");
+      expect(result.error).toContain("initiated → released");
+    }
+  });
+
+  it("sets completedAt when transitioning to released", async () => {
+    const initiated = { ...mockTx, status: "seller_confirmed" };
+    const released = { ...mockTx, status: "released", completedAt: new Date() };
+    db.select.mockReturnValue(chainDbResult([initiated]));
+    db.update.mockReturnValue(chainDbResult([released]));
+
+    const result = await transitionTransaction("tx-1", "released");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.transaction.completedAt).toBeInstanceOf(Date);
+    }
+  });
+
+  it("sets completedAt when transitioning to refunded", async () => {
+    const refunded = { ...mockTx, status: "refunded", completedAt: new Date(), platformFeeNgn: "0" };
+    db.select.mockReturnValue(chainDbResult([mockTx]));
+    db.update.mockReturnValue(chainDbResult([refunded]));
+
+    const result = await transitionTransaction("tx-1", "refunded");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.transaction.completedAt).toBeInstanceOf(Date);
+    }
+  });
+
+  it("does not set completedAt for non-terminal transitions", async () => {
+    const held = { ...mockTx, status: "funds_held" };
+    db.select.mockReturnValue(chainDbResult([mockTx]));
+    db.update.mockReturnValue(chainDbResult([held]));
+
+    const result = await transitionTransaction("tx-1", "funds_held");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.transaction.completedAt).toBeNull();
+    }
+  });
+});
+
+// ── getTransactionById ───────────────────────────────────────────
+
+describe("getTransactionById", () => {
+  it("returns the transaction when found", async () => {
+    db.select.mockReturnValue(chainDbResult([mockTx]));
+
+    const result = await getTransactionById("tx-1");
+
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe("tx-1");
+    expect(result!.status).toBe("initiated");
+  });
+
+  it("returns null when transaction does not exist", async () => {
+    db.select.mockReturnValue(chainDbResult([]));
+
+    const result = await getTransactionById("nonexistent");
+
+    expect(result).toBeNull();
+  });
+});
+
+// ── getTransactionWithDetails ────────────────────────────────────
+
+describe("getTransactionWithDetails", () => {
+  const detailedTx = {
+    id: "tx-1",
+    status: "initiated",
+    agreedPriceNgn: "1000000",
+    platformFeeNgn: "25000",
+    feePayer: "seller",
+    initiatedAt: new Date(),
+    completedAt: null,
+    buyerName: "Test Buyer",
+    buyerEmail: "buyer@test.com",
+    listingModelYear: 2022,
+    trimName: "LE",
+    modelName: "Camry",
+    makeName: "Toyota",
+  };
+
+  it("returns transaction with joined details", async () => {
+    db.select.mockReturnValue(chainDbResult([detailedTx]));
+
+    const result = await getTransactionWithDetails("tx-1");
+
+    expect(result).not.toBeNull();
+    expect(result!.buyerName).toBe("Test Buyer");
+    expect(result!.makeName).toBe("Toyota");
+    expect(result!.modelName).toBe("Camry");
+    expect(result!.trimName).toBe("LE");
+    expect(result!.listingModelYear).toBe(2022);
+  });
+
+  it("returns null when transaction does not exist", async () => {
+    db.select.mockReturnValue(chainDbResult([]));
+
+    const result = await getTransactionWithDetails("nonexistent");
+
+    expect(result).toBeNull();
+  });
+});
+
+// ── getTransactionsByBuyer ───────────────────────────────────────
+
+describe("getTransactionsByBuyer", () => {
+  it("returns transactions for given buyer", async () => {
+    const txs = [mockTx, { ...mockTx, id: "tx-2", status: "funds_held" }];
+    db.select.mockReturnValue(chainDbResult(txs));
+
+    const result = await getTransactionsByBuyer("buyer-1");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("tx-1");
+    expect(result[1].id).toBe("tx-2");
+  });
+
+  it("returns empty array when buyer has no transactions", async () => {
+    db.select.mockReturnValue(chainDbResult([]));
+
+    const result = await getTransactionsByBuyer("no-tx-buyer");
+
+    expect(result).toHaveLength(0);
+  });
+});
+
+// ── getTransactionsBySeller ──────────────────────────────────────
+
+describe("getTransactionsBySeller", () => {
+  it("returns transactions for given seller", async () => {
+    const txs = [mockTx];
+    db.select.mockReturnValue(chainDbResult(txs));
+
+    const result = await getTransactionsBySeller("seller-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].sellerId).toBe("seller-1");
+  });
+
+  it("returns empty array when seller has no transactions", async () => {
+    db.select.mockReturnValue(chainDbResult([]));
+
+    const result = await getTransactionsBySeller("no-tx-seller");
+
+    expect(result).toHaveLength(0);
+  });
 });

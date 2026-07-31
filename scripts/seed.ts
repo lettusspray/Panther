@@ -1537,6 +1537,15 @@ async function seedSystemConfig(): Promise<void> {
   console.log(`System config seeded: ${count} new rows (${SYSTEM_CONFIG_SEED.length} total)`);
 }
 
+async function seedDealer(): Promise<void> {
+  const existingUsers = await db.select({ id: user.id }).from(user).limit(1);
+  if (existingUsers.length > 0) {
+    console.log("Users exist — skipping dealer seed (run manually for specific user).");
+    return;
+  }
+  console.log("Dealer seed: no users exist yet. Create a user first via sign-up.");
+}
+
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
     console.error("DATABASE_URL is required. Copy .env.example to .env and configure.");
@@ -1548,6 +1557,9 @@ async function main(): Promise<void> {
 
   console.log("Seeding system config...");
   await seedSystemConfig();
+
+  console.log("Seeding dealer data...");
+  await seedDealer();
 
   console.log("Seed complete.");
 }

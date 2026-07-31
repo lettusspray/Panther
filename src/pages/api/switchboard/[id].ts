@@ -6,8 +6,8 @@
 
 import type { APIRoute } from "astro";
 import { eq } from "drizzle-orm";
-import { db } from "../../../../lib/db";
-import { switchboardTransaction } from "../../../../lib/db/schema";
+import { db } from "../../../lib/db";
+import { switchboardTransaction } from "../../../lib/db/schema";
 
 export const GET: APIRoute = async ({ params, locals }) => {
   const user = (locals as { user: Record<string, unknown> | null }).user;

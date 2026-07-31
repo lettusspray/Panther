@@ -42,7 +42,13 @@ export const POST: APIRoute = async ({ params, locals }) => {
   }
 
   return new Response(
-    JSON.stringify({ ok: true, listingId: result.listingId, status: "active" }),
+    JSON.stringify({
+      ok: true,
+      listingId: result.listingId,
+      status: "active",
+      dealerSlug: result.dealerSlug,
+      dealerUrl: result.dealerSlug ? `/dealers/${result.dealerSlug}` : null,
+    }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
 };

@@ -1,4 +1,6 @@
 ---
+import Icon from "@/components/ui/Icon.astro";
+
 export interface Props {
   specs: Record<string, unknown> | null;
   warnings: string[];
@@ -36,7 +38,7 @@ const { specs, warnings } = Astro.props;
         <div class="kh-spec-row"><span class="kh-label">Range</span><span class="kh-value">{String(specs.range_km)} km</span></div>
       )}
       {specs.ncap_stars && (
-        <div class="kh-spec-row"><span class="kh-label">Safety</span><span class="kh-value">{String(specs.ncap_stars)} ★ NCAP</span></div>
+        <div class="kh-spec-row"><span class="kh-label">Safety</span><span class="kh-value"><Icon name="star" size={14} class="kh-star" /> {String(specs.ncap_stars)} NCAP</span></div>
       )}
       {specs.acceleration_0_100_sec && (
         <div class="kh-spec-row"><span class="kh-label">0-100 km/h</span><span class="kh-value">{String(specs.acceleration_0_100_sec)}s</span></div>

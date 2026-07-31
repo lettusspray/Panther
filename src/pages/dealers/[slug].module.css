@@ -1,0 +1,485 @@
+/* ── Resting Posture: Assured Calm ───────────────────────────── */
+/* 8px base. Serif (Prata) headings. ≤1024px container. Low chroma. */
+
+.page {
+  background: oklch(97% 0.01 80);
+  min-height: calc(100vh - 192px);
+}
+
+.container {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+/* ── Banner ─────────────────────────────── */
+
+.banner {
+  border-radius: 12px;
+  overflow: hidden;
+  height: 200px;
+  background: oklch(92% 0.015 80);
+  margin-bottom: var(--space-6);
+}
+
+.bannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bannerFallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, oklch(90% 0.015 80), oklch(94% 0.01 80));
+}
+
+/* ── Header ─────────────────────────────── */
+
+.header {
+  margin-bottom: var(--space-8);
+}
+
+.headerMain {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid oklch(85% 0.01 80);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.businessName {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  margin: 0 0 var(--space-2);
+  line-height: 1.2;
+}
+
+/* AEO answer paragraph */
+.aeoAnswer {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: oklch(50% 0.02 70);
+  margin: 0 0 var(--space-3);
+  max-width: 600px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.badgeVerified {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: oklch(65% 0.18 150);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badgeRating {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: oklch(75% 0.12 80);
+  color: #fff;
+}
+
+.badgeNaddc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: oklch(55% 0.12 250);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.metaItem {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: oklch(50% 0.02 70);
+}
+
+.metaItem + .metaItem::before {
+  content: "\00B7";
+  margin-right: var(--space-3);
+  color: oklch(70% 0.02 70);
+}
+
+/* ── Contact + Share Bar ──────────────────── */
+
+.contactBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid oklch(85% 0.01 80);
+}
+
+.contactTag {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  padding: var(--space-2) var(--space-3);
+  color: oklch(50% 0.02 70);
+}
+
+/* ── Sections ───────────────────────────── */
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.sectionTitle {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sectionCount {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: oklch(50% 0.02 70);
+}
+
+.sectionRating {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: oklch(50% 0.12 80);
+}
+
+.aboutText {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.7;
+  color: oklch(40% 0.02 70);
+  max-width: 680px;
+}
+
+.emptyState {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: oklch(55% 0.02 70);
+  text-align: center;
+  padding: var(--space-12) 0;
+}
+
+/* ── Tab Bar ────────────────────────────── */
+
+.tabBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid oklch(85% 0.01 80);
+  padding-bottom: var(--space-2);
+}
+
+.tab {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  color: oklch(50% 0.02 70);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--panther-resting-hex);
+}
+
+.tabActive {
+  color: var(--panther-resting-hex);
+  font-weight: 600;
+}
+
+.tabSpacer {
+  flex: 1;
+}
+
+/* ── Inventory Grid ─────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  text-decoration: none;
+}
+
+.cardSold {
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.cardImageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: oklch(92% 0.015 80);
+}
+
+.cardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: oklch(60% 0.02 70);
+}
+
+/* Platform fingerprint badge on listing cards */
+.cardBadge {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: oklch(20% 0.02 30 / 0.75);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cardBadgeSold {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  padding: var(--space-2) var(--space-5);
+  border-radius: 6px;
+  background: oklch(50% 0.18 30 / 0.85);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cardBody {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardPrice {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+}
+
+.cardTitle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: oklch(40% 0.02 70);
+}
+
+.cardMileage {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: oklch(55% 0.02 70);
+}
+
+.cardDate {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: oklch(60% 0.02 70);
+  margin-top: var(--space-1);
+}
+
+.cardSoldDate {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: oklch(50% 0.18 30);
+  margin-top: var(--space-1);
+}
+
+/* ── Reviews ────────────────────────────── */
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.reviewCard {
+  background: #fff;
+  border-radius: 6px;
+  padding: var(--space-4);
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.reviewRating {
+  font-size: 14px;
+  color: oklch(70% 0.12 80);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.starOn {
+  color: oklch(70% 0.12 80);
+}
+
+.starOff {
+  color: oklch(70% 0.12 80 / 0.35);
+}
+
+.reviewDate {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: oklch(60% 0.02 70);
+}
+
+.reviewTitle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin: 0 0 var(--space-1);
+}
+
+.reviewBody {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: oklch(45% 0.02 70);
+  margin: 0;
+}
+
+/* ── Platform Fingerprint ───────────────── */
+
+.fingerprint {
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
+  border-top: 1px solid oklch(85% 0.01 80);
+  text-align: center;
+}
+
+.fingerprintText {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: oklch(60% 0.02 70);
+  line-height: 1.5;
+}
+
+.fingerprintLink {
+  color: oklch(50% 0.02 70);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 200ms ease;
+}
+
+.fingerprintLink:hover {
+  text-decoration-color: oklch(50% 0.02 70);
+}
+
+/* ── Responsive ─────────────────────────── */
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-4);
+  }
+
+  .headerMain {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .aeoAnswer {
+    max-width: none;
+  }
+
+  .meta {
+    justify-content: center;
+  }
+
+  .contactBar {
+    justify-content: center;
+  }
+
+  .tabBar {
+    flex-wrap: wrap;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

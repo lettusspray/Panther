@@ -1,23 +1,58 @@
+/* ── Hero ──────────────────────────────────────────────────── */
 .hero {
   padding: var(--space-40) 0 var(--space-32);
   text-align: center;
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(32px, 5vw, 64px);
-  color: var(--panther-resting-hex);
+  color: var(--posture-heading);
   margin-bottom: var(--space-6);
   line-height: 1.15;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .heroSubtitle {
   font-family: var(--font-sans);
   font-size: clamp(16px, 2vw, 20px);
-  color: var(--panther-eyes-hex);
+  color: var(--posture-body);
   max-width: 640px;
-  margin: 0 auto var(--space-8);
+  margin: 0 auto var(--space-6);
   line-height: 1.6;
+}
+
+.heroBadges {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-10);
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--posture-heading);
+  background: color-mix(in oklch, var(--posture-heading) 6%, var(--posture-bg));
+  border: 1px solid color-mix(in oklch, var(--posture-heading) 15%, transparent);
+  border-radius: 20px;
+  padding: 4px var(--space-3);
+  line-height: 1;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22C55E;
+  flex-shrink: 0;
 }
 
 .heroActions {
@@ -27,76 +62,113 @@
   flex-wrap: wrap;
 }
 
-.btnLg {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
-  padding: 0 var(--space-8);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 200ms var(--ease-micro);
-  white-space: nowrap;
-}
-
-.btnPrimary {
-  background: var(--panther-roaring-hex);
-  color: #fff;
-}
-
-.btnPrimary:hover {
-  filter: brightness(1.05);
-  transform: scale(1.02);
-}
-
-.btnSecondary {
-  background: transparent;
-  color: var(--panther-walking-hex);
-  border: 2px solid var(--panther-walking-hex);
-}
-
-.btnSecondary:hover {
-  background: color-mix(in oklch, var(--panther-walking-hex) 10%, transparent);
-}
-
-.valueProps {
+/* ── Show the Work ───────────────────────────────────────── */
+.showWork {
   padding: var(--space-32) 0;
-  background: color-mix(in oklch, var(--panther-resting-hex) 3%, #fff);
+  background: color-mix(in oklch, var(--posture-heading) 3%, var(--posture-bg));
 }
 
 .sectionTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 28px;
-  color: var(--panther-resting-hex);
+  color: var(--posture-heading);
   text-align: center;
-  margin-bottom: var(--space-12);
+  margin-bottom: var(--space-4);
+}
+
+.sectionSubtitle {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--posture-body);
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--space-12);
+  line-height: 1.6;
+}
+
+.formulaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+.stepCard {
+  background: color-mix(in oklch, var(--posture-heading) 3%, var(--posture-bg));
+  border: 1px solid var(--posture-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  padding: var(--space-6);
+}
+
+.stepCardHighlight {
+  background: color-mix(in oklch, var(--posture-accent) 6%, var(--posture-bg));
+}
+
+.stepNumber {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--posture-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.stepCardHighlight .stepNumber {
+  color: var(--posture-accent);
+}
+
+.stepTitle {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--posture-heading);
+  margin-bottom: var(--space-1);
+}
+
+.stepDesc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--posture-body);
+  line-height: 1.5;
+}
+
+.freshnessBanner {
+  max-width: 1100px;
+  margin: var(--space-8) auto 0;
+  padding: var(--space-4) var(--space-6);
+  background: color-mix(in oklch, var(--posture-heading) 5%, var(--posture-bg));
+  border-radius: 8px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--posture-body);
+  border: 1px solid color-mix(in oklch, var(--posture-heading) 10%, transparent);
+}
+
+/* ── Value Props ─────────────────────────────────────────── */
+.valueProps {
+  padding: var(--space-32) 0;
 }
 
 .propsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--space-6);
-  max-width: 1280px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--space-8);
 }
 
 .propCard {
-  background: #fff;
+  background: color-mix(in oklch, var(--posture-heading) 3%, var(--posture-bg));
+  border: 1px solid var(--posture-border);
   border-radius: 8px;
   box-shadow: var(--shadow-card);
   padding: var(--space-8);
-}
-
-.propNumber {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--panther-roaring-hex);
-  margin-bottom: var(--space-4);
-  letter-spacing: 0.05em;
 }
 
 .propTitle {
@@ -104,31 +176,107 @@
   font-size: 18px;
   font-weight: 600;
   margin-bottom: var(--space-3);
-  color: var(--panther-resting-hex);
+  color: var(--posture-heading);
 }
 
 .propText {
   font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--panther-eyes-hex);
+  color: var(--posture-body);
   line-height: 1.6;
 }
 
+.propCta {
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--posture-accent);
+  transition: color 200ms var(--ease-micro);
+}
+
+.propCta:hover {
+  color: var(--posture-heading);
+}
+
+/* ── Trust Signals ───────────────────────────────────────── */
+.trustSection {
+  padding: var(--space-24) 0;
+  background: color-mix(in oklch, var(--posture-heading) 3%, var(--posture-bg));
+}
+
+.trustGrid {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+.trustItem {
+  text-align: center;
+  max-width: 220px;
+}
+
+.trustLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--posture-heading);
+  margin-bottom: var(--space-2);
+}
+
+.trustDesc {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--posture-body);
+  line-height: 1.5;
+}
+
+/* ── CTA ─────────────────────────────────────────────────── */
 .ctaSection {
   padding: var(--space-32) 0;
   text-align: center;
 }
 
 .ctaTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(24px, 3vw, 36px);
-  color: var(--panther-resting-hex);
+  color: var(--posture-heading);
   margin-bottom: var(--space-4);
 }
 
 .ctaText {
   font-family: var(--font-sans);
   font-size: 16px;
-  color: var(--panther-eyes-hex);
+  color: var(--posture-body);
   margin-bottom: var(--space-8);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctaActions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .formulaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .trustGrid {
+    gap: var(--space-6);
+  }
+
+  .heroBadges {
+    flex-direction: column;
+    align-items: center;
+  }
 }

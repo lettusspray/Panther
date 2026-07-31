@@ -1,16 +1,18 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./new.module.css";
-import "../../styles/global.css";
-import { getConditionFields } from "../../lib/listings/condition-reports";
-import ConditionReportForm from "../../components/listings/ConditionReportForm.astro";
-import PhotoUploader from "../../components/listings/PhotoUploader.astro";
+import "@/styles/global.css";
+import { getConditionFields } from "@/lib/listings/condition-reports";
+import ConditionReportForm from "@/components/listings/ConditionReportForm.astro";
+import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 ---
 
 <BaseLayout
   title="List a Vehicle"
   posture="walking"
   description="List your vehicle on Panther. GVO-verified identification, structured condition reports, transparent pricing."
+  ogUrl="https://panther.ng/listings/new"
 >
   <section class={styles.hero}>
     <h1 class={styles.heroTitle}>List a Vehicle</h1>
@@ -55,22 +57,22 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       <p class={styles.stepDesc}>Select the domain that best describes your vehicle.</p>
       <div class={styles.domainGrid}>
         <button class={styles.domainBtn} data-domain="car" data-slug="car">
-          <span class={styles.domainEmoji}>🚗</span>
+          <span class={styles.domainEmoji}><Icon name="car" size={36} /></span>
           <span class={styles.domainName}>Car</span>
           <span class={styles.domainDesc}>Sedans, SUVs, pickups, coupes</span>
         </button>
         <button class={styles.domainBtn} data-domain="motorcycle" data-slug="motorcycle">
-          <span class={styles.domainEmoji}>🏍️</span>
+          <span class={styles.domainEmoji}><Icon name="motorcycle" size={36} /></span>
           <span class={styles.domainName}>Motorcycle</span>
           <span class={styles.domainDesc}>Sport, cruiser, touring, commuter</span>
         </button>
         <button class={styles.domainBtn} data-domain="tricycle" data-slug="tricycle">
-          <span class={styles.domainEmoji}>🛺</span>
+          <span class={styles.domainEmoji}><Icon name="scooter" size={36} /></span>
           <span class={styles.domainName}>Tricycle (Keke)</span>
           <span class={styles.domainDesc}>Passenger and cargo tricycles</span>
         </button>
         <button class={styles.domainBtn} data-domain="commercial" data-slug="commercial">
-          <span class={styles.domainEmoji}>🚛</span>
+          <span class={styles.domainEmoji}><Icon name="truck" size={36} /></span>
           <span class={styles.domainName}>Commercial</span>
           <span class={styles.domainDesc}>Trucks, buses, heavy-duty vehicles</span>
         </button>
@@ -87,7 +89,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       <div class={styles.vinSection}>
         <div class={styles.vinRow}>
           <input type="text" class={styles.vinInput} id="vin-input" placeholder="Enter 17-character VIN (e.g. 1HGCM82633A123456)" maxlength="17" autocomplete="off" />
-          <button type="button" class={styles.vinDecodeBtn} id="vin-decode-btn">Decode VIN</button>
+          <button type="button" class="btn btn-secondary btn-md" id="vin-decode-btn"><span class="btn-label">Decode VIN</span></button>
         </div>
         <div class={styles.vinStatus} id="vin-status"></div>
         <div class={styles.vinDivider}><span>or browse the catalog</span></div>
@@ -120,8 +122,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       </div>
 
       <div class={styles.gvoRequestArea}>
-        <button type="button" class={styles.gvoRequestBtn} id="gvo-request-btn">
-          Can't find your vehicle?
+        <button type="button" class={`btn btn-tertiary btn-sm ${styles.gvoRequestBtn}`} id="gvo-request-btn" aria-expanded="false">
+          <span class="btn-label">Can't find your vehicle?</span>
         </button>
         <div class={styles.gvoRequestForm} id="gvo-request-form" hidden>
           <p class={styles.gvoRequestText}>
@@ -141,9 +143,9 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
             <input type="text" class={styles.fieldInput} id="gvo-request-trim" placeholder="e.g. LE, Standard" />
           </div>
           <div class={styles.gvoLookupActions}>
-            <button type="button" class={styles.gvoLookupBtn} id="gvo-lookup-btn">Look up vehicle</button>
+            <button type="button" class={`btn btn-secondary btn-md ${styles.gvoLookupBtn}`} id="gvo-lookup-btn"><span class="btn-label">Look up vehicle</span></button>
             <span class={styles.gvoLookupOr}>or</span>
-            <button type="button" class={styles.gvoCustomBtn} id="gvo-custom-btn">Continue with custom details</button>
+            <button type="button" class={`btn btn-secondary btn-md ${styles.gvoCustomBtn}`} id="gvo-custom-btn"><span class="btn-label">Continue with custom details</span></button>
           </div>
           <p class={styles.gvoLookupStatus} id="gvo-lookup-status" hidden></p>
           <div class={styles.gvoRequestDivider}><span>or submit a request</span></div>
@@ -151,14 +153,14 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
             <label class={styles.fieldLabel}>Notes <span class={styles.fieldOptional}>(optional)</span></label>
             <textarea class={styles.fieldTextarea} id="gvo-request-notes" rows={2} placeholder="Any additional details to help identify the vehicle."></textarea>
           </div>
-          <button type="button" class={styles.gvoRequestSubmit} id="gvo-request-submit">Submit Request</button>
+          <button type="button" class="btn btn-primary btn-md" id="gvo-request-submit"><span class="btn-label">Submit Request</span></button>
           <p class={styles.gvoRequestStatus} id="gvo-request-status" hidden></p>
         </div>
       </div>
 
       <div class={styles.stepActions}>
-        <button class={styles.btnSecondary} data-goto="1">Back</button>
-        <button class={styles.btnPrimary} id="step2-next" disabled>Continue</button>
+        <button type="button" class="btn btn-secondary btn-md" data-goto="1"><span class="btn-label">Back</span></button>
+        <button type="button" class="btn btn-primary btn-md" id="step2-next" disabled><span class="btn-label">Continue</span></button>
       </div>
     </div>
 
@@ -190,8 +192,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       <ConditionReportForm fields={getConditionFields("car")} containerId="condition-fields" />
 
       <div class={styles.stepActions}>
-        <button class={styles.btnSecondary} data-goto="2">Back</button>
-        <button class={styles.btnPrimary} id="step3-next">Add Photos</button>
+        <button type="button" class="btn btn-secondary btn-md" data-goto="2"><span class="btn-label">Back</span></button>
+        <button type="button" class="btn btn-primary btn-md" id="step3-next"><span class="btn-label">Add Photos</span></button>
       </div>
     </div>
 
@@ -208,7 +210,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       {/* ── Video Section — Aggressively Pushed, Not Required ── */}
       <div class={styles.videoSection}>
         <div class={styles.videoPromo}>
-          <span class={styles.videoPromoIcon}>🎥</span>
+          <span class={styles.videoPromoIcon}><Icon name="video-camera" size={24} /></span>
           <span class={styles.videoPromoTitle}>Add a walkaround video</span>
           <span class={styles.videoPromoDesc}>
             Listings with a walkaround video sell 2x faster. Buyers want to see the car in motion — engine start, interior walkthrough, exterior sweep.
@@ -222,7 +224,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
         <div id="video-preview" class={styles.photoPreviewGrid}></div>
 
         <div class={styles.videoUploadArea} id="video-upload-area">
-          <div class={styles.photoUploadIcon}>🎬</div>
+          <div class={styles.photoUploadIcon}><Icon name="camera" size={28} /></div>
           <p class={styles.photoUploadText}>Add a walkaround video</p>
           <p class={styles.photoUploadHint}>MP4 or WebM — max 100MB, 2 minutes max</p>
           <input type="file" id="video-input" accept="video/mp4,video/webm" style="display: none;" />
@@ -234,8 +236,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       </div>
 
       <div class={styles.stepActions}>
-        <button class={styles.btnSecondary} data-goto="3">Back</button>
-        <button class={styles.btnPrimary} id="step4-next">Review Listing</button>
+        <button type="button" class="btn btn-secondary btn-md" data-goto="3"><span class="btn-label">Back</span></button>
+        <button type="button" class="btn btn-primary btn-md" id="step4-next"><span class="btn-label">Review Listing</span></button>
       </div>
     </div>
 
@@ -266,8 +268,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       <div id="activation-status"></div>
 
       <div class={styles.activationActions}>
-        <button class={styles.btnActivate} id="activate-btn">Activate Listing</button>
-        <button class={styles.btnDraft} id="draft-btn">Save as Draft</button>
+        <button type="button" class="btn btn-primary btn-lg" id="activate-btn"><span class="btn-label">Activate Listing</span></button>
+        <button type="button" class="btn btn-secondary btn-lg" id="draft-btn"><span class="btn-label">Save as Draft</span></button>
       </div>
 
       <div id="submit-status" class={styles.submitStatus} style="display: none;"></div>
@@ -293,6 +295,12 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
   let createdListingId = "";
 
   // ── DOM References ──────────────────────────────────────────────
+  function setBtnLabel(btn: HTMLButtonElement, text: string) {
+    const labelEl = btn.querySelector(".btn-label");
+    if (labelEl) labelEl.textContent = text;
+    else btn.textContent = text;
+  }
+
   const steps = document.querySelectorAll<HTMLElement>("[data-step]");
   const progressSteps = document.querySelectorAll<HTMLElement>(".progress [data-step]");
   const progressDividers = document.querySelectorAll<HTMLElement>(".progressDivider");
@@ -371,7 +379,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       }
 
       vinDecodeBtn.disabled = true;
-      vinDecodeBtn.textContent = "Decoding...";
+      vinDecodeBtn.classList.add("is-loading");
+      setBtnLabel(vinDecodeBtn, "Decoding...");
       vinStatus.textContent = "Decoding VIN...";
       vinStatus.className = "vinStatusPending";
       vinStatus.style.display = "block";
@@ -404,7 +413,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
           vinStatus.textContent = `Decoded: ${data.make} ${data.model} ${data.trim || ""} (${data.year || "year unknown"})`;
           vinStatus.className = styles.vinStatusOk || "vinStatusOk";
           vinInput.disabled = true;
-          vinDecodeBtn.textContent = "Decoded ✓";
+          vinDecodeBtn.classList.remove("is-loading");
+          setBtnLabel(vinDecodeBtn, "Decoded");
           vinDecodeBtn.disabled = true;
         } else if (res.ok && data.ok && !data.trimId) {
           // VIN decoded but GVO lookup failed — populate as custom
@@ -425,19 +435,22 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
           vinStatus.textContent = `Found: ${data.make} ${data.model} ${data.trim || ""}. Not in GVO yet — will save as custom entry.`;
           vinStatus.className = "vinStatusWarn";
           vinInput.disabled = true;
-          vinDecodeBtn.textContent = "Found ✓";
+          vinDecodeBtn.classList.remove("is-loading");
+          setBtnLabel(vinDecodeBtn, "Found");
           vinDecodeBtn.disabled = true;
         } else {
           vinStatus.textContent = data.error || "Could not decode VIN. Try selecting manually below.";
           vinStatus.className = styles.vinStatusError || "vinStatusError";
+          vinDecodeBtn.classList.remove("is-loading");
           vinDecodeBtn.disabled = false;
-          vinDecodeBtn.textContent = "Decode VIN";
+          setBtnLabel(vinDecodeBtn, "Decode VIN");
         }
       } catch {
         vinStatus.textContent = "Network error. Try again or select manually.";
         vinStatus.className = styles.vinStatusError || "vinStatusError";
+        vinDecodeBtn.classList.remove("is-loading");
         vinDecodeBtn.disabled = false;
-        vinDecodeBtn.textContent = "Decode VIN";
+        setBtnLabel(vinDecodeBtn, "Decode VIN");
       }
     };
 
@@ -926,7 +939,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
     const videoMissing = selectedVideos.length === 0;
     if (canActivate) {
       const videoPrompt = videoMissing
-        ? '<p style="margin-top:var(--space-2);font-family:var(--font-sans);font-size:13px;color:var(--panther-eyes-hex)">💡 Add a walkaround video from the previous step to sell 2x faster.</p>'
+        ? '<p style="margin-top:var(--space-2);font-family:var(--font-sans);font-size:13px;color:var(--panther-eyes-hex)">Add a walkaround video from the previous step to sell 2x faster.</p>'
         : "";
       activationStatusEl.innerHTML = `
         <div class="activationReady">
@@ -1003,21 +1016,23 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
     if (!confirm("Activate this listing? It will be visible to buyers immediately.")) return;
 
     activateBtn.disabled = true;
-    activateBtn.textContent = "Creating listing...";
+    activateBtn.classList.add("is-loading");
+    setBtnLabel(activateBtn, "Creating listing...");
     draftBtn.disabled = true;
 
     try {
       const createResult = await createListingData();
       if (!createResult.ok) {
         showStatus(createResult.error || "Failed to create listing.", "error");
+        activateBtn.classList.remove("is-loading");
         activateBtn.disabled = false;
-        activateBtn.textContent = "Activate Listing";
+        setBtnLabel(activateBtn, "Activate Listing");
         draftBtn.disabled = false;
         return;
       }
 
       createdListingId = createResult.listingId!;
-      activateBtn.textContent = "Activating...";
+      setBtnLabel(activateBtn, "Activating...");
 
       const activateResult = await activateListingData(createdListingId);
       if (activateResult.ok) {
@@ -1030,38 +1045,44 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
           `Listing saved as draft. ${activateResult.error || "Could not activate yet."}`,
           "error",
         );
-        activateBtn.textContent = "Activate Listing";
+        activateBtn.classList.remove("is-loading");
+        setBtnLabel(activateBtn, "Activate Listing");
         activateBtn.disabled = false;
         draftBtn.disabled = false;
       }
     } catch {
       showStatus("Network error. Please try again.", "error");
+      activateBtn.classList.remove("is-loading");
       activateBtn.disabled = false;
-      activateBtn.textContent = "Activate Listing";
+      setBtnLabel(activateBtn, "Activate Listing");
       draftBtn.disabled = false;
     }
   });
 
   draftBtn.addEventListener("click", async () => {
     draftBtn.disabled = true;
-    draftBtn.textContent = "Saving...";
+    draftBtn.classList.add("is-loading");
+    setBtnLabel(draftBtn, "Saving...");
     activateBtn.disabled = true;
 
     try {
       const result = await createListingData();
       if (result.ok) {
         showStatus(`Listing saved as draft. You can activate it later from your dashboard.`, "success");
-        draftBtn.textContent = "Saved";
+        draftBtn.classList.remove("is-loading");
+        setBtnLabel(draftBtn, "Saved");
       } else {
         showStatus(result.error || "Failed to save listing.", "error");
+        draftBtn.classList.remove("is-loading");
         draftBtn.disabled = false;
-        draftBtn.textContent = "Save as Draft";
+        setBtnLabel(draftBtn, "Save as Draft");
         activateBtn.disabled = false;
       }
     } catch {
       showStatus("Network error. Please try again.", "error");
+      draftBtn.classList.remove("is-loading");
       draftBtn.disabled = false;
-      draftBtn.textContent = "Save as Draft";
+      setBtnLabel(draftBtn, "Save as Draft");
       activateBtn.disabled = false;
     }
   });
@@ -1070,7 +1091,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
   const gvoRequestBtn = document.getElementById("gvo-request-btn");
   const gvoRequestForm = document.getElementById("gvo-request-form");
   const gvoRequestDomain = document.getElementById("gvo-request-domain") as HTMLInputElement | null;
-  const domainBtns = document.querySelectorAll("[data-domain]");
+  const gvoDomainBtns = document.querySelectorAll("[data-domain]");
 
   if (gvoRequestBtn && gvoRequestForm) {
     gvoRequestBtn.addEventListener("click", () => {
@@ -1079,7 +1100,7 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       gvoRequestForm.hidden = expanded;
     });
 
-    domainBtns.forEach((btn) => {
+    gvoDomainBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         const domain = btn.getAttribute("data-domain");
         if (gvoRequestDomain && domain) gvoRequestDomain.value = domain;
@@ -1124,7 +1145,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       }
 
       gvoLookupBtn.disabled = true;
-      gvoLookupBtn.textContent = "Looking up...";
+      gvoLookupBtn.classList.add("is-loading");
+      setBtnLabel(gvoLookupBtn, "Looking up...");
 
       try {
         const res = await fetch("/api/gvo/lookup", {
@@ -1167,7 +1189,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       }
 
       gvoLookupBtn.disabled = false;
-      gvoLookupBtn.textContent = "Look up vehicle";
+      gvoLookupBtn.classList.remove("is-loading");
+      setBtnLabel(gvoLookupBtn, "Look up vehicle");
     });
   }
 
@@ -1220,7 +1243,8 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
       }
 
       gvoRequestSubmit.disabled = true;
-      gvoRequestSubmit.textContent = "Submitting...";
+      gvoRequestSubmit.classList.add("is-loading");
+      setBtnLabel(gvoRequestSubmit, "Submitting...");
 
       try {
         const res = await fetch("/api/gvo/request", {
@@ -1243,14 +1267,16 @@ import PhotoUploader from "../../components/listings/PhotoUploader.astro";
         } else {
           gvoRequestStatus.textContent = data.error || "Failed to submit request.";
           gvoRequestStatus.style.color = "#C0392B";
+          gvoRequestSubmit.classList.remove("is-loading");
           gvoRequestSubmit.disabled = false;
-          gvoRequestSubmit.textContent = "Submit Request";
+          setBtnLabel(gvoRequestSubmit, "Submit Request");
         }
       } catch {
         gvoRequestStatus.textContent = "Network error. Please try again.";
         gvoRequestStatus.style.color = "#C0392B";
+        gvoRequestSubmit.classList.remove("is-loading");
         gvoRequestSubmit.disabled = false;
-        gvoRequestSubmit.textContent = "Submit Request";
+        setBtnLabel(gvoRequestSubmit, "Submit Request");
       }
       gvoRequestStatus.hidden = false;
     });

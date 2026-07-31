@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import styles from "./switchboard.module.css";
-import "../../styles/global.css";
+import "@/styles/global.css";
 import { db } from "../../lib/db";
 import { switchboardTransaction, listing, gvoTrim, gvoModel, gvoMake, user } from "../../lib/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -68,7 +68,7 @@ function statusClass(status: string) {
 }
 ---
 
-<BaseLayout title="Transactions" posture="walking" description="Your Switchboard transaction history.">
+<BaseLayout title="Transactions" posture="walking" description="Your Switchboard transaction history." ogUrl="https://panther.ng/switchboard">
   <div class={styles.page}>
     <div style="margin-bottom: var(--space-8);">
       <h1 style="font-family: var(--font-serif); font-size: clamp(28px, 4vw, 40px); color: var(--panther-resting-hex); margin-bottom: var(--space-2);">
@@ -85,7 +85,7 @@ function statusClass(status: string) {
         <p class={styles.emptyText}>
           When you initiate a purchase through Switchboard, it will appear here.
         </p>
-        <a href="/listings" class={styles.btnConfirm} style="display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 var(--space-8); text-decoration: none;">
+        <a href="/listings" class="btn btn-primary btn-lg">
           Browse Listings
         </a>
       </div>

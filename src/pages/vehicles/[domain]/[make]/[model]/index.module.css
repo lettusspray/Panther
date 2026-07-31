@@ -173,10 +173,17 @@
 
 .warningItem {
   display: flex;
+  align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3);
   background: color-mix(in oklch, var(--panther-roaring-hex) 5%, #fff);
   border-radius: 6px;
+}
+
+.warningIcon {
+  color: var(--panther-roaring-hex);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .warningText {

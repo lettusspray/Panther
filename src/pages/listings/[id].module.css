@@ -53,6 +53,21 @@
   padding: 0 var(--space-8);
 }
 
+.heroAnswer {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--panther-eyes-hex);
+  line-height: 1.6;
+  max-width: 720px;
+  margin: var(--space-4) auto 0;
+  padding: 0 var(--space-8);
+}
+
+.answerValue {
+  color: var(--panther-resting-hex);
+  font-weight: 600;
+}
+
 /* ── Content Grid ────────────────────────────────────────────── */
 .contentGrid {
   display: grid;
@@ -289,25 +304,6 @@
   line-height: 1.5;
 }
 
-.switchboardBtn {
-  width: 100%;
-  height: 48px;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
-  background: var(--panther-roaring-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms var(--ease-posture);
-}
-
-.switchboardBtn:hover {
-  filter: brightness(0.95);
-  transform: scale(1.01);
-}
-
 /* ── Image Gallery ──────────────────────────────────────────── */
 .imageGrid {
   display: grid;
@@ -467,6 +463,27 @@
   font-style: italic;
   margin-top: var(--space-2);
   line-height: 1.4;
+}
+
+/* ── Platform Fingerprint ─────────────────────────────────── */
+
+.fingerprint {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  border-top: 1px solid oklch(85% 0.01 80);
+  margin-top: var(--space-8);
+}
+
+.fingerprintText {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: oklch(60% 0.02 70);
+  line-height: 1.5;
+}
+
+.fingerprintLink {
+  font-weight: 500;
+  color: inherit;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */

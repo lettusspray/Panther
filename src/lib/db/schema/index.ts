@@ -373,6 +373,75 @@ export const sellerBankAccount = pgTable(
   ],
 );
 
+// ── Dealer Profile (Storefront) ─────────────────────────────────────
+// 1:1 with user. Every seller can have a dealer profile for their
+// public-facing storefront page.
+
+export const dealer = pgTable(
+  "dealer",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: "cascade" }),
+    businessName: text("business_name").notNull(),
+    slug: text("slug").notNull().unique(),
+    logo: text("logo"), // Cloudflare Images ID
+    bannerImage: text("banner_image"), // Cloudflare Images ID
+    about: text("about"),
+    city: text("city"),
+    state: text("state"),
+    contactPhone: text("contact_phone"),
+    whatsappNumber: text("whatsapp_number"),
+    naddcRegistrationId: text("naddc_registration_id"),
+    isVerified: boolean("is_verified").notNull().default(false),
+    inspectionAvailable: boolean("inspection_available").notNull().default(false),
+    deliveryAvailable: boolean("delivery_available").notNull().default(false),
+    googleBusinessUrl: text("google_business_url"),
+    subdomain: text("subdomain").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("dealer_user_idx").on(t.userId),
+    uniqueIndex("dealer_slug_idx").on(t.slug),
+  ],
+);
+
+// ── Dealer Reviews ─────────────────────────────────────────────────
+
+export const dealerReview = pgTable(
+  "dealer_review",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dealerId: uuid("dealer_id")
+      .notNull()
+      .references(() => dealer.id, { onDelete: "cascade" }),
+    buyerId: uuid("buyer_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    listingId: uuid("listing_id")
+      .references(() => listing.id, { onDelete: "set null" }),
+    switchboardTxId: uuid("switchboard_tx_id")
+      .references(() => switchboardTransaction.id, { onDelete: "set null" }),
+    rating: integer("rating").notNull(), // 1-5
+    title: text("title"),
+    body: text("body"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("review_dealer_idx").on(t.dealerId),
+    index("review_buyer_idx").on(t.buyerId),
+  ],
+);
+
 // ── Listing Reports ─────────────────────────────────────────────────
 // Visible "report this listing" mechanism per constitution §IV.3/F2.0b.
 

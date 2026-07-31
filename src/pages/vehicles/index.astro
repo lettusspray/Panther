@@ -1,13 +1,14 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./index.module.css";
-import "../../styles/global.css";
+import "@/styles/global.css";
 
 const domains = [
-  { slug: "car", name: "Cars", emoji: "🚗", desc: "Sedans, SUVs, pickups, and everything in between. Standard passenger vehicles imported into Nigeria." },
-  { slug: "motorcycle", name: "Motorcycles", emoji: "🏍️", desc: "Sport, cruiser, touring, and commuter motorcycles. From Kawasaki to Bajaj." },
-  { slug: "tricycle", name: "Tricycles (Keke)", emoji: "🛺", desc: "Passenger and cargo tricycles — the backbone of intra-city transport across Nigeria." },
-  { slug: "commercial", name: "Commercial Vehicles", emoji: "🚛", desc: "Trucks, buses, and heavy-duty vehicles built for work. Engine hours matter more than mileage." },
+  { slug: "car", name: "Cars", icon: "car" as const, desc: "Sedans, SUVs, pickups, and everything in between. Standard passenger vehicles imported into Nigeria." },
+  { slug: "motorcycle", name: "Motorcycles", icon: "motorcycle" as const, desc: "Sport, cruiser, touring, and commuter motorcycles. From Kawasaki to Bajaj." },
+  { slug: "tricycle", name: "Tricycles (Keke)", icon: "scooter" as const, desc: "Passenger and cargo tricycles — the backbone of intra-city transport across Nigeria." },
+  { slug: "commercial", name: "Commercial Vehicles", icon: "truck" as const, desc: "Trucks, buses, and heavy-duty vehicles built for work. Engine hours matter more than mileage." },
 ];
 ---
 
@@ -15,6 +16,7 @@ const domains = [
   title="Browse Vehicles"
   posture="walking"
   description="Explore the Global Vehicle Ontology. Browse by domain, make, model, and trim."
+  ogUrl="https://panther.ng/vehicles"
 >
   <section class={styles.hero}>
     <div class={styles.heroTitle}>
@@ -29,7 +31,9 @@ const domains = [
   <div class={styles.domainsGrid}>
     {domains.map((domain) => (
       <a href={`/vehicles/${domain.slug}`} class={styles.domainCard}>
-        <span class={styles.domainEmoji}>{domain.emoji}</span>
+        <span class={styles.domainEmoji}>
+          <Icon name={domain.icon} size={40} />
+        </span>
         <h2 class={styles.domainName}>{domain.name}</h2>
         <p class={styles.domainDesc}>{domain.desc}</p>
       </a>

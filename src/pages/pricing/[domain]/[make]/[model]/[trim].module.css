@@ -504,26 +504,8 @@
   font-family: var(--font-sans);
 }
 
-.errorBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 var(--space-6);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--panther-walking-hex);
-  border: 2px solid var(--panther-walking-hex);
-  text-decoration: none;
+.errorState .btn {
   margin-top: var(--space-4);
-  transition: all 200ms var(--ease-micro);
-}
-
-.errorBtn:hover {
-  background: color-mix(in oklch, var(--panther-walking-hex) 10%, transparent);
 }
 
 @media (max-width: 768px) {

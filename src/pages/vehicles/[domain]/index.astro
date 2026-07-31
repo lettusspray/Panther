@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import styles from "./index.module.css";
-import "../../../styles/global.css";
+import "@/styles/global.css";
 import { db } from "../../../lib/db";
 import { gvoDomain, gvoCategory, gvoMake } from "../../../lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -49,6 +49,7 @@ const uniqueMakes = Array.from(
   title={`${domainRow.name} Makes`}
   posture="walking"
   description={`Browse ${domainRow.name.toLowerCase()} manufacturers available on Panther.`}
+  ogUrl={`https://panther.ng/vehicles/${domain}`}
 >
   <section class={styles.hero}>
     <nav class={styles.breadcrumb}>

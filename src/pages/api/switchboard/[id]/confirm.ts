@@ -6,11 +6,11 @@
 
 import type { APIRoute } from "astro";
 import { eq } from "drizzle-orm";
-import { db } from "../../../../../lib/db";
-import { switchboardTransaction, sellerBankAccount } from "../../../../../lib/db/schema";
-import { getPaymentProvider } from "../../../../../lib/payments";
-import { canTransition, transitionTransaction } from "../../../../../lib/trust/switchboard";
-import type { SwitchboardStatus } from "../../../../../lib/trust/switchboard";
+import { db } from "../../../../lib/db";
+import { switchboardTransaction, sellerBankAccount } from "../../../../lib/db/schema";
+import { getPaymentProvider } from "../../../../lib/payments";
+import { canTransition, transitionTransaction } from "../../../../lib/trust/switchboard";
+import type { SwitchboardStatus } from "../../../../lib/trust/switchboard";
 
 export const POST: APIRoute = async ({ params, locals }) => {
   const user = (locals as { user: Record<string, unknown> | null }).user;

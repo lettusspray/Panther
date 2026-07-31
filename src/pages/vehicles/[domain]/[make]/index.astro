@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import styles from "./index.module.css";
-import "../../../../styles/global.css";
+import "@/styles/global.css";
 import { db } from "../../../../lib/db";
 import { gvoDomain, gvoCategory, gvoMake, gvoModel, gvoTrim, cohortPricing } from "../../../../lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -66,6 +66,7 @@ const modelsWithPricing = await Promise.all(
   title={`${makeRow.name} Models`}
   posture="walking"
   description={`Browse ${makeRow.name} models available on Panther. Specs, pricing, and condition data.`}
+  ogUrl={`https://panther.ng/vehicles/${domain}/${make}`}
 >
   <section class={styles.hero}>
     <nav class={styles.breadcrumb}>

@@ -1,13 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import styles from "./index.module.css";
-import "../../styles/global.css";
+import "@/styles/global.css";
 ---
 
 <BaseLayout
   title="Vehicle Import Pricing"
   posture="walking"
   description="Calculate the true landed cost of any vehicle imported into Nigeria. 13-step statutory formula with live NCS rates."
+  ogUrl="https://panther.ng/pricing"
 >
   <section class={styles.hero}>
     <h1 class={`${styles.heroTitle} font-sans`}>

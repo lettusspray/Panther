@@ -9,6 +9,7 @@
  */
 
 import type { PaymentProvider } from "./types";
+import { PaystackProvider } from "./paystack";
 
 let cachedProvider: PaymentProvider | null = null;
 
@@ -19,14 +20,11 @@ export function getPaymentProvider(): PaymentProvider {
 
   switch (providerName) {
     case "paystack": {
-      // Lazy import to avoid loading Paystack code if not needed
-      const { PaystackProvider } = require("./paystack");
       cachedProvider = new PaystackProvider();
       break;
     }
     // Flutterwave adapter — planned, not yet implemented
     // case "flutterwave": {
-    //   const { FlutterwaveProvider } = require("./flutterwave");
     //   cachedProvider = new FlutterwaveProvider();
     //   break;
     // }

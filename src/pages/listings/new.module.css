@@ -424,31 +424,6 @@
   border-color: var(--panther-resting-hex);
 }
 
-.vinDecodeBtn {
-  height: 48px;
-  padding: 0 var(--space-6);
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--panther-resting-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms ease;
-  white-space: nowrap;
-}
-
-.vinDecodeBtn:hover {
-  filter: brightness(1.15);
-}
-
-.vinDecodeBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  filter: none;
-}
-
 .vinStatus {
   display: none;
   margin-top: var(--space-2);
@@ -497,20 +472,7 @@
 }
 
 .gvoRequestBtn {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--panther-eyes-hex);
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: all 200ms ease;
-  border: none;
-  background: none;
-  cursor: pointer;
   padding: 0;
-}
-
-.gvoRequestBtn:hover {
-  text-decoration-color: var(--panther-eyes-hex);
 }
 
 .gvoRequestForm {
@@ -531,28 +493,6 @@
   line-height: 1.5;
 }
 
-.gvoRequestSubmit {
-  height: 40px;
-  border: none;
-  border-radius: 6px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  background: var(--panther-resting-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.gvoRequestSubmit:hover {
-  filter: brightness(1.2);
-}
-
-.gvoRequestSubmit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .gvoRequestStatus {
   font-family: var(--font-sans);
   font-size: 12px;
@@ -569,42 +509,8 @@
 
 .gvoLookupBtn,
 .gvoCustomBtn {
-  height: 44px;
-  padding: 0 var(--space-5);
-  border-radius: 6px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 200ms ease;
   flex: 1;
   min-width: 160px;
-}
-
-.gvoLookupBtn {
-  background: var(--panther-resting-hex);
-  color: #fff;
-  border: none;
-}
-
-.gvoLookupBtn:hover {
-  filter: brightness(1.2);
-}
-
-.gvoLookupBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: none;
-}
-
-.gvoCustomBtn {
-  background: transparent;
-  color: var(--panther-resting-hex);
-  border: 1px solid var(--panther-resting-hex);
-}
-
-.gvoCustomBtn:hover {
-  background: color-mix(in oklch, var(--panther-resting-hex) 8%, #fff);
 }
 
 .gvoLookupOr {
@@ -667,50 +573,6 @@
   justify-content: space-between;
   gap: var(--space-4);
   margin-top: var(--space-6);
-}
-
-.btnPrimary {
-  height: 48px;
-  padding: 0 var(--space-8);
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
-  background: var(--panther-roaring-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms var(--ease-posture);
-}
-
-.btnPrimary:hover {
-  filter: brightness(0.95);
-  transform: scale(1.01);
-}
-
-.btnPrimary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btnSecondary {
-  height: 48px;
-  padding: 0 var(--space-6);
-  border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--panther-eyes-hex);
-  background: transparent;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.btnSecondary:hover {
-  border-color: var(--panther-eyes-hex);
-  color: var(--panther-resting-hex);
 }
 
 /* ── Submit Status ────────────────────────────────────────────── */
@@ -926,51 +788,6 @@
   flex-direction: column;
   gap: var(--space-3);
   margin-top: var(--space-6);
-}
-
-.btnActivate {
-  height: 56px;
-  padding: 0 var(--space-8);
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 600;
-  background: var(--panther-roaring-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms var(--ease-posture);
-  text-align: center;
-}
-
-.btnActivate:hover {
-  filter: brightness(0.95);
-  transform: scale(1.01);
-}
-
-.btnActivate:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btnDraft {
-  height: 48px;
-  padding: 0 var(--space-8);
-  border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--panther-eyes-hex);
-  background: transparent;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.btnDraft:hover {
-  border-color: var(--panther-eyes-hex);
-  color: var(--panther-resting-hex);
 }
 
 .activationReady {

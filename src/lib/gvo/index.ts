@@ -46,7 +46,66 @@ export async function getTrimsByModel(modelId: string) {
     .orderBy(gvoTrim.name);
 }
 
-// ── Full path resolver ─────────────────────────────────────────────
+// ── Model-level resolver (for model pricing page) ──────────────────
+
+export interface ModelPageData {
+  domain: { id: string; name: string; slug: string };
+  category: { id: string; name: string; slug: string };
+  make: { id: string; name: string; slug: string };
+  model: { id: string; name: string; slug: string; firstModelYear: number | null; lastModelYear: number | null };
+  trims: Array<{ id: string; name: string; slug: string; engine: string | null; transmission: string | null }>;
+  modelYearRange: string;
+}
+
+export async function resolveModelPageData(
+  domainSlug: string,
+  makeSlug: string,
+  modelSlug: string,
+): Promise<ModelPageData | null> {
+  const domains = await getDomains();
+  const domain = domains.find((d) => d.slug === domainSlug);
+  if (!domain) return null;
+
+  const categories = await getCategoriesByDomain(domain.id);
+  let makeId: string | null = null;
+  let foundCategory: { id: string; name: string; slug: string } | null = null;
+  let foundMake: { id: string; name: string; slug: string } | null = null;
+
+  for (const cat of categories) {
+    const makes = await getMakesByCategory(cat.id);
+    const m = makes.find((mk) => mk.slug === makeSlug);
+    if (m) {
+      makeId = m.id;
+      foundCategory = cat;
+      foundMake = m;
+      break;
+    }
+  }
+  if (!makeId || !foundCategory || !foundMake) return null;
+
+  const models = await getModelsByMake(makeId);
+  const model = models.find((mdl) => mdl.slug === modelSlug);
+  if (!model) return null;
+
+  const trims = await getTrimsByModel(model.id);
+
+  const yearRange = model.firstModelYear && model.lastModelYear
+    ? `${model.firstModelYear}–${model.lastModelYear}`
+    : model.firstModelYear
+      ? `since ${model.firstModelYear}`
+      : "";
+
+  return {
+    domain: { id: domain.id, name: domain.name, slug: domain.slug },
+    category: { id: foundCategory.id, name: foundCategory.name, slug: foundCategory.slug },
+    make: { id: foundMake.id, name: foundMake.name, slug: foundMake.slug },
+    model: { id: model.id, name: model.name, slug: model.slug, firstModelYear: model.firstModelYear, lastModelYear: model.lastModelYear },
+    trims: trims.map((t) => ({ id: t.id, name: t.name, slug: t.slug, engine: t.engine, transmission: t.transmission })),
+    modelYearRange: yearRange,
+  };
+}
+
+// ── Full path resolver (trim-level) ─────────────────────────────────
 
 export interface GvoPath {
   domain: { id: string; name: string; slug: string };

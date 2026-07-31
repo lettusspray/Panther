@@ -43,6 +43,13 @@
       "when": 1785352016664,
       "tag": "0005_parts_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785397711579,
+      "tag": "0006_left_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

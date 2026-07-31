@@ -1,0 +1,180 @@
+/* ── Posture Layer ─────────────────────────────────────────────
+   Design System §15.3: each posture class sets the colour and
+   font variables automatically. Apply posture-* to the <body>
+   (BaseLayout) or to any container. Explicit per-element
+   declarations win via the cascade.
+
+   Derived tokens (--posture-*):
+     --posture-font            font family for this posture
+     --posture-heading         heading/ink colour
+     --posture-body            body text colour
+     --posture-muted           secondary/muted colour
+     --posture-accent          action colour
+     --posture-border          hairline border colour
+     --posture-bg              surface background
+     --posture-container-width container constraint
+     --posture-pad-x           horizontal padding
+     --posture-line-height     vertical rhythm ratio
+     --posture-gap             paragraph/section gap
+     --posture-ease            posture-shift easing (§8.1)
+*/
+
+.posture-roaring {
+  /* Serif track — Roaring Calm (§4.1) */
+  --posture-font: var(--font-serif);
+  --posture-heading: var(--panther-resting-hex);
+  --posture-body: var(--panther-eyes-hex);
+  --posture-muted: var(--panther-walking-hex);
+  --posture-accent: var(--panther-roaring-hex);
+  --posture-border: color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+  --posture-bg: #fff;
+  --posture-container-width: 1440px;
+  --posture-pad-x: var(--space-20);
+  --posture-line-height: 1.2;
+  --posture-gap: var(--space-8);
+  --posture-ease: var(--ease-posture);
+  font-family: var(--posture-font);
+}
+
+.posture-walking {
+  /* Sans track — Walking Forward (§4.2) */
+  --posture-font: var(--font-sans);
+  --posture-heading: var(--panther-resting-hex);
+  --posture-body: var(--panther-eyes-hex);
+  --posture-muted: var(--panther-walking-hex);
+  --posture-accent: var(--panther-roaring-hex);
+  --posture-border: color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+  --posture-bg: #fff;
+  --posture-container-width: 1280px;
+  --posture-pad-x: var(--space-8);
+  --posture-line-height: 1.4;
+  --posture-gap: var(--space-2);
+  --posture-ease: var(--ease-posture);
+  font-family: var(--posture-font);
+}
+
+.posture-eyes {
+  /* Sans track — Eyes-Forward (§4.2) */
+  --posture-font: var(--font-sans);
+  --posture-heading: var(--panther-resting-hex);
+  --posture-body: var(--panther-eyes-hex);
+  --posture-muted: var(--panther-walking-hex);
+  --posture-accent: var(--panther-eyes-hex);
+  --posture-border: color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+  --posture-bg: #fff;
+  --posture-container-width: 1024px;
+  --posture-pad-x: var(--space-4);
+  --posture-line-height: 1.3;
+  --posture-gap: var(--space-1);
+  --posture-ease: var(--ease-posture);
+  font-family: var(--posture-font);
+}
+
+.posture-resting {
+  /* Serif track — Resting Assured (§4.1) */
+  --posture-font: var(--font-serif);
+  --posture-heading: var(--panther-resting-hex);
+  --posture-body: var(--panther-eyes-hex);
+  --posture-muted: var(--panther-walking-hex);
+  --posture-accent: var(--panther-roaring-hex);
+  --posture-border: color-mix(in oklch, var(--panther-eyes-hex) 20%, transparent);
+  --posture-bg: #fff;
+  --posture-container-width: 1024px;
+  --posture-pad-x: var(--space-16);
+  --posture-line-height: 1.6;
+  --posture-gap: var(--space-4);
+  --posture-ease: var(--ease-posture);
+  font-family: var(--posture-font);
+}
+
+/* Inherit the posture track on unstyled descendants */
+.posture-roaring :where(h1, h2, h3, h4, h5, h6),
+.posture-resting :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--posture-font);
+}
+
+/* ── Focus-visible ring (§8.3) ─────────────────────────────── */
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 2px;
+}
+
+/* ── Dark theme (§12) ─────────────────────────────────────────
+   Restricted to marketing/hero pages (Roaring Calm zone) only.
+   Background #1A1A1A. Resting becomes invisible on dark and is
+   excluded — headings use a light warm ink. Roaring, Walking and
+   Eyes-Forward are lightened (light halo) for legibility.
+   Apply via <BaseLayout theme="dark"> on Roaring pages only. */
+
+.theme-dark {
+  --dark-bg: #1A1A1A;
+  --dark-ink: oklch(90% 0.02 60);
+  --dark-body: oklch(74% 0.03 225);
+  --dark-muted: oklch(70% 0.04 210);
+  --dark-accent: oklch(64% 0.17 30);
+  --dark-border: oklch(70% 0.03 225 / 0.22);
+
+  /* Light halo: the locked palette is lightened so Roaring,
+     Walking and Eyes-Forward remain legible on dark. Resting
+     (dark ink) is excluded — headings resolve to --dark-ink. */
+  --panther-roaring-hex: var(--dark-accent);
+  --panther-walking-hex: var(--dark-muted);
+  --panther-eyes-hex: var(--dark-body);
+  --panther-resting-hex: var(--dark-ink);
+}
+
+.theme-dark.posture-roaring,
+.theme-dark.posture-walking,
+.theme-dark.posture-eyes,
+.theme-dark.posture-resting {
+  background: var(--dark-bg);
+  color: var(--dark-body);
+  --posture-heading: var(--dark-ink);
+  --posture-body: var(--dark-body);
+  --posture-muted: var(--dark-muted);
+  --posture-accent: var(--dark-accent);
+  --posture-border: var(--dark-border);
+  --posture-bg: var(--dark-bg);
+}
+
+.theme-dark.posture-roaring,
+.theme-dark.posture-resting {
+  --posture-font: var(--font-serif);
+}
+
+/* ── Motion utilities (§8) ─────────────────────────────────── */
+
+/* Micro-interaction: spring overshoot (200ms) */
+.motion-micro {
+  transition: all var(--duration-micro) var(--ease-spring);
+}
+
+/* Page transition: ease-out (400ms) */
+.motion-page {
+  transition: all var(--duration-page) var(--ease-page);
+}
+
+/* Posture shift: ease-in-out (300ms) */
+.motion-posture {
+  transition: all var(--duration-posture) var(--ease-posture);
+}
+
+/* Interactive scale bump (§8.3) */
+.hover-scale {
+  transition: transform var(--duration-micro) var(--ease-spring);
+}
+
+.hover-scale:hover {
+  transform: scale(var(--scale-hover));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-micro,
+  .motion-page,
+  .motion-posture,
+  .hover-scale {
+    transition-duration: 0.01ms;
+    transform: none;
+  }
+}

@@ -294,69 +294,6 @@
   gap: var(--space-3);
 }
 
-.btnConfirm {
-  width: 100%;
-  height: 52px;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
-  background: var(--panther-roaring-hex);
-  color: #fff;
-  cursor: pointer;
-  transition: all 200ms var(--ease-posture);
-}
-
-.btnConfirm:hover {
-  filter: brightness(0.95);
-  transform: scale(1.01);
-}
-
-.btnConfirm:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btnCancel {
-  width: 100%;
-  height: 48px;
-  border: 1px solid color-mix(in oklch, var(--panther-eyes-hex) 25%, transparent);
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--panther-eyes-hex);
-  background: transparent;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.btnCancel:hover {
-  border-color: var(--panther-eyes-hex);
-  color: var(--panther-resting-hex);
-}
-
-.btnDanger {
-  width: 100%;
-  height: 48px;
-  border: 1px solid color-mix(in oklch, #C0392B 30%, transparent);
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  color: #C0392B;
-  background: transparent;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.btnDanger:hover {
-  background: color-mix(in oklch, #C0392B 5%, #fff);
-  border-color: #C0392B;
-}
-
 /* ── Info Box ─────────────────────────────────────────────────── */
 .infoBox {
   padding: var(--space-4);

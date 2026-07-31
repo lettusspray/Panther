@@ -1,0 +1,236 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+}
+
+.previewLink {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 200ms ease;
+}
+
+.previewLink:hover {
+  text-decoration-color: var(--panther-eyes-hex);
+}
+
+/* ── Google Business Profile Guide ──────────────────────── */
+
+.gbpGuide {
+  background: oklch(45% 0.03 225 / 0.04);
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 12px;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gbpTitle {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--panther-resting-hex);
+  margin: 0;
+}
+
+.gbpText {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+}
+
+.gbpText code {
+  font-size: 12px;
+  background: oklch(45% 0.03 225 / 0.08);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.gbpSteps {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.gbpSteps a {
+  color: var(--panther-resting-hex);
+  text-decoration: underline;
+}
+
+.gbpTip {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: oklch(70% 0.12 150 / 0.15);
+  border-radius: 6px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--panther-resting-hex);
+}
+
+.input,
+.textarea {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: var(--space-3);
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--panther-resting-hex);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 1px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.urlPreview {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.urlPrefix {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  background: oklch(45% 0.03 225 / 0.04);
+  padding: var(--space-3) 0 var(--space-3) var(--space-3);
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  white-space: nowrap;
+}
+
+.urlSuffix {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+  background: oklch(45% 0.03 225 / 0.04);
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  white-space: nowrap;
+}
+
+.inputSlug {
+  border-radius: 0;
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--panther-eyes-hex);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-resting-hex);
+  cursor: pointer;
+}
+
+.checkLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--panther-eyes-hex);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.formStatus {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: 6px;
+  background: oklch(90% 0.01 80);
+}
+
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
