@@ -15,11 +15,12 @@
     "lint": "eslint .",
     "design:lint": "tsx scripts/design-lint.ts",
     "typecheck": "astro check",
-    "deploy": "astro build && wrangler pages deploy dist",
-    "deploy:all": "npm run build && npm run db:migrate && wrangler pages deploy dist",
+    "deploy": "astro build && wrangler deploy",
+    "deploy:all": "npm run build && npm run db:migrate && wrangler deploy",
     "db:seed:launch": "tsx scripts/seed-launch.ts",
     "worker:deploy": "wrangler deploy -c wrangler.workers.toml",
-    "worker:build": "wrangler deploy --dry-run --outdir=dist-worker -c wrangler.workers.toml"
+    "worker:build": "wrangler deploy --dry-run --outdir=dist-worker -c wrangler.workers.toml",
+    "dev:worker": "astro build && wrangler dev"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.3",

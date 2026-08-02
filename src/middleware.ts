@@ -46,8 +46,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Resolve the session for every non-API request so public pages (e.g.
-  // listing detail) know whether the visitor is signed in.
+  // Public marketing/catalog paths — no auth and no DB session check.
+  // The homepage, pricing, vehicles, and listings-browse pages must never
+  // depend on the DB, otherwise a slow database takes the whole site down.
+  const isOrUnder = (p: string) => path === p || path.startsWith(p + "/");
+  const isPublicStatic =
+    PUBLIC_PATHS.some((p) => path === p) ||
+    isOrUnder("/pricing") ||
+    isOrUnder("/vehicles") ||
+    path === "/listings";
+  if (isPublicStatic) {
+    return next();
+  }
+
+  // Public pages that DO need to know the visitor (listing detail shows the
+  // escrow CTA to signed-in buyers; dealer storefronts show review state).
+  const needsUser =
+    isOrUnder("/dealers") ||
+    (isOrUnder("/listings") && path !== "/listings" && path !== "/listings/new");
+
+  // Resolve the session where the logged-in user matters.
   let session = null;
   try {
     session = await auth.api.getSession({
@@ -59,14 +77,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = session?.user ?? null;
   context.locals.session = session?.session ?? null;
 
-  // Public paths — no auth required
-  const isPublic =
-    PUBLIC_PATHS.some((p) => path === p) ||
-    path.startsWith("/pricing/") ||
-    path.startsWith("/vehicles/") ||
-    path.startsWith("/dealers/") ||
-    (path.startsWith("/listings/") && path !== "/listings/new");
-  if (isPublic) {
+  // Public-but-needs-user pages render with the user state attached.
+  if (needsUser) {
     return next();
   }
 

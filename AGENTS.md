@@ -13,7 +13,10 @@ Directions are approximate pointers toward the simplest/cleanest design. **That 
 | Command | What it does |
 |---------|-------------|
 | `npm run dev` | Astro dev server (Edge SSR via `@astrojs/cloudflare`) |
-| `npm run build` | Build for Cloudflare Pages |
+| `npm run build` | Build for Cloudflare Workers (emits `dist/client` + `dist/server/wrangler.json`) |
+| `npm run dev:worker` | Preview the built worker locally: `astro build && wrangler dev` |
+| `npm run deploy` | `astro build && wrangler deploy` (Workers with static assets) |
+| `npm run worker:deploy` | Deploy the nightly pipeline Worker: `wrangler deploy -c wrangler.workers.toml` |
 | `npm run typecheck` | Uses `astro check` (not `tsc`) — validates `.astro` files too |
 | `npm run lint` | ESLint with `typescript-eslint` |
 | `npm run db:generate` | Drizzle Kit — generate migration from schema |
@@ -26,6 +29,15 @@ Directions are approximate pointers toward the simplest/cleanest design. **That 
 | `npx vitest run test/foo.test.ts` | Single test file |
 
 Tests live in `test/**/*.test.ts`. Env vars are stubbed in `test/setup.ts` via `vi.stubEnv`. Globals enabled (`describe`/`it`/`expect`/`vi` auto-imported).
+
+## Cloudflare Deployment (Workers, not Pages)
+
+`@astrojs/cloudflare` v14 uses the Cloudflare Vite plugin → the target is **Workers with static assets**, deployed with `wrangler deploy` (auto-reads the generated `dist/server/wrangler.json`; serves `dist/client` as assets). **Do NOT set `pages_build_output_dir`** — Pages mode is legacy and errors on the reserved `ASSETS` binding. Git integration = Workers Builds: build `npx astro build`, deploy `npx wrangler deploy`.
+
+- `wrangler.toml` (root) holds app `[vars]` + R2/KV bindings only — no `main`, no `pages_build_output_dir`. The plugin generates the real worker config at build.
+- `wrangler.workers.toml` is the separate nightly-pipeline Worker (cron + queues).
+- Env in workers: `src/lib/env.ts` `readEnv()` checks worker bindings (`__WORKER_ENV__`) → `import.meta.env` → `process.env`. `auth` and `db` are lazy so a missing secret/DB can't 500 the whole site.
+- Middleware must NOT run DB/session checks on marketing pages (`/`, `/pricing`, `/vehicles`, `/listings`) — a slow DB would take the whole site down. Only `/listings/[id]` and `/dealers/*` resolve the session.
 
 ## Architecture Map
 
