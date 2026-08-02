@@ -12,26 +12,38 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Wildcard subdomain routing: *.panther.ng → dealer storefront
   // Requires Cloudflare wildcard DNS record: *.panther.ng → this worker
+  // NOTE: context.rewrite() re-runs this middleware with the same host, so
+  // every branch below must detect its own rewrite target and render instead
+  // of re-rewriting — otherwise the request loops ("Loop Detected").
   const subdomain = extractSubdomain(host);
   if (subdomain) {
-    const dealerProfile = await getDealerBySubdomain(subdomain);
+    context.locals.subdomainHost = host;
+    if (path.startsWith("/dealers/")) return next(); // already rewrote → render
+    let dealerProfile = null;
+    try {
+      dealerProfile = await getDealerBySubdomain(subdomain);
+    } catch {
+      // DB unavailable — treat as no dealer; render 404, never 500
+    }
     if (dealerProfile) {
-      context.locals.subdomainHost = host;
       return context.rewrite(`/dealers/${dealerProfile.slug}`);
     }
-    // Subdomain not found — render 404
+    // Subdomain not found — render 404 (guarded against the rewrite loop)
+    if (path === "/404") return next();
     return context.rewrite("/404");
   }
 
-  // Allow the canonical host, local dev, and Cloudflare Pages previews
+  // Allow the canonical host, workers.dev/pages.dev previews, and local dev
   const isAllowedHost =
     host === PANTHER_DOMAIN ||
+    host.endsWith(".workers.dev") ||
     host.endsWith(".pages.dev") ||
     host === "localhost" ||
     host.startsWith("127.0.0.1") ||
     host.startsWith("0.0.0.0");
   if (!isAllowedHost) {
-    // Unknown host — render 404
+    // Unknown host — render 404 (guarded against the rewrite loop)
+    if (path === "/404") return next();
     return context.rewrite("/404");
   }
 
@@ -51,6 +63,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // depend on the DB, otherwise a slow database takes the whole site down.
   const isOrUnder = (p: string) => path === p || path.startsWith(p + "/");
   const isPublicStatic =
+    path === "/404" ||
     PUBLIC_PATHS.some((p) => path === p) ||
     isOrUnder("/pricing") ||
     isOrUnder("/vehicles") ||
