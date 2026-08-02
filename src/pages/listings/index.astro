@@ -38,7 +38,7 @@ const freshness = await checkDataFreshness(PRICING_RATE_KEYS);
 <BaseLayout
   title="Vehicle Listings"
   posture="walking"
-  description="Browse active vehicle listings on Panther. Transparent pricing, structured condition reports."
+  description="Browse active vehicle listings on Panther. Structured condition reports, clear asking prices."
   ogUrl="https://panther.ng/listings"
 >
   {!freshness.ok && (
@@ -73,7 +73,7 @@ const freshness = await checkDataFreshness(PRICING_RATE_KEYS);
         <select class={styles.filterSelect} id="filter-make" aria-label="Filter by make">
           <option value="">All Makes</option>
           {makes.map((m) => (
-            <option value={m} key={m}>{m}</option>
+            <option value={m}>{m}</option>
           ))}
         </select>
         <select class={styles.filterSelect} id="filter-price" aria-label="Filter by price range">
@@ -102,7 +102,6 @@ const freshness = await checkDataFreshness(PRICING_RATE_KEYS);
               data-model={item.modelName}
               data-year={item.modelYear}
               data-price={price}
-              key={item.id}
             >
               <div class={styles.cardPlaceholder}>
                 <span class={styles.cardInitial}>{item.makeName.charAt(0)}</span>

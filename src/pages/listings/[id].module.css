@@ -35,7 +35,7 @@
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(28px, 4vw, 48px);
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-2);
@@ -129,15 +129,15 @@
 }
 
 .summaryGood {
-  background: color-mix(in oklch, #27ae60 10%, #fff);
+  background: color-mix(in oklch, var(--panther-success-hex) 10%, #fff);
 }
 
 .summaryFair {
-  background: color-mix(in oklch, #f39c12 10%, #fff);
+  background: color-mix(in oklch, var(--panther-warning-hex) 10%, #fff);
 }
 
 .summaryPoor {
-  background: color-mix(in oklch, #C0392B 10%, #fff);
+  background: color-mix(in oklch, var(--panther-danger-hex) 10%, #fff);
 }
 
 .summaryCount {
@@ -182,15 +182,15 @@
 }
 
 .condition_good {
-  color: #27ae60;
+  color: var(--panther-success-hex);
 }
 
 .condition_fair {
-  color: #f39c12;
+  color: var(--panther-warning-hex);
 }
 
 .condition_poor {
-  color: #C0392B;
+  color: var(--panther-danger-hex);
 }
 
 .condition_absent {
@@ -242,7 +242,7 @@
 
 .priceValue {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 28px;
   font-weight: 700;
   margin-bottom: var(--space-3);

@@ -53,9 +53,8 @@ export function generateAuthQrData(authToken: string): string {
 export function buildConfirmationMessage(): string {
   const communityLink = COMMUNITY_LINK();
   return (
-    "Login verified! Welcome to Panther. " +
-    "Join the team — connect with other members, get updates, " +
-    "talk to us and share feedback directly in our community here: " +
+    "Login verified. Welcome to Panther. " +
+    "Questions or feedback? Join our community: " +
     communityLink
   );
 }

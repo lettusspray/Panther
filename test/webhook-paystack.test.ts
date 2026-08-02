@@ -78,18 +78,35 @@ function makeContext(req: Request): APIContext {
   return {
     request: req,
     params: {},
-    locals: { user: null, session: null, subdomainHost: null },
+    locals: { user: null, session: null, subdomainHost: null, cfContext: null as unknown as ExecutionContext },
     url: new URL(req.url),
     site: undefined,
     generator: "Astro",
     redirect: () => new Response(null, { status: 302 }),
-    rewrite: () => new Response(null, { status: 302 }),
+    rewrite: () => Promise.resolve(new Response(null, { status: 302 })),
     cookies: {} as APIContext["cookies"],
     clientAddress: "127.0.0.1",
     preferredLocale: undefined,
     preferredLocaleList: undefined,
     props: {},
     currentLocale: undefined,
+    session: undefined,
+    cache: {
+      enabled: false,
+      set: () => {},
+      tags: [],
+      options: {} as APIContext["cache"]["options"],
+      invalidate: () => Promise.resolve(),
+    },
+    originPathname: "/",
+    getActionResult: () => undefined,
+    callAction: async (): Promise<never> => {
+      throw new Error("not implemented");
+    },
+    isPrerendered: false,
+    csp: undefined,
+    logger: { info: () => {}, warn: () => {}, error: () => {} },
+    routePattern: "/api/webhooks/paystack",
   };
 }
 
@@ -149,10 +166,10 @@ describe("idempotency", () => {
 
   it("handles race condition (unique constraint violation)", async () => {
     // Simulate a thenable that rejects with a PG unique violation
-    const rejectThenable: PromiseLike<unknown> = {
-      then(_resolve, reject) {
+    const rejectThenable = {
+      then(_resolve: (value: unknown) => void, reject: (reason: unknown) => void) {
         const err = Object.assign(new Error("duplicate key"), { code: "23505" });
-        reject!(err);
+        reject(err);
       },
     };
     db.insert.mockReturnValue({ values: () => rejectThenable });

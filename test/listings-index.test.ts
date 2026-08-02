@@ -154,7 +154,7 @@ describe("listing card data attributes", () => {
   it("card has expected dataset keys for client-side filtering", () => {
     const card = {
       dataset: { make: "Toyota", model: "Camry", year: "2020", price: "5000000" },
-    } as HTMLAnchorElement;
+    } as unknown as HTMLAnchorElement;
     expect(card.dataset.make).toBeDefined();
     expect(card.dataset.model).toBeDefined();
     expect(card.dataset.year).toBeDefined();

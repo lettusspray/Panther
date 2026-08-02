@@ -88,7 +88,10 @@ describe("normalizeSubdomain", () => {
     const result = normalizeSubdomain(123);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable");
-    expect(result.error).toMatch(/string/);
+    expect(result.reason).toBe("invalid");
+    if (result.reason === "invalid") {
+      expect(result.error).toMatch(/string/);
+    }
   });
 
   it("treats undefined, null, and empty as 'not provided'", async () => {

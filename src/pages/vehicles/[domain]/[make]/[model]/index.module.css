@@ -35,7 +35,7 @@
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(28px, 4vw, 48px);
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-2);
@@ -203,7 +203,7 @@
 }
 
 .pricingCtaTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 18px;
   margin-bottom: var(--space-2);
   color: #fff;
@@ -283,18 +283,18 @@
 }
 
 .parts_high {
-  background: color-mix(in oklch, #27ae60 12%, #fff);
-  color: #27ae60;
+  background: color-mix(in oklch, var(--panther-success-hex) 12%, #fff);
+  color: var(--panther-success-hex);
 }
 
 .parts_medium {
-  background: color-mix(in oklch, #f39c12 12%, #fff);
-  color: #b7950b;
+  background: color-mix(in oklch, var(--panther-warning-hex) 12%, #fff);
+  color: var(--panther-warning-strong-hex);
 }
 
 .parts_low {
-  background: color-mix(in oklch, #C0392B 10%, #fff);
-  color: #C0392B;
+  background: color-mix(in oklch, var(--panther-danger-hex) 10%, #fff);
+  color: var(--panther-danger-hex);
 }
 
 .partsDisclaimer {

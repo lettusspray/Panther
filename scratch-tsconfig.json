@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["/tmp/opencode/domcast.ts"],
+  "exclude": []
+}

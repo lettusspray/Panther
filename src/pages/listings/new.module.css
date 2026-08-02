@@ -4,7 +4,7 @@
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(28px, 4vw, 48px);
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-3);
@@ -102,7 +102,7 @@
 }
 
 .stepTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 22px;
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-2);
@@ -435,15 +435,15 @@
 }
 
 .vinStatusOk {
-  background: color-mix(in oklch, #2E7D32 8%, #fff);
-  color: #1B5E20;
-  border: 1px solid color-mix(in oklch, #2E7D32 20%, transparent);
+  background: color-mix(in oklch, var(--panther-success-strong-hex) 8%, #fff);
+  color: var(--panther-success-strong-hex);
+  border: 1px solid color-mix(in oklch, var(--panther-success-strong-hex) 20%, transparent);
 }
 
 .vinStatusError {
-  background: color-mix(in oklch, #C0392B 5%, #fff);
-  color: #B71C1C;
-  border: 1px solid color-mix(in oklch, #C0392B 20%, transparent);
+  background: color-mix(in oklch, var(--panther-danger-hex) 5%, #fff);
+  color: var(--panther-danger-strong-hex);
+  border: 1px solid color-mix(in oklch, var(--panther-danger-hex) 20%, transparent);
 }
 
 .vinDivider {
@@ -592,9 +592,9 @@
 }
 
 .submitError {
-  background: color-mix(in oklch, #C0392B 5%, #fff);
-  color: #C0392B;
-  border: 1px solid color-mix(in oklch, #C0392B 20%, transparent);
+  background: color-mix(in oklch, var(--panther-danger-hex) 5%, #fff);
+  color: var(--panther-danger-hex);
+  border: 1px solid color-mix(in oklch, var(--panther-danger-hex) 20%, transparent);
 }
 
 /* ── Photos Section ──────────────────────────────────────────── */
@@ -814,8 +814,8 @@
 
 .activationIncomplete {
   padding: var(--space-4);
-  background: color-mix(in oklch, #D4A017 5%, #fff);
-  border: 1px solid color-mix(in oklch, #D4A017 15%, transparent);
+  background: color-mix(in oklch, var(--panther-warning-hex) 5%, #fff);
+  border: 1px solid color-mix(in oklch, var(--panther-warning-hex) 15%, transparent);
   border-radius: 8px;
   margin-bottom: var(--space-4);
 }
@@ -824,7 +824,7 @@
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
-  color: #8B6914;
+  color: var(--panther-warning-strong-hex);
   margin-bottom: var(--space-1);
 }
 

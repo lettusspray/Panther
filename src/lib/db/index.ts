@@ -5,28 +5,45 @@
  * to Neon using a standard pg connection string. All DB traffic must be
  * routed through Cloudflare Hyperdrive."
  *
- * HYPERDRIVE_CONNECTION_STRING is injected by Cloudflare at runtime when
- * the Worker is bound to a Hyperdrive instance. In local dev, we fall
- * back to DATABASE_URL (direct Neon connection).
+ * The client is created lazily on first use so this module can load in both
+ * the Astro app (import.meta.env) and the standalone pipeline Worker (which
+ * hydrates worker bindings into readEnv before any query runs).
  */
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
+import { readEnv } from "../env";
 
-const connectionString =
-  import.meta.env.HYPERDRIVE_CONNECTION_STRING ||
-  import.meta.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error(
-    "No database connection string available. " +
-    "Set HYPERDRIVE_CONNECTION_STRING (production) or DATABASE_URL (dev).",
-  );
+function resolveConnectionString(): string | undefined {
+  return readEnv("HYPERDRIVE_CONNECTION_STRING") || readEnv("DATABASE_URL");
 }
 
-const sql = neon(connectionString);
+function makeDb() {
+  const connectionString = resolveConnectionString();
+  if (!connectionString) {
+    throw new Error(
+      "No database connection string available. " +
+      "Set HYPERDRIVE_CONNECTION_STRING (production) or DATABASE_URL (dev).",
+    );
+  }
+  return drizzle(neon(connectionString), { schema });
+}
 
-export const db = drizzle(sql, { schema });
+export type Database = ReturnType<typeof makeDb>;
 
-export type Database = typeof db;
+let _db: Database | null = null;
+
+function getDb(): Database {
+  if (_db) return _db;
+  _db = makeDb();
+  return _db;
+}
+
+export const db = new Proxy({} as Database, {
+  get(_target, prop) {
+    const client = getDb();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

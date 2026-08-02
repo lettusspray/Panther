@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/ui/Button.astro";
 import styles from "./listings.module.css";
 import "@/styles/global.css";
 import { getDealerListings } from "../../lib/dealer";
@@ -42,31 +43,31 @@ const formattedDate = (d: Date | null) =>
             const imgs = l.images as { tag: string; url: string }[] | null;
             const img = imgs?.[0];
             return (
-              <div class={styles.tableRow} key={l.id}>
+              <div class={styles.tableRow}>
                 <div class={styles.colVehicle}>
-                  {img && <img class={styles.thumb} src={img.url} alt="" />}
+                  {img && <img class={styles.thumb} src={img.url} alt={`${l.modelYear} vehicle photo`} />}
                   <span>{l.modelYear}</span>
                 </div>
                 <span class={styles.colPrice}>₦{Number(l.askingPriceNgn).toLocaleString()}</span>
                 <span class={`${styles.colStatus} ${styles[`status_${l.status}`]}`}>{l.status}</span>
                 <span class={styles.colDate}>{formattedDate(l.createdAt)}</span>
                 <div class={styles.colActions}>
-                  <a href={`/listings/${l.id}`} class="btn btn-tertiary btn-sm">View</a>
+                  <Button label="View" href={`/listings/${l.id}`} variant="tertiary" size="sm" />
                   {l.status === "draft" && (
-                    <button
-                      class="btn btn-secondary btn-sm"
+                    <Button
+                      label="Activate"
+                      variant="secondary"
+                      size="sm"
                       data-activate={l.id}
-                    >
-                      Activate
-                    </button>
+                    />
                   )}
                   {l.status === "active" && (
-                    <button
-                      class="btn btn-danger btn-sm"
+                    <Button
+                      label="Remove"
+                      variant="danger"
+                      size="sm"
                       data-remove={l.id}
-                    >
-                      Remove
-                    </button>
+                    />
                   )}
                 </div>
               </div>

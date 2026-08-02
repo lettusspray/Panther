@@ -29,7 +29,7 @@
 }
 
 .explainerTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 24px;
   color: var(--panther-resting-hex);
   text-align: center;
@@ -93,7 +93,7 @@
 }
 
 .selectorTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 24px;
   color: var(--panther-resting-hex);
   text-align: center;

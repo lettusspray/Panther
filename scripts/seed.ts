@@ -20,6 +20,7 @@ import {
   gvoModel,
   gvoTrim,
   systemConfig,
+  user,
 } from "../src/lib/db/schema";
 import { eq } from "drizzle-orm";
 

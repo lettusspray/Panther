@@ -20,7 +20,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
 
 <div class="pu-section">
   <h3 class="pu-title">Add photos of your vehicle</h3>
-  <p class="pu-desc">Good photos sell vehicles. Listings with 6+ clear photos get 5x more buyer interest.</p>
+  <p class="pu-desc">Good photos sell vehicles. Show every angle so buyers aren't guessing.</p>
 
   <div class="pu-checklist">
     <div class="pu-check-item"><span class="pu-check-num">1</span><span>Front — straight-on, full vehicle visible</span></div>
@@ -48,6 +48,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
 </div>
 
 <script define:vars={{ maxPhotos, maxBytes }}>
+  import { iconSvg } from "@/lib/design-system/icons";
   class PhotoUploader {
     photos = [];
     container;
@@ -148,7 +149,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
 
         const removeBtn = document.createElement("button");
         removeBtn.className = "pu-remove-btn";
-        removeBtn.textContent = "×";
+        removeBtn.innerHTML = iconSvg("x", 14);
         removeBtn.setAttribute("aria-label", "Remove photo");
         removeBtn.addEventListener("click", () => this.remove(i));
         div.appendChild(removeBtn);
@@ -287,7 +288,7 @@ const maxBytes = maxFileSizeMb * 1024 * 1024;
     text-align: center;
     font-family: var(--font-sans);
     font-size: 10px;
-    color: #C0392B;
+    color: var(--panther-danger-strong-hex);
   }
   .pu-retry-btn {
     margin-top: var(--space-1);

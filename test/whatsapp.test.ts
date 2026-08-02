@@ -2,21 +2,36 @@ import { vi, describe, it, expect } from "vitest";
 
 // ── Mock DB ─────────────────────────────────────────────────────────
 
-const mockChain = () => {
-  const chain: Record<string, unknown> = {};
-  chain.select = vi.fn(() => chain);
-  chain.from = vi.fn(() => chain);
-  chain.where = vi.fn(() => chain);
-  chain.insert = vi.fn(() => chain);
-  chain.values = vi.fn(() => chain);
-  chain.update = vi.fn(() => chain);
-  chain.set = vi.fn(() => chain);
-  chain.delete = vi.fn(() => chain);
-  chain.returning = vi.fn(() => chain);
-  chain.limit = vi.fn(() => chain);
-  chain.then = vi.fn((resolve: (v: unknown) => void) =>
-    Promise.resolve([]).then(resolve),
-  );
+interface Chain {
+  select: (...args: unknown[]) => Chain;
+  from: (...args: unknown[]) => Chain;
+  where: (...args: unknown[]) => Chain;
+  insert: (...args: unknown[]) => Chain;
+  values: (...args: unknown[]) => Chain;
+  update: (...args: unknown[]) => Chain;
+  set: (...args: unknown[]) => Chain;
+  delete: (...args: unknown[]) => Chain;
+  returning: (...args: unknown[]) => Chain;
+  limit: (...args: unknown[]) => Chain;
+  then: (resolve: (v: unknown) => void) => Promise<unknown>;
+}
+
+const mockChain = (): Chain => {
+  const chain: Chain = {
+    select: vi.fn(() => chain),
+    from: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    insert: vi.fn(() => chain),
+    values: vi.fn(() => chain),
+    update: vi.fn(() => chain),
+    set: vi.fn(() => chain),
+    delete: vi.fn(() => chain),
+    returning: vi.fn(() => chain),
+    limit: vi.fn(() => chain),
+    then: vi.fn((resolve: (v: unknown) => void) =>
+      Promise.resolve([]).then(resolve),
+    ),
+  };
   return chain;
 };
 
@@ -38,7 +53,7 @@ vi.mock("../../src/lib/db/schema", () => ({
 
 // ── Import after mocks ──────────────────────────────────────────────
 
-import { parseAuthTokenFromMessage, buildConfirmationMessage, generateAuthDeepLink } from "../../src/lib/auth/whatsapp-link";
+import { parseAuthTokenFromMessage, buildConfirmationMessage, generateAuthDeepLink } from "../src/lib/auth/whatsapp-link";
 
 // ── Token parsing tests ─────────────────────────────────────────────
 
@@ -147,7 +162,7 @@ describe("webhook challenge verification", () => {
 
   it("mode=subscribe with wrong token is rejected", () => {
     const mode = "subscribe";
-    const token = "wrong-token";
+    const token: string = "wrong-token";
     const challenge = "1234567890";
 
     const valid = mode === "subscribe" && token === "correct-token" && !!challenge;
@@ -155,7 +170,7 @@ describe("webhook challenge verification", () => {
   });
 
   it("non-subscribe mode is rejected", () => {
-    const mode = "unsubscribe";
+    const mode: string = "unsubscribe";
     const valid = mode === "subscribe";
     expect(valid).toBe(false);
   });

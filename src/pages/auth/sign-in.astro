@@ -69,7 +69,7 @@ import "@/styles/global.css";
   }
 
   .auth-title {
-    font-family: var(--font-serif);
+    font-family: var(--posture-font);
     font-size: 28px;
     color: var(--panther-resting-hex);
     margin-bottom: var(--space-1);
@@ -122,11 +122,11 @@ import "@/styles/global.css";
 
   .form-error {
     padding: var(--space-3);
-    background: color-mix(in oklch, #dc2626 8%, #fff);
-    border: 1px solid color-mix(in oklch, #dc2626 30%, transparent);
+    background: color-mix(in oklch, var(--panther-danger-strong-hex) 8%, #fff);
+    border: 1px solid color-mix(in oklch, var(--panther-danger-strong-hex) 30%, transparent);
     border-radius: 8px;
     font-size: 13px;
-    color: #dc2626;
+    color: var(--panther-danger-strong-hex);
   }
 
   .auth-alt {
@@ -182,7 +182,7 @@ import "@/styles/global.css";
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { error?: { message?: string } };
 
       if (!res.ok || data.error) {
         errorEl.textContent = data.error?.message ?? "Invalid email or password";

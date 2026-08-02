@@ -22,7 +22,6 @@
 import { db } from "../../lib/db";
 import { gvoDomain, gvoCategory, gvoMake, gvoModel } from "../../lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { parseEpaCsv, enrichGvoWithEpa, getEpaStats } from "../../lib/data/epa";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -292,7 +291,7 @@ export async function ingestOntology(): Promise<OntologyResult> {
         if (variants.length === 0) continue;
 
         // Determine domain and category from segment/fuel type
-        let domain = "car";
+        const domain = "car";
         let category = "Sedan";
 
         const segment = variants[0]?.segment?.toLowerCase() ?? "";
@@ -395,7 +394,7 @@ export async function ingestOntology(): Promise<OntologyResult> {
                 const vehicleRes = await fetch(`${EPA_API}/${vehicleId}`, { headers: epaHeaders });
                 if (!vehicleRes.ok) continue;
 
-                const vehicle = await vehicleRes.json() as Record<string, string>;
+                await vehicleRes.json();
                 result.epaEnriched++;
               }
             } catch {

@@ -362,8 +362,8 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     gap: var(--space-2);
     margin-top: var(--space-3);
     padding: var(--space-3);
-    background: color-mix(in oklch, #27ae60 8%, #fff);
-    border: 1px solid color-mix(in oklch, #27ae60 20%, transparent);
+    background: color-mix(in oklch, var(--panther-success-hex) 8%, #fff);
+    border: 1px solid color-mix(in oklch, var(--panther-success-hex) 20%, transparent);
     border-radius: 6px;
   }
   .selected-label {
@@ -377,7 +377,7 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 600;
-    color: #1e8449;
+    color: var(--panther-success-strong-hex);
   }
   .gvo-request-area {
     margin-top: var(--space-4);
@@ -417,7 +417,7 @@ const { stepNextId = "step2-next", yearSelectId = "year-select" } = Astro.props;
     margin-top: var(--space-2);
   }
   .gvo-lookup-status--error {
-    color: #C0392B;
+    color: var(--panther-danger-hex);
   }
 
   @media (max-width: 768px) {

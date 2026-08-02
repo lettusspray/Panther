@@ -14,6 +14,7 @@
 import { db } from "../../lib/db";
 import { knowledgeEntry, gvoTrim } from "../../lib/db/schema";
 import { eq } from "drizzle-orm";
+import { readEnv } from "../../lib/env";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -61,7 +62,7 @@ RULES:
 6. No markdown, no explanations, no preamble — pure JSON only.`;
 
 async function callGroq(specs: VehicleSpecs): Promise<KnowledgeWarnings> {
-  const apiKey = import.meta.env.GROQ_API_KEY;
+  const apiKey = readEnv("GROQ_API_KEY");
   if (!apiKey) {
     return { warnings: ["Specs data unavailable — consult a local mechanic."] };
   }

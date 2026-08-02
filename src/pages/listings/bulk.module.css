@@ -7,7 +7,7 @@
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 36px;
   font-weight: 700;
   color: var(--panther-resting-hex);
@@ -68,7 +68,7 @@
 }
 
 .panelTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 22px;
   font-weight: 600;
   color: var(--panther-resting-hex);

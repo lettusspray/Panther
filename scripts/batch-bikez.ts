@@ -51,6 +51,26 @@ async function fetchBatch(urls: string[], concurrency = 8): Promise<{ url: strin
 
 // ── Parser ──────────────────────────────────────────────────────────
 
+interface BikezJsonLd {
+  name?: string;
+  brand?: { name?: string };
+  model?: string;
+  vehicleEngine?: {
+    engineDisplacement?: { value?: string };
+    enginePower?: { value?: string };
+    torque?: { value?: string };
+  };
+  weight?: { value?: string };
+  fuelCapacity?: { value?: string };
+  wheelbase?: { value?: string };
+  fuelConsumption?: { value?: string };
+  bodyType?: string;
+  category?: string;
+  description?: string;
+  color?: string;
+  image?: { url?: string };
+}
+
 function parseBikez(html: string, url: string): Record<string, unknown> | null {
   // Extract JSON-LD Motorcycle data
   const jsonLdMatch = html.match(/"@type"\s*:\s*"Motorcycle"[\s\S]*?"@context"/);
@@ -58,12 +78,14 @@ function parseBikez(html: string, url: string): Record<string, unknown> | null {
 
   // Find the full JSON block
   const allJsonLd = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
-  let bikeData: Record<string, any> | null = null;
+  let bikeData: BikezJsonLd | null = null;
   for (const m of allJsonLd) {
     try {
       const d = JSON.parse(m[1]);
       if (d["@type"] === "Motorcycle") { bikeData = d; break; }
-    } catch {}
+    } catch {
+      // Invalid JSON-LD block — skip and try the next one
+    }
   }
   if (!bikeData) return null;
 

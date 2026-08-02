@@ -51,7 +51,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22C55E;
+  background: var(--panther-success-strong-hex);
   flex-shrink: 0;
 }
 

@@ -9,7 +9,7 @@ vi.mock("../src/lib/data/crawl4ai", () => ({
   parseNumeric: vi.fn(),
 }));
 
-import { crawlEvDatabase, discoverEvUrls, toVehicleData } from "../src/lib/data/ev-database";
+import { crawlEvDatabase, toVehicleData } from "../src/lib/data/ev-database";
 import * as crawl4ai from "../src/lib/data/crawl4ai";
 
 // ── Test HTML (ev-database.org structure) ─────────────────────────
@@ -63,28 +63,6 @@ const TESLA_MODEL_3_HTML = `
 </table>
 <table>
   <tr><td>Charge Power</td><td>11 kW AC</td></tr>
-</table>
-</html>
-`;
-
-const BYD_ATTO_3_HTML = `
-<html>
-<table>
-  <tr><td>Nominal Capacity *</td><td>60.5 kWh</td></tr>
-  <tr><td>Useable Capacity*</td><td>58.1 kWh</td></tr>
-  <tr><td>Electric Range</td><td>420 km</td></tr>
-  <tr><td>Charge Power (max)</td><td>80 kW DC</td></tr>
-  <tr><td>Total Power</td><td>150 kW (204 PS)</td></tr>
-  <tr><td>Total Torque</td><td>310 Nm</td></tr>
-  <tr><td>Acceleration 0 - 100 km/h</td><td>7.3 sec</td></tr>
-  <tr><td>Top Speed</td><td>160 km/h</td></tr>
-  <tr><td>Drive</td><td>Front</td></tr>
-  <tr><td>Length</td><td>4455 mm</td></tr>
-  <tr><td>Width</td><td>1875 mm</td></tr>
-  <tr><td>Height</td><td>1615 mm</td></tr>
-  <tr><td>Weight Unladen (EU)</td><td>1740 kg</td></tr>
-  <tr><td>Seats</td><td>5 people</td></tr>
-  <tr><td>Cargo Volume</td><td>440 L</td></tr>
 </table>
 </html>
 `;

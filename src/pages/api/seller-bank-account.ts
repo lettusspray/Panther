@@ -9,7 +9,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../../lib/db";
 import { sellerBankAccount } from "../../lib/db/schema";
 import { getPaymentProvider } from "../../lib/payments";
@@ -48,9 +48,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .select()
     .from(sellerBankAccount)
     .where(
-      eq(sellerBankAccount.sellerId, userId) &&
-        eq(sellerBankAccount.bankCode, bankCode) &&
+      and(
+        eq(sellerBankAccount.sellerId, userId),
+        eq(sellerBankAccount.bankCode, bankCode),
         eq(sellerBankAccount.accountNumber, accountNumber),
+      ),
     )
     .limit(1);
 

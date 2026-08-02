@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   await db.insert(listingReport).values({
     listingId: id,
-    reporterId: user?.id ?? null,
+    reporterId: (user?.id as string | undefined) ?? null,
     reason: body.reason.trim(),
     description: body.description?.trim()
       ? `${body.description.trim()}${ip ? ` [IP: ${ip}]` : ""}`
@@ -99,7 +99,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   return new Response(
     JSON.stringify({
       ok: true,
-      message: "Report submitted. Our team reviews all reports within 24 hours. Thank you for helping keep Panther trustworthy.",
+      message: "Report submitted. Our team reviews reports within 24 hours.",
     }),
     { status: 201 },
   );

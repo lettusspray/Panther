@@ -107,7 +107,7 @@ const attribution = [...new Set(images.map((img) => img.photographer).filter(Boo
   title={`${makeRow.name} ${modelRow.name}`}
   posture="eyes"
   description={`${makeRow.name} ${modelRow.name} — specs, pricing, and buyer warnings for the Nigerian market.`}
-  ogImage={images?.[0]?.url ?? undefined}
+  ogImage={images?.[0]?.urls.medium ?? undefined}
   ogUrl={`https://panther.ng/vehicles/${domain}/${make}/${model}`}
 >
   <section class={styles.hero}>
@@ -184,7 +184,7 @@ const attribution = [...new Set(images.map((img) => img.photographer).filter(Boo
         </div>
 
         {trims.length > 0 && trims.map((trim) => (
-          <div class={styles.sectionBorder} key={trim.id}>
+          <div class={styles.sectionBorder}>
             <div class={styles.specRow}>
               <span class={styles.specLabel}>Trim</span>
               <span class={styles.specValue}>{trim.name}</span>

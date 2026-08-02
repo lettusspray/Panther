@@ -71,10 +71,6 @@ function parseNum(v: string): number | null {
   return m ? parseFloat(m[0]) : null;
 }
 
-function cleanLine(s: string): string {
-  return s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-}
-
 // ── Parser ──────────────────────────────────────────────────────────
 
 /**

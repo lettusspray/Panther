@@ -143,7 +143,7 @@ describe("Crawl4AI Client", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const urls = Array.from({ length: 75 }, (_, i) => `https://${i}.com`);
-      const results = await crawlBatch(urls);
+      await crawlBatch(urls);
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });

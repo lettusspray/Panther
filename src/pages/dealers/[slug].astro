@@ -27,7 +27,7 @@ const pageUrl = canonicalUrl;
 const pageTitle = `${profile.businessName} — Vehicles for Sale in ${profile.city ?? "Nigeria"}`;
 const pageDesc = profile.about
   ? `${profile.businessName}. ${profile.about.slice(0, 200)}`
-  : `${profile.businessName} — ${stats.active} vehicle${stats.active !== 1 ? "s" : ""} for sale${profile.city ? " in " + profile.city : ""}. Browse inventory, contact via WhatsApp, transact securely with Panther Switchboard escrow.`;
+  : `${profile.businessName} — ${stats.active} vehicle${stats.active !== 1 ? "s" : ""} for sale${profile.city ? " in " + profile.city : ""}. Browse inventory, contact via WhatsApp, with Panther Switchboard escrow.`;
 const jsonLd = generateDealerJsonLd({
   businessName: profile.businessName,
   slug,
@@ -195,7 +195,7 @@ const formattedDate = (d: Date | null) =>
           )}
           <div class={styles.tabSpacer} />
           <a
-            href={`https://wa.me/${profile.whatsappNumber ? profile.whatsappNumber.replace(/[^0-9]/g, "") : ""}?text=${encodeURIComponent(`Hi, I'm interested in a vehicle from your lot: ${pageUrl}`)}`}
+            href={`https://wa.me/${profile.whatsappNumber ? profile.whatsappNumber.replace(/[^0-9]/g, "") : ""}?text=${encodeURIComponent(`Hi, I'm interested in a vehicle from your lot on Panther: ${pageUrl}`)}`}
             class="btn btn-primary btn-md"
             target="_blank"
             rel="noopener noreferrer"
@@ -214,10 +214,10 @@ const formattedDate = (d: Date | null) =>
                 const imgs = l.images as { tag: string; url: string }[] | null;
                 const img = imgs?.[0];
                 return (
-                  <a href={`/listings/${l.id}`} class={styles.card} key={l.id}>
+                  <a href={`/listings/${l.id}`} class={styles.card}>
                     <div class={styles.cardImageWrap}>
                       {img ? (
-                        <img class={styles.cardImage} src={img.url} alt="" loading="lazy" />
+                        <img class={styles.cardImage} src={img.url} alt={`${l.modelYear} vehicle photo`} loading="lazy" />
                       ) : (
                         <div class={styles.cardImagePlaceholder} />
                       )}
@@ -254,10 +254,10 @@ const formattedDate = (d: Date | null) =>
                 const imgs = l.images as { tag: string; url: string }[] | null;
                 const img = imgs?.[0];
                 return (
-                  <div class={`${styles.card} ${styles.cardSold}`} key={l.id}>
+                  <div class={`${styles.card} ${styles.cardSold}`}>
                     <div class={styles.cardImageWrap}>
                       {img ? (
-                        <img class={styles.cardImage} src={img.url} alt="" loading="lazy" />
+                        <img class={styles.cardImage} src={img.url} alt={`${l.modelYear} vehicle photo`} loading="lazy" />
                       ) : (
                         <div class={styles.cardImagePlaceholder} />
                       )}
@@ -300,7 +300,7 @@ const formattedDate = (d: Date | null) =>
           </h2>
           <div class={styles.reviewList}>
             {reviews.map((r) => (
-              <div class={styles.reviewCard} key={r.id}>
+              <div class={styles.reviewCard}>
                 <div class={styles.reviewHeader}>
                   <span class={styles.reviewRating}>
                     {Array.from({ length: 5 }, (_, i) => (
@@ -330,14 +330,15 @@ const formattedDate = (d: Date | null) =>
 </BaseLayout>
 
 <script>
+  import css from "./[slug].module.css";
   document.querySelectorAll("[data-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
       const tabName = tab.getAttribute("data-tab");
-      document.querySelectorAll("[data-tab]").forEach((t) => t.classList.remove("tabActive"));
+      document.querySelectorAll("[data-tab]").forEach((t) => t.classList.remove(css.tabActive));
       document.querySelectorAll("[data-panel]").forEach((p) => {
         (p as HTMLElement).style.display = "none";
       });
-      tab.classList.add("tabActive");
+      tab.classList.add(css.tabActive);
       const panel = document.querySelector(`[data-panel="${tabName}"]`);
       if (panel) (panel as HTMLElement).style.display = "";
     });

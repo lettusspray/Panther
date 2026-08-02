@@ -19,7 +19,9 @@ Directions are approximate pointers toward the simplest/cleanest design. **That 
 | `npm run db:generate` | Drizzle Kit — generate migration from schema |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:push` | Push schema directly (dev only) |
+| `npm run db:studio` | Drizzle Kit studio (DB inspection) |
 | `npm run db:seed` | `tsx scripts/seed.ts` — seeds GVO + config |
+| `npm run design:lint` | Enforces design-system rules PANTHER-01..06 (OKLCH token ranges, posture pairing) across `src/`; takes optional path arg |
 | `npx vitest run` | Run all tests (vitest with globals, env stubs) |
 | `npx vitest run test/foo.test.ts` | Single test file |
 
@@ -31,7 +33,7 @@ Tests live in `test/**/*.test.ts`. Env vars are stubbed in `test/setup.ts` via `
 - **Cron trigger** → `src/workers/cron.ts` (nightly 02:00 UTC: ontology, pricing, knowledge, crawl4ai)
 - **Queue consumers** → `src/workers/queues/*.ts` (ontology, pricing, knowledge, dead-letter)
 - **Ingestion pipelines** → `src/workers/ingestion/*.ts` (crawl4ai, knowledge, ontology, pricing)
-- **Drizzle schema** → `src/lib/db/schema/index.ts` (single consolidated file, 13 tables)
+- **Drizzle schema** → `src/lib/db/schema/index.ts` (single consolidated file, 19 tables)
 - **Pricing engine** → `src/lib/pricing/engine.ts` (13-step landed-cost formula)
 - **Auth** → `src/lib/auth/` (Better-Auth + WhatsApp inbound auth)
 - **Path alias** → `@/*` maps to `src/*` (tsconfig + vitest + Vite config)
@@ -48,7 +50,7 @@ Tests live in `test/**/*.test.ts`. Env vars are stubbed in `test/setup.ts` via `
 - No AI vision/photo forensics (rigid UI toggles per category)
 - No runtime LLM calls (Groq in Queues for offline ETL only)
 - No hardcoded statutory/FX constants (live from `System_Config` table)
-- No "Lagos default" (platform is nationally agnostic across 774+ LGAs)
+- No "Lagos default" (platform is nationally agnostic — no city or "774 LGAs" serves as marketing shorthand; plain "nationally available" language only)
 - No heavy KYC at MVP (Switchboard utility revocation, not identity enforcement)
 - No cancellation fees
 - No raw S3 image serving (Cloudflare Images only)
@@ -77,6 +79,15 @@ Pricing Engine **must** check `effective_timestamp` on NCS/CBN rates. If stale: 
 - Serif never paired with Eyes-Forward colours; sans never with Resting colours
 - Dark theme for marketing/hero (Roaring Calm) only — Resting invisible on dark
 
+### CSS Modules & Client JS Gotcha
+
+Astro 7 scopes every `*.module.css` class to `_name_hash` in the build. **Client `<script>` code can never reference module class names as literal strings** — `el.classList.toggle("stepActive")` silently matches nothing and the feature renders broken.
+
+- From a processed `<script>` (no `define:vars`/`is:inline`), `import css from "./x.module.css"` and use `css.className` — the bundler injects the scoped names into the client chunk. Keep the script TS-processed; adding `define:vars` forces `is:inline` and breaks all TS syntax in the script.
+- JS-only state that must toggle from a script is best modeled as `data-*` attributes + attribute selectors in the module CSS (e.g. `.toast[data-toast="success"]`), or read the scoped name via the `css` import above.
+- Global utilities (`.is-loading`, `.icon-spin`, `.btn*`) live in `global.css` and are NOT scoped — literal classList toggles are correct there.
+- VIN status classes `vinStatusPending`/`vinStatusWarn` in `listings/new.astro` are dead (no CSS exists) — left as-is, unstyled no-ops.
+
 ## MVP Scope
 
 **Ships**: Pricing Engine, GVO cascading selectors, UI-toggle condition reports, Switchboard escrow, Knowledge Hub (offline Groq ETL), SEO/AEO pricing pages.
@@ -92,19 +103,37 @@ Every dealer storefront is wired for Google Local Maps indexing:
 - **Dashboard**: GBP URL field in profile editor
 - **Migration**: `drizzle/migrations/0007_google_business.sql`
 
+## Wildcard Subdomain Routing
+
+Each dealer gets `dealer.subdomain` (migration `drizzle/migrations/0008_subdomain.sql`, unique). `*.panther.ng` resolves to a dealer storefront via middleware — no route file for it:
+- `src/middleware.ts:onRequest` extracts the subdomain (`src/lib/dealer/subdomain.ts:extractSubdomain`) and `context.rewrite("/dealers/${slug}")`; unknown subdomain/host → `/404`
+- Requires Cloudflare wildcard DNS `*.panther.ng` pointing at this worker
+- `getDealerCanonicalUrl()` in `src/lib/dealer/subdomain.ts` decides canonical URL: subdomain host if present, else `https://panther.ng/dealers/{slug}` — use it for SEO/JSON-LD to avoid duplicate content
+- Middleware adds `context.locals.subdomainHost` (typed in `src/env.d.ts`) — pass to `getDealerCanonicalUrl()` from storefront pages
+- `context.rewrite()` (Astro) preserves the original host; middleware pass-through paths (`/api/`, `/webhooks/`, static) never rewrite
+- Tests: `test/dealer-subdomain.test.ts` (extraction, validation, canonical URL)
+
 ## Platform Fingerprint Rules
 
 Panther branding must be visible on every surface:
-- **Global footer** (BaseLayout): "Panther | Nigeria's trusted vehicle pricing & escrow platform" with navigation links
-- **Dealer storefront**: Fingerprint section at page bottom — "{businessName} sells on Panther — Trust is the product. Math is the foundation."
+- **Global footer** (BaseLayout): "Panther" with navigation links
+- **Dealer storefront**: Fingerprint section at page bottom — "{businessName} sells on Panther"
 - **Dealer listing cards**: "Panther" badge on each card image corner
-- **Listing detail page**: "This vehicle is listed on Panther — Nigeria's trusted vehicle pricing and escrow platform."
+- **Listing detail page**: "Listed on Panther"
 - **WhatsApp share messages**: Include "on Panther" in the pre-filled text
 - **Share button**: Includes business name + page URL (WhatsApp fallback when native share unavailable)
 
+## Positioning (do not regress)
+
+Panther is **Nigeria's auto marketplace** — buying/selling/escrow/condition-reports lead; pricing is a differentiator, not the identity.
+- Never describe Panther as a "pricing platform", "vehicle pricing platform", or "pricing and transaction platform".
+- Meta descriptions default to "Nigeria's auto marketplace."
+- Copy must stay plain and direct: no unsourced multipliers ("5x", "2x"), no "trusted"/"seamless"/"transparent pricing" puffery, no "Pro tip", no "highest-ROI".
+- No internal jargon in user-facing copy: never "Global Vehicle Ontology", "the ontology", "GVO", "domain" (for vehicle type), or "cohort" — use "catalog", "vehicle type", "this model", etc.
+
 ## Dealer Storefront Architecture
 
-- `src/lib/dealer/index.ts` — All data access (`getDealerBySlug`, `getDealerListings`, `getDealerReviews`, `getDealerStats`, `upsertDealerProfile`, `slugExists`)
+- `src/lib/dealer/index.ts` — All data access (`getDealerBySlug`, `getDealerBySubdomain`, `getDealerListings`, `getDealerReviews`, `getDealerStats`, `upsertDealerProfile`, `subdomainExists`, `slugExists`)
 - `src/lib/dealer/json-ld.ts` — `generateDealerJsonLd()` produces `AutoDealer + LocalBusiness + BreadcrumbList` with NAP, hasMap, sameAs, openingHours, aggregateRating
 - `src/pages/dealers/[slug].astro` — Public storefront (Resting posture) with banner/logo, AEO hero, badges (Verified/NADDC/Rating), contact bar (Call/WhatsApp/Share/GBP/Maps/Inspection/Delivery), inventory tabs (Active + Sold), reviews, platform fingerprint
 - `src/pages/dashboard/profile.astro` — Profile editor with GBP URL field

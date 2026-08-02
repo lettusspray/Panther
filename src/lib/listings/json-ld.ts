@@ -78,7 +78,7 @@ export function generateListingJsonLd(params: {
         name: `What is the asking price for this ${params.modelYear} ${params.make} ${params.model}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `The asking price for this ${title} is ₦${params.askingPriceNgn.toLocaleString()}. This is the seller's listed price and may be negotiable. Use Panther's Switchboard escrow to transact securely — the seller only receives funds after you confirm the vehicle.`,
+          text: `The asking price for this ${title} is ₦${params.askingPriceNgn.toLocaleString()}. This is the seller's listed price and may be negotiable. Use Panther's Switchboard escrow — the seller only receives funds after you confirm the vehicle.`,
         },
       },
       {
@@ -86,7 +86,7 @@ export function generateListingJsonLd(params: {
         name: `What is the condition of this ${params.modelYear} ${params.make} ${params.model}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `This vehicle has a structured condition report with ${params.condition ? Object.values(params.condition).filter((v) => v === "good").length + " good, " + Object.values(params.condition).filter((v) => v === "fair").length + " fair" : "verified"} ratings across inspected categories. Panther's condition reports use rigid UI toggles per category — no free-text, no guesswork.`,
+          text: `This vehicle has a structured condition report with ${params.condition ? Object.values(params.condition).filter((v) => v === "good").length + " good, " + Object.values(params.condition).filter((v) => v === "fair").length + " fair" : "verified"} ratings across inspected categories. Panther rates each category with fixed options, so a buyer knows exactly what they're getting.`,
         },
       },
     ],

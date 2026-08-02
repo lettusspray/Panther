@@ -58,9 +58,9 @@ const faqSchema = modelPage ? {
           <nav class={styles.breadcrumb}>
             <a href="/pricing">Pricing</a>
             <span class={styles.breadcrumbSep}>/</span>
-            <a href={`/pricing/${domain}`}>{domain.replace(/-/g, " ")}</a>
+            <a href={`/vehicles/${domain}`}>{domain.replace(/-/g, " ")}</a>
             <span class={styles.breadcrumbSep}>/</span>
-            <a href={`/pricing/${domain}/${make}`}>{displayMake}</a>
+            <a href={`/vehicles/${domain}/${make}`}>{displayMake}</a>
             <span class={styles.breadcrumbSep}>/</span>
             <span class={styles.breadcrumbCurrent}>{displayModel}</span>
           </nav>
@@ -102,7 +102,7 @@ const faqSchema = modelPage ? {
         <nav class={styles.breadcrumb}>
           <a href="/pricing">Pricing</a>
           <span class={styles.breadcrumbSep}>/</span>
-          <a href={`/pricing/${domain}`}>{displayMake}</a>
+          <a href={`/vehicles/${domain}/${make}`}>{displayMake}</a>
         </nav>
         <h1 class={styles.heroTitle}>Vehicle not found</h1>
         <p class={styles.heroSubtitle}>

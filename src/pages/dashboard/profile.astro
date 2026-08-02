@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Icon from "../../components/ui/Icon.astro";
 import styles from "./profile.module.css";
 import "@/styles/global.css";
 import { getDealerByUserId } from "../../lib/dealer";
@@ -25,7 +26,7 @@ const formMethod = profile ? "PATCH" : "POST";
 
       {profile && (
         <a href={`/dealers/${profile.slug}`} class={styles.previewLink}>
-          Preview your storefront →
+          Preview your storefront <Icon name="arrow-right" size={12} />
         </a>
       )}
 
@@ -33,25 +34,21 @@ const formMethod = profile ? "PATCH" : "POST";
       <div class={styles.gbpGuide}>
         <h2 class={styles.gbpTitle}>Get found on Google Maps & Search</h2>
         <p class={styles.gbpText}>
-          A <strong>Google Business Profile</strong> is the single highest-ROI thing you can do for your dealership.
-          It's <strong>free</strong>, takes <strong>15 minutes</strong> to set up, and makes your business appear
-          when buyers search for vehicles in your area. Dealers with a complete GBP get <strong>5× more leads</strong>
-          from local search.
+          A <strong>Google Business Profile</strong> is free and takes about 15 minutes to set up.
+          It makes your dealership appear when buyers search for vehicles in your area.
         </p>
         <p class={styles.gbpText}>
-          As a Panther dealer, you get a <strong>free website</strong> — just set your custom subdomain below
-          and submit it on your Google Business Profile. Your customers will see your dealership on a
-          <strong> professional, SEO-optimized site</strong> at <code>yourbusiness.panther.ng</code>.
-          No hosting fees, no setup, no maintenance.
+          As a Panther dealer you also get a free website. Set your subdomain below and submit it on your
+          Google Business Profile, and your dealership is live at <code>yourbusiness.panther.ng</code>.
         </p>
         <ol class={styles.gbpSteps}>
           <li>Go to <a href="https://business.google.com" target="_blank" rel="noopener noreferrer">business.google.com</a> and claim your profile</li>
           <li>Choose your subdomain below (e.g. <code>lagos-motors.panther.ng</code>)</li>
           <li>In your GBP dashboard, add your subdomain URL as your website</li>
-          <li>You're live on Google Maps — buyers find you, message you, and transact securely on Panther</li>
+          <li>You're live on Google Maps — buyers find you, message you, and use Panther</li>
         </ol>
         <p class={styles.gbpTip}>
-          <strong>Pro tip:</strong> Add photos, respond to reviews, and post weekly to rank higher.
+          Add photos, reply to reviews, and post regularly.
         </p>
       </div>
 

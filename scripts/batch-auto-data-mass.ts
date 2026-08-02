@@ -215,7 +215,7 @@ async function main() {
           await upsertKnowledge(trimId, v);
 
           upserted++;
-        } catch (err) {
+        } catch {
           errors++;
         }
       }

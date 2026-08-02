@@ -15,7 +15,7 @@ export interface Props {
 
 const {
   title,
-  description = "The trusted pricing and transaction platform for Nigerian vehicle buyers and sellers.",
+  description = "Nigeria's auto marketplace. Buy and sell vehicles with escrow, condition reports, and a published landed-cost breakdown.",
   posture = "roaring",
   theme = "light",
   jsonLd,
@@ -52,7 +52,7 @@ const user = Astro.locals.user;
     <link rel="canonical" href={ogUrl ?? "https://panther.ng"} />
     <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
     {jsonLd?.map((schema) => (
-      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} is:inline />
     ))}
   </head>
   <body class={postureClass + (themeClass ? ` ${themeClass}` : "")}>
@@ -63,15 +63,15 @@ const user = Astro.locals.user;
         </a>
         <nav aria-label="Main navigation">
           <ul class="nav-list">
-            <li><a href="/pricing" class="nav-link">Pricing</a></li>
-            <li><a href="/vehicles" class="nav-link">Vehicles</a></li>
             <li><a href="/listings" class="nav-link">Listings</a></li>
+            <li><a href="/vehicles" class="nav-link">Vehicles</a></li>
+            <li><a href="/pricing" class="nav-link">Pricing</a></li>
             <li><a href="/switchboard" class="nav-link">Escrow</a></li>
           </ul>
         </nav>
         <div class="header-actions">
           {user ? (
-            <Button label={user.name ?? "Dashboard"} href="/dashboard" variant="secondary" size="sm" />
+            <Button label={String(user.name ?? "Dashboard")} href="/dashboard" variant="secondary" size="sm" />
           ) : (
             <Button label="Sign In" href="/auth/sign-in" variant="secondary" size="sm" />
           )}
@@ -89,9 +89,9 @@ const user = Astro.locals.user;
           Panther
         </p>
         <div class="footer-links">
-          <a href="/pricing">Pricing</a>
-          <a href="/vehicles">Vehicles</a>
           <a href="/listings">Listings</a>
+          <a href="/vehicles">Vehicles</a>
+          <a href="/pricing">Pricing</a>
           <a href="/switchboard">Escrow</a>
         </div>
       </div>

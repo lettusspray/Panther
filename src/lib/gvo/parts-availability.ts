@@ -55,7 +55,7 @@ export function getPartsAvailability(makeName: string): PartsAvailability {
       score: "high",
       label: "High",
       description:
-        "Parts are widely available across Nigerian markets due to high national import volume. Verify local availability in your specific State/LGA.",
+        "Parts are widely available across Nigerian markets due to high national import volume. Verify availability locally in your state.",
     };
   }
 
@@ -64,7 +64,7 @@ export function getPartsAvailability(makeName: string): PartsAvailability {
       score: "medium",
       label: "Medium",
       description:
-        "Parts are moderately available. Common items may be found locally; specialty parts may require ordering. Verify local availability in your specific State/LGA.",
+        "Parts are moderately available. Common items may be found locally; specialty parts may require ordering. Verify availability locally in your state.",
     };
   }
 
@@ -72,6 +72,6 @@ export function getPartsAvailability(makeName: string): PartsAvailability {
     score: "low",
     label: "Low",
     description:
-      "Parts availability is limited. Most components may need to be ordered or sourced from specialty dealers. Verify local availability in your specific State/LGA.",
+      "Parts availability is limited. Most components may need to be ordered or sourced from specialty dealers. Verify availability locally in your state.",
   };
 }

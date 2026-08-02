@@ -168,7 +168,7 @@ async function enrichFromEvDatabase(
   vehicles: EvSpecs[],
 ): Promise<{ upserted: number; created: number; errors: string[] }> {
   let upserted = 0;
-  let created = 0;
+  const created = 0;
   const errors: string[] = [];
 
   // Ensure EV domain exists
@@ -364,7 +364,7 @@ async function enrichFromAutoData(
   vehicles: AutoDataSpecs[],
 ): Promise<{ upserted: number; created: number; errors: string[] }> {
   let upserted = 0;
-  let created = 0;
+  const created = 0;
   const errors: string[] = [];
 
   for (const v of vehicles) {

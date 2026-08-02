@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import { decodeVin } from "../../../lib/data/nhtsa-enrichment";
-import { searchNhtsaMakeModel } from "../../../lib/data/nhtsa-lookup";
 import { findOrCreateGvoTrim } from "../../../lib/gvo/create-on-the-fly";
 
 export const POST: APIRoute = async ({ request }) => {
@@ -23,8 +22,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const domain = body?.domain || "car";
   let trimId: string | null = null;
-  let gvoMakeName = decoded.make;
-  let gvoModelName = decoded.model;
+  const gvoMakeName = decoded.make;
+  const gvoModelName = decoded.model;
 
   if (decoded.trim) {
     try {

@@ -1,10 +1,13 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import Button from "@/components/ui/Button.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./dashboard.module.css";
 import "@/styles/global.css";
 import { getDealerByUserId, getDealerListings, getDealerStats, getDealerReviews } from "../lib/dealer";
 
 const user = Astro.locals.user;
+if (!user?.id) return Astro.redirect("/auth/sign-in");
 const session = Astro.locals.session;
 
 const dealerProfile = user?.id ? await getDealerByUserId(user.id as string) : null;
@@ -71,35 +74,35 @@ const formattedDate = (d: Date | string | null) =>
 
       {/* Quick Actions */}
       <div class={styles.grid}>
-        <a href="/listings/new" class={styles.card}>
-          <span class={styles.cardIcon}>+</span>
+        <a href="/listings/new" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="plus" size={20} class={styles.cardIcon} />
           <span class={styles.cardTitle}>New Listing</span>
           <span class={styles.cardText}>Create a listing with condition report</span>
         </a>
-        <a href="/listings/bulk" class={styles.card}>
-          <span class={styles.cardIcon}>⊕</span>
+        <a href="/listings/bulk" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="plus-circle" size={20} class={styles.cardIcon} />
           <span class={styles.cardTitle}>Bulk Upload</span>
           <span class={styles.cardText}>Import multiple listings via CSV or VIN</span>
         </a>
-        <a href="/dashboard/listings" class={styles.card}>
-          <span class={styles.cardIcon}>≡</span>
+        <a href="/dashboard/listings" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="list" size={20} class={styles.cardIcon} />
           <span class={styles.cardTitle}>My Listings</span>
           <span class={styles.cardText}>Manage, edit, or remove your listings</span>
         </a>
-        <a href="/dashboard/profile" class={styles.card}>
-          <span class={styles.cardIcon}>◎</span>
+        <a href="/dashboard/profile" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="storefront" size={20} class={styles.cardIcon} />
           <span class={styles.cardTitle}>Storefront Profile</span>
           <span class={styles.cardText}>Edit business name, logo, contact, about</span>
         </a>
-        <a href="/switchboard" class={styles.card}>
-          <span class={styles.cardIcon}>$</span>
+        <a href="/switchboard" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="arrows-left-right" size={20} class={styles.cardIcon} />
           <span class={styles.cardTitle}>Transactions</span>
           <span class={styles.cardText}>Escrow history and active deals</span>
         </a>
-        <a href="/pricing" class={styles.card}>
-          <span class={styles.cardIcon}>#</span>
-          <span class={styles.cardTitle}>Pricing Engine</span>
-          <span class={styles.cardText}>Check landed cost for any vehicle</span>
+        <a href="/pricing" class={`${styles.card} motion-micro hover-scale`}>
+          <Icon name="chart-line" size={20} class={styles.cardIcon} />
+          <span class={styles.cardTitle}>Pricing</span>
+          <span class={styles.cardText}>Landed cost for any vehicle</span>
         </a>
       </div>
 
@@ -112,9 +115,9 @@ const formattedDate = (d: Date | string | null) =>
               const imgs = l.images as { tag: string; url: string }[] | null;
               const img = imgs?.[0];
               return (
-                <a href={`/listings/${l.id}`} class={styles.listingRow} key={l.id}>
+                <a href={`/listings/${l.id}`} class={styles.listingRow}>
                   <div class={styles.listingThumb}>
-                    {img ? <img src={img.url} alt="" class={styles.listingThumbImg} /> : null}
+                    {img ? <img src={img.url} alt={`${l.modelYear} vehicle photo`} class={styles.listingThumbImg} /> : null}
                   </div>
                   <div class={styles.listingInfo}>
                     <span class={styles.listingYear}>{l.modelYear}</span>
@@ -127,7 +130,7 @@ const formattedDate = (d: Date | string | null) =>
               );
             })}
           </div>
-          {listings.length > 5 ? <a href="/dashboard/listings" class={styles.viewAll}>View all {listings.length} listings →</a> : null}
+          {listings.length > 5 ? <a href="/dashboard/listings" class={styles.viewAll}>View all {listings.length} listings <Icon name="arrow-right" size={12} /></a> : null}
         </div>
       ) : dealerProfile ? (
         <div class={styles.section}>
@@ -153,7 +156,60 @@ const formattedDate = (d: Date | string | null) =>
             <span class={styles.accountValue}>{user.createdAt ? formattedDate(user.createdAt as string) : ""}</span>
           </div>
         </div>
-        <button id="sign-out-btn" class="btn btn-secondary btn-sm">Sign Out</button>
+
+        <div class={styles.bankSection}>
+          <h3 class={styles.bankTitle}>Bank details for escrow payouts</h3>
+          <p class={styles.bankHelper}>Where your escrow funds are paid when a deal settles.</p>
+          <form id="bank-form" class={styles.bankForm}>
+            <div class={styles.bankField}>
+              <label class={styles.bankLabel} for="bankAccountName">Account Name</label>
+              <input
+                class={styles.bankInput}
+                id="bankAccountName"
+                name="accountName"
+                type="text"
+                required
+              />
+            </div>
+            <div class={styles.bankRow}>
+              <div class={styles.bankField}>
+                <label class={styles.bankLabel} for="bankCode">Bank Code</label>
+                <input
+                  class={styles.bankInput}
+                  id="bankCode"
+                  name="bankCode"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength={3}
+                  pattern="^\d{3}$"
+                  required
+                  placeholder="e.g. 044"
+                />
+                <span class={styles.bankHint}>3-digit code, e.g. 044 for Access Bank</span>
+              </div>
+              <div class={styles.bankField}>
+                <label class={styles.bankLabel} for="bankAccountNumber">Account Number</label>
+                <input
+                  class={styles.bankInput}
+                  id="bankAccountNumber"
+                  name="accountNumber"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength={10}
+                  pattern="^\d{10}$"
+                  required
+                  placeholder="10 digits"
+                />
+              </div>
+            </div>
+            <div class={styles.bankActions}>
+              <Button type="submit" label="Save Bank Details" variant="primary" size="md" id="bank-submit" />
+            </div>
+            <div id="bank-status" class={styles.bankStatus} style="display: none;"></div>
+          </form>
+        </div>
+
+        <Button id="sign-out-btn" label="Sign Out" variant="secondary" size="sm" />
       </div>
     </div>
   </div>
@@ -168,5 +224,86 @@ const formattedDate = (d: Date | string | null) =>
     } catch {
       window.location.href = "/";
     }
+  });
+
+  interface BankAccount {
+    id: string;
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+    verified: boolean;
+    createdAt: string;
+  }
+
+  interface BankResponse {
+    ok?: boolean;
+    error?: string;
+    message?: string;
+    accounts?: BankAccount[];
+    bankAccount?: BankAccount;
+  }
+
+  const bankForm = document.getElementById("bank-form") as HTMLFormElement;
+  const bankStatus = document.getElementById("bank-status") as HTMLElement;
+  const bankAccountName = document.getElementById("bankAccountName") as HTMLInputElement;
+  const bankCode = document.getElementById("bankCode") as HTMLInputElement;
+  const bankAccountNumber = document.getElementById("bankAccountNumber") as HTMLInputElement;
+  const bankSubmit = document.getElementById("bank-submit") as HTMLButtonElement;
+
+  const setBankStatus = (text: string, isError: boolean) => {
+    bankStatus.textContent = text;
+    bankStatus.style.display = "block";
+    bankStatus.style.color = isError ? "oklch(45% 0.18 30)" : "oklch(45% 0.18 150)";
+  };
+
+  (async () => {
+    try {
+      const res = await fetch("/api/seller-bank-account");
+      const result: BankResponse = await res.json();
+      if (res.ok && result.accounts && result.accounts.length > 0) {
+        const acc = result.accounts[0];
+        bankAccountName.value = acc.accountName ?? "";
+        bankCode.value = acc.bankCode;
+        bankAccountNumber.value = acc.accountNumber;
+      }
+    } catch {
+      // Leave the form empty.
+    }
+  })();
+
+  bankForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    bankStatus.style.display = "none";
+    const labelEl = bankSubmit.querySelector(".btn-label");
+    const setLabel = (text: string) => {
+      if (labelEl) labelEl.textContent = text;
+    };
+    bankSubmit.disabled = true;
+    bankSubmit.classList.add("is-loading");
+    setLabel("Saving...");
+
+    try {
+      const res = await fetch("/api/seller-bank-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountName: bankAccountName.value.trim(),
+          bankCode: bankCode.value.trim(),
+          accountNumber: bankAccountNumber.value.trim(),
+        }),
+      });
+      const result: BankResponse = await res.json();
+      if (res.ok) {
+        setBankStatus(result.message ?? "Bank details saved.", false);
+      } else {
+        setBankStatus(result.error ?? "Failed to save bank details.", true);
+      }
+    } catch {
+      setBankStatus("Network error. Please try again.", true);
+    }
+
+    bankSubmit.disabled = false;
+    bankSubmit.classList.remove("is-loading");
+    setLabel("Save Bank Details");
   });
 </script>

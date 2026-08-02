@@ -14,6 +14,7 @@
  */
 
 // ── Types ───────────────────────────────────────────────────────────
+import { readEnv } from "../env";
 
 export interface ScrapeOptions {
   /** Render JavaScript (default: true for NCS) */
@@ -47,7 +48,7 @@ let currentIndex = 0;
  * Called once on module load; re-call if env changes.
  */
 function loadKeys(): string[] {
-  const raw = import.meta.env.SCRAPER_API_KEYS ?? "";
+  const raw = readEnv("SCRAPER_API_KEYS") ?? "";
   return raw
     .split(",")
     .map((k) => k.trim())

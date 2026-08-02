@@ -1,0 +1,19 @@
+# Security headers for all static asset responses.
+# NOTE: Cloudflare Pages `_headers` applies to static assets only — HTML/API
+# responses rendered by the SSR worker (Astro "server" output) are NOT covered;
+# those need headers set in worker/middleware code separately if required.
+#
+# HSTS is intentionally NOT set here: a blanket Strict-Transport-Security would
+# also apply to http:// preview/deploy-preview domains and could lock browsers
+# into a bad HSTS state. Set it as a Cloudflare dashboard/edge setting scoped
+# to the apex domain (panther.ng) instead (SSL/TLS -> Edge Certificates -> HSTS).
+#
+# CSP is DEFERRED by design: this app emits inline scripts/styles via Astro's
+# processed <script> tags and scoped CSS. A strict Content-Security-Policy here
+# would break the site. Revisit via Astro's `security.csp` config or worker-set
+# headers once the inline-script surface is audited.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

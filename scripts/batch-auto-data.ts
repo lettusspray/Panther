@@ -16,8 +16,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and, ilike } from "drizzle-orm";
 import { gvoMake, gvoModel, gvoTrim, knowledgeEntry } from "../src/lib/db/schema";
-import { crawlAutoData, type AutoDataSpecs } from "../src/lib/data/auto-data";
-import { crawlHtml, type CrawlResult } from "../src/lib/data/crawl4ai";
+import { crawlAutoData } from "../src/lib/data/auto-data";
+import { crawlHtml } from "../src/lib/data/crawl4ai";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);

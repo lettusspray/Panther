@@ -2,20 +2,34 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // ── Mock DB ─────────────────────────────────────────────────────────
 
-const mockChain = () => {
-  const chain: Record<string, unknown> = {};
-  chain.select = vi.fn(() => chain);
-  chain.from = vi.fn(() => chain);
-  chain.where = vi.fn(() => chain);
-  chain.insert = vi.fn(() => chain);
-  chain.values = vi.fn(() => chain);
-  chain.update = vi.fn(() => chain);
-  chain.set = vi.fn(() => chain);
-  chain.returning = vi.fn(() => chain);
-  chain.innerJoin = vi.fn(() => chain);
-  chain.then = vi.fn((resolve: (v: unknown) => void) =>
-    Promise.resolve([]).then(resolve),
-  );
+interface Chain {
+  select: (...args: unknown[]) => Chain;
+  from: (...args: unknown[]) => Chain;
+  where: (...args: unknown[]) => Chain;
+  insert: (...args: unknown[]) => Chain;
+  values: (...args: unknown[]) => Chain;
+  update: (...args: unknown[]) => Chain;
+  set: (...args: unknown[]) => Chain;
+  returning: (...args: unknown[]) => Chain;
+  innerJoin: (...args: unknown[]) => Chain;
+  then: (resolve: (v: unknown) => void) => Promise<unknown>;
+}
+
+const mockChain = (): Chain => {
+  const chain: Chain = {
+    select: vi.fn(() => chain),
+    from: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    insert: vi.fn(() => chain),
+    values: vi.fn(() => chain),
+    update: vi.fn(() => chain),
+    set: vi.fn(() => chain),
+    returning: vi.fn(() => chain),
+    innerJoin: vi.fn(() => chain),
+    then: vi.fn((resolve: (v: unknown) => void) =>
+      Promise.resolve([]).then(resolve),
+    ),
+  };
   return chain;
 };
 

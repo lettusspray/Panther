@@ -23,7 +23,7 @@
 
 import { db } from "../db";
 import { gvoTrim, gvoModel, gvoMake } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // ── Types ───────────────────────────────────────────────────────────
 

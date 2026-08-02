@@ -15,6 +15,7 @@ export interface Props {
   loading?: boolean;
   class?: string;
   id?: string;
+  style?: string;
   "aria-expanded"?: boolean;
 }
 
@@ -41,6 +42,27 @@ const dataAttrs = Object.fromEntries(
 const ariaAttrs = Object.fromEntries(
   Object.entries(Astro.props).filter(([k]) => k.startsWith("aria-")),
 );
+const rest = Object.fromEntries(
+  Object.entries(Astro.props).filter(
+    ([k]) =>
+      ![
+        "label",
+        "href",
+        "variant",
+        "size",
+        "type",
+        "icon",
+        "iconRight",
+        "full",
+        "disabled",
+        "loading",
+        "class",
+        "id",
+        ...Object.keys(dataAttrs),
+        ...Object.keys(ariaAttrs),
+      ].includes(k),
+  ),
+);
 
 const classes = [
   "btn",
@@ -58,14 +80,14 @@ const iconSize = size === "lg" ? 20 : size === "sm" ? 14 : 16;
 
 {
   href ? (
-    <a href={href} class={classes} id={id} aria-busy={loading || undefined} {...dataAttrs} {...ariaAttrs}>
+    <a href={href} class={classes} id={id} aria-busy={loading || undefined} {...dataAttrs} {...ariaAttrs} {...rest}>
       <span class="btn-spinner" aria-hidden="true"></span>
       {icon && !iconRight ? <Icon name={icon} size={iconSize} class="btn-icon" /> : null}
       <span class="btn-label">{label}</span>
       {icon && iconRight ? <Icon name={icon} size={iconSize} class="btn-icon" /> : null}
     </a>
   ) : (
-    <button type={type} class={classes} id={id} disabled={disabled || loading} aria-busy={loading || undefined} {...dataAttrs} {...ariaAttrs}>
+    <button type={type} class={classes} id={id} disabled={disabled || loading} aria-busy={loading || undefined} {...dataAttrs} {...ariaAttrs} {...rest}>
       <span class="btn-spinner" aria-hidden="true"></span>
       {icon && !iconRight ? <Icon name={icon} size={iconSize} class="btn-icon" /> : null}
       <span class="btn-label">{label}</span>

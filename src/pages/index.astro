@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Button from "@/components/ui/Button.astro";
+import "@/styles/global.css";
 import styles from "./index.module.css";
 
 const faqSchema = {
@@ -19,39 +20,70 @@ const faqSchema = {
 };
 ---
 
-<BaseLayout title="Panther — Trusted Vehicle Pricing in Nigeria" posture="roaring" theme="dark" jsonLd={[faqSchema]} ogUrl="https://panther.ng">
+<BaseLayout title="Panther — Nigeria's Auto Marketplace" posture="roaring" theme="dark" jsonLd={[faqSchema]} ogUrl="https://panther.ng">
   <section class={styles.hero}>
     <h1 class={styles.heroTitle}>
       We don't sell cars.<br />
       We reveal the truth about them.
     </h1>
     <p class={styles.heroSubtitle}>
-      Pricing is a 13-step statutory formula computed from live rates.
-      We show every step. All 774 LGAs.
+      Panther is the Nigerian auto marketplace. Escrow holds the money until you confirm
+      the vehicle, condition reports tell you what you're buying, and the landed cost is
+      published in full.
     </p>
     <div class={styles.heroBadges}>
       <span class={styles.heroBadge}>
         <span class={styles.badgeDot}></span>
-        Live data
+        Escrow held
       </span>
       <span class={styles.heroBadge}>
-        774 LGAs
+        Condition reports
       </span>
       <span class={styles.heroBadge}>
         No cancel fees
       </span>
     </div>
     <div class={styles.heroActions}>
-      <Button label="Begin" href="/pricing" variant="primary" size="lg" />
-      <Button label="Explore Vehicles" href="/vehicles" variant="secondary" size="lg" />
+      <Button label="Browse Listings" href="/listings" variant="primary" size="lg" />
+      <Button label="Sell a Vehicle" href="/listings/new" variant="secondary" size="lg" />
+    </div>
+  </section>
+
+  <section class={styles.valueProps}>
+    <div class={styles.propsGrid}>
+      <div class={styles.propCard}>
+        <h3 class={styles.propTitle}>Switchboard</h3>
+        <p class={styles.propText}>
+          The buyer's money sits in escrow until both sides confirm the vehicle matches
+          its listing. No cancellation fee, ever.
+        </p>
+        <a href="/switchboard" class={styles.propCta}>How escrow works</a>
+      </div>
+      <div class={styles.propCard}>
+        <h3 class={styles.propTitle}>Condition reports</h3>
+        <p class={styles.propText}>
+          Every listing carries a structured condition report, category by category.
+          Cars, motorcycles, and commercial vehicles each have their own checks. Free,
+          no paywall.
+        </p>
+        <a href="/vehicles" class={styles.propCta}>Browse the catalog</a>
+      </div>
+      <div class={styles.propCard}>
+        <h3 class={styles.propTitle}>Landed cost</h3>
+        <p class={styles.propText}>
+          The full 13-step statutory breakdown for any vehicle imported into Nigeria.
+          FOB to CIF to duty to VAT, every charge itemised.
+        </p>
+        <a href="/pricing" class={styles.propCta}>See the method</a>
+      </div>
     </div>
   </section>
 
   <section class={styles.showWork}>
-    <h2 class={styles.sectionTitle}>The 13-step formula</h2>
+    <h2 class={styles.sectionTitle}>Where the price comes from</h2>
     <p class={styles.sectionSubtitle}>
       Import duty, NAC levy, surcharge, CISS, ETLS, VAT.
-      Each computed from live statutory rates.
+      Computed from live statutory rates, in the right order.
     </p>
     <div class={styles.formulaGrid}>
       <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
@@ -81,35 +113,6 @@ const faqSchema = {
     </div>
   </section>
 
-  <section class={styles.valueProps}>
-    <div class={styles.propsGrid}>
-      <div class={styles.propCard}>
-        <h3 class={styles.propTitle}>Pricing</h3>
-        <p class={styles.propText}>
-          FOB anchor, CIF calculation, every statutory charge itemised.
-          The full methodology, not a single number.
-        </p>
-        <a href="/pricing" class={styles.propCta}>See the method</a>
-      </div>
-      <div class={styles.propCard}>
-        <h3 class={styles.propTitle}>Condition</h3>
-        <p class={styles.propText}>
-          Category-specific toggle forms. Cars, motorcycles, commercial —
-          each with its own schema. Free, front and centre, zero paywall.
-        </p>
-        <a href="/vehicles" class={styles.propCta}>View listings</a>
-      </div>
-      <div class={styles.propCard}>
-        <h3 class={styles.propTitle}>Switchboard</h3>
-        <p class={styles.propText}>
-          Pay on delivery, digitised. Funds held until both parties confirm.
-          No cancel fees.
-        </p>
-        <a href="/switchboard" class={styles.propCta}>Escrow details</a>
-      </div>
-    </div>
-  </section>
-
   <section class={styles.trustSection}>
     <div class={styles.trustGrid}>
       <div class={styles.trustItem}>
@@ -117,8 +120,8 @@ const faqSchema = {
         <div class={styles.trustDesc}>NCS and CBN rates pulled fresh. If stale, the engine halts.</div>
       </div>
       <div class={styles.trustItem}>
-        <div class={styles.trustLabel}>774 LGAs</div>
-        <div class={styles.trustDesc}>Nigeria is not Lagos. No city serves as a default proxy.</div>
+        <div class={styles.trustLabel}>Nationwide</div>
+        <div class={styles.trustDesc}>No city is the default. Prices and parts data are national, not Lagos-centric.</div>
       </div>
       <div class={styles.trustItem}>
         <div class={styles.trustLabel}>No cancel fees</div>
@@ -129,14 +132,14 @@ const faqSchema = {
 
   <section class={styles.ctaSection}>
     <h2 class={styles.ctaTitle}>
-      What is a 2015 Toyota Camry really worth in Nigeria?
+      Found one?
     </h2>
     <p class={styles.ctaText}>
-      From FOB to final delivery. Every naira accounted for.
+      When a listing matches, Switchboard holds the payment until the vehicle checks out.
     </p>
     <div class={styles.ctaActions}>
-      <Button label="Get the range" href="/pricing/toyota/camry" variant="primary" size="lg" />
-      <Button label="All prices" href="/pricing" variant="tertiary" size="lg" />
+      <Button label="Browse Listings" href="/listings" variant="primary" size="lg" />
+      <Button label="What's a 2015 Camry worth?" href="/pricing/car/toyota/camry" variant="tertiary" size="lg" />
     </div>
   </section>
 </BaseLayout>

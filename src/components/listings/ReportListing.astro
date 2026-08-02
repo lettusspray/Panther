@@ -106,7 +106,7 @@ const { listingId } = Astro.props;
         return;
       }
       const labelEl = submitBtn.querySelector(".btn-label");
-      const setLoading = (isLoading: boolean) => {
+      const setLoading = (isLoading) => {
         submitBtn.disabled = isLoading;
         submitBtn.classList.toggle("is-loading", isLoading);
         if (labelEl) labelEl.textContent = isLoading ? "Submitting..." : "Submit Report";
@@ -215,26 +215,26 @@ const { listingId } = Astro.props;
   }
   .report-success {
     padding: var(--space-4);
-    background: color-mix(in oklch, #27ae60 8%, #fff);
+    background: color-mix(in oklch, var(--panther-success-hex) 8%, #fff);
     border-radius: 6px;
   }
   .report-success-text {
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
-    color: #1e8449;
+    color: var(--panther-success-strong-hex);
     margin: 0;
   }
   .report-error {
     padding: var(--space-3);
-    background: color-mix(in oklch, #C0392B 8%, #fff);
+    background: color-mix(in oklch, var(--panther-danger-hex) 8%, #fff);
     border-radius: 6px;
     margin-bottom: var(--space-3);
   }
   .report-error-text {
     font-family: var(--font-sans);
     font-size: 13px;
-    color: #A93226;
+    color: var(--panther-danger-strong-hex);
     margin: 0;
   }
   .report-field {

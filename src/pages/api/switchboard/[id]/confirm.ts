@@ -70,7 +70,7 @@ async function attemptSettlement(tx: {
   id: string;
   sellerId: string;
   agreedPriceNgn: string | number;
-  platformFeeNgn: string | number;
+  platformFeeNgn: string | number | null;
 }): Promise<void> {
   const price = Number(tx.agreedPriceNgn);
   const fee = Number(tx.platformFeeNgn);

@@ -184,6 +184,12 @@ async function testInitiateTransfer(recipientCode: string) {
 async function testWebhookSignatureRoundTrip() {
   log("🧪", "Test 5: Webhook Signature Round-Trip");
 
+  const secretKey = SECRET_KEY;
+  if (!secretKey) {
+    console.error("ERROR: PAYSTACK_SECRET_KEY not set — cannot verify signatures");
+    process.exit(1);
+  }
+
   // Simulate what Paystack sends
   const webhookPayload = JSON.stringify({
     event: "charge.success",
@@ -197,12 +203,12 @@ async function testWebhookSignatureRoundTrip() {
   });
 
   // Generate signature the way Paystack does (HMAC-SHA512)
-  const signature = createHmac("sha512", SECRET_KEY)
+  const signature = createHmac("sha512", secretKey)
     .update(webhookPayload)
     .digest("hex");
 
   // Verify it the way our adapter does
-  const expected = createHmac("sha512", SECRET_KEY)
+  const expected = createHmac("sha512", secretKey)
     .update(webhookPayload)
     .digest("hex");
 
@@ -227,7 +233,7 @@ async function testWebhookSignatureRoundTrip() {
 
   // Verify rejection of tampered payload
   const tampered = '{"event":"charge.success","data":{"amount":999999}}';
-  const tamperedSig = createHmac("sha512", SECRET_KEY)
+  const tamperedSig = createHmac("sha512", secretKey)
     .update(tampered)
     .digest("hex");
 

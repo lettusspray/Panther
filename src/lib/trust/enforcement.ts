@@ -63,7 +63,6 @@ export async function getEnforcementStatus(userId: string): Promise<EnforcementS
 export async function applySanction(
   userId: string,
   newTier: DisclosureTier,
-  reason?: string,
 ): Promise<void> {
   await db
     .update(user)

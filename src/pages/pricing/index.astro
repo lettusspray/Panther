@@ -7,16 +7,15 @@ import "@/styles/global.css";
 <BaseLayout
   title="Vehicle Import Pricing"
   posture="walking"
-  description="Calculate the true landed cost of any vehicle imported into Nigeria. 13-step statutory formula with live NCS rates."
+  description="Calculate the landed cost of any vehicle imported into Nigeria. Full 13-step statutory breakdown with live NCS rates."
   ogUrl="https://panther.ng/pricing"
 >
   <section class={styles.hero}>
     <h1 class={`${styles.heroTitle} font-sans`}>
-      What does it <em class={styles.heroTitleEm}>really</em> cost to import a vehicle into Nigeria?
+      What does it cost to import a vehicle into Nigeria?
     </h1>
     <p class={styles.heroSubtitle}>
-      Not the number your agent quoted. The statutory, auditable, naira-for-naira breakdown —
-      from FOB to final delivery at your port.
+      Not the figure your agent quoted. The statutory breakdown, naira for naira, from FOB to your port.
     </p>
   </section>
 
@@ -25,7 +24,7 @@ import "@/styles/global.css";
       <h2 class={styles.explainerTitle}>The 13-Step Formula</h2>
       <p class={styles.explainerIntro}>
         Every landed cost is computed by applying Nigeria's statutory import charges
-        in exact order of operations. No approximations. No magic numbers.
+        in the exact order of operations. No approximations, no skipped charges.
       </p>
       <div class={styles.stepsGrid}>
         {[
@@ -56,11 +55,11 @@ import "@/styles/global.css";
   <section class={styles.selector}>
     <h2 class={styles.selectorTitle}>Select a Make</h2>
     <p class={styles.selectorSubtitle}>
-      Choose a manufacturer to begin exploring pricing by model and trim.
+      Pick a manufacturer to see pricing by model and trim.
     </p>
     <div class={styles.makesGrid}>
       {["Toyota", "Honda", "Mercedes-Benz", "BMW", "Hyundai", "Kia", "Lexus", "Ford", "Nissan", "Volkswagen"].map((name) => (
-        <a href={`/pricing/car/${name.toLowerCase().replace(/ /g, "-")}`} class={styles.makeCard}>
+        <a href={`/vehicles/car/${name.toLowerCase().replace(/ /g, "-")}`} class={styles.makeCard}>
           <span class={styles.makeName}>{name}</span>
         </a>
       ))}

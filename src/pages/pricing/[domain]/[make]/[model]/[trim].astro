@@ -67,7 +67,7 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
     <nav class={styles.breadcrumb}>
       <a href="/pricing">Pricing</a>
       <span class={styles.breadcrumbSep}>/</span>
-      <a href={`/pricing/${domain}/${make}`}>{makeName}</a>
+      <a href={`/vehicles/${domain}/${make}`}>{makeName}</a>
       <span class={styles.breadcrumbSep}>/</span>
       <a href={`/pricing/${domain}/${make}/${model}`}>{modelName}</a>
       <span class={styles.breadcrumbSep}>/</span>
@@ -96,13 +96,13 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
     ) : noData ? (
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Pricing data not yet available for this vehicle</h1>
-        <p class={styles.errorText}>This cohort hasn't been priced yet. Check back after the nightly pricing update, or browse available vehicles.</p>
+        <p class={styles.errorText}>This model isn't priced yet. Check back after the next update, or browse available vehicles.</p>
         <a href="/pricing" class="btn btn-secondary btn-md">Browse Other Vehicles</a>
       </div>
     ) : notFound ? (
       <div class={styles.errorState}>
         <h1 class={styles.errorTitle}>Vehicle not found</h1>
-        <p class={styles.errorText}>This vehicle doesn't exist in the Global Vehicle Ontology yet.</p>
+        <p class={styles.errorText}>This vehicle isn't in the catalog yet.</p>
         <a href="/vehicles" class="btn btn-secondary btn-md">Browse Vehicles</a>
       </div>
     ) : (
@@ -122,7 +122,6 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
             <button
               class={`${styles.yearTab} ${i === 0 ? styles.yearTabActive : ""}`}
               data-index={i}
-              key={c.modelYear}
             >
               {c.modelYear}
             </button>
@@ -137,7 +136,6 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
             <div
               class={`${styles.cohortPanel} ${i === 0 ? styles.cohortPanelActive : ""}`}
               data-index={i}
-              key={cohort.modelYear}
             >
               <div class={styles.costCard}>
                 <div class={styles.costHeader}>
@@ -170,7 +168,7 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
                     <span class={styles.stepFormulaCol}>Formula</span>
                   </div>
                   {lc.steps.map((step) => (
-                    <div class={`${styles.stepRow} ${step.step === 13 ? styles.stepFinal : ""}`} key={step.step}>
+                    <div class={`${styles.stepRow} ${step.step === 13 ? styles.stepFinal : ""}`}>
                       <span class={styles.stepNum}>{step.step}</span>
                       <span>{step.name}</span>
                       <span>₦{step.valueLow.toLocaleString()}</span>
@@ -197,14 +195,15 @@ const notFound = errorData?.status === 404 && errorData.error === "Vehicle not f
 </BaseLayout>
 
 <script>
+  import css from "./[trim].module.css";
   document.querySelectorAll("[data-index]").forEach((tab) => {
     tab.addEventListener("click", () => {
       const idx = tab.getAttribute("data-index");
-      document.querySelectorAll("[data-index]").forEach((t) => t.classList.remove("yearTabActive"));
-      document.querySelectorAll("#cohort-panels > div").forEach((p) => p.classList.remove("cohortPanelActive"));
-      tab.classList.add("yearTabActive");
+      document.querySelectorAll("[data-index]").forEach((t) => t.classList.remove(css.yearTabActive));
+      document.querySelectorAll("#cohort-panels > div").forEach((p) => p.classList.remove(css.cohortPanelActive));
+      tab.classList.add(css.yearTabActive);
       const target = document.querySelector(`#cohort-panels > div[data-index="${idx}"]`);
-      if (target) target.classList.add("cohortPanelActive");
+      if (target) target.classList.add(css.cohortPanelActive);
     });
   });
 </script>

@@ -11,7 +11,7 @@ ENVIRONMENT = "production"
 
 # Crawl4AI
 CRAWL4AI_API_URL = "https://crawl4ai-production-e503.up.railway.app"
-CRAWL4AI_API_KEY = "850da107bea2ec98bcf7dae7346aef1dd34e335b4e1c5eb02f4be1c06865dfc3"
+# CRAWL4AI_API_KEY — set as a Cloudflare Pages dashboard secret
 
 # Database
 # In production, HYPERDRIVE_CONNECTION_STRING is injected automatically
@@ -42,48 +42,6 @@ bucket_name = "panther-images"
 binding = "VIDEOS_BUCKET"
 bucket_name = "panther-videos"
 
-# ── Queue Producers ───────────────────────────────────────────
-[[queues.producers]]
-queue = "ingestion-ontology"
-binding = "ONTOLOGY_QUEUE"
-
-[[queues.producers]]
-queue = "ingestion-pricing"
-binding = "PRICING_QUEUE"
-
-[[queues.producers]]
-queue = "etl-knowledge"
-binding = "KNOWLEDGE_QUEUE"
-
-[[queues.producers]]
-queue = "dead-letter"
-binding = "DEAD_LETTER_QUEUE"
-
-# ── Queue Consumers (Cron Workers) ────────────────────────────
-[[queues.consumers]]
-queue = "ingestion-ontology"
-max_batch_size = 100
-max_batch_timeout = 30
-max_retries = 3
-
-[[queues.consumers]]
-queue = "ingestion-pricing"
-max_batch_size = 50
-max_batch_timeout = 60
-max_retries = 3
-
-[[queues.consumers]]
-queue = "etl-knowledge"
-max_batch_size = 10
-max_batch_timeout = 120
-max_retries = 3
-
-[[queues.consumers]]
-queue = "dead-letter"
-max_batch_size = 25
-max_batch_timeout = 30
-max_retries = 1
-
-# ── Cron Triggers ─────────────────────────────────────────────
-[triggers]
-crons = ["0 2 * * *"]
+# ── Nightly pipeline (cron + queues) ──────────────────────────
+# Lives in the separate pipeline Worker — see wrangler.workers.toml.
+# Deploy it with:  npx wrangler deploy -c wrangler.workers.toml

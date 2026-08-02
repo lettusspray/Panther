@@ -50,7 +50,7 @@
   border-radius: 6px;
   color: var(--panther-resting-hex);
   text-decoration: none;
-  transition: all 200ms ease;
+  transition: background-color var(--duration-micro) var(--ease-micro), border-color var(--duration-micro) var(--ease-micro);
 }
 
 .viewStorefrontBtn:hover {
@@ -152,18 +152,17 @@
   border: 1px solid oklch(45% 0.03 225 / 0.15);
   border-radius: 10px;
   text-decoration: none;
-  transition: all 200ms ease;
   background: #fff;
 }
 
 .card:hover {
   border-color: var(--panther-eyes-hex);
   box-shadow: 0 2px 8px oklch(0% 0 0 / 0.06);
-  transform: translateY(-1px);
 }
 
 .cardIcon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
   color: var(--panther-eyes-hex);
 }
 
@@ -221,7 +220,7 @@
   padding: var(--space-3) var(--space-4);
   text-decoration: none;
   border-bottom: 1px solid oklch(45% 0.03 225 / 0.08);
-  transition: background 200ms ease;
+  transition: background var(--duration-micro) var(--ease-micro);
 }
 
 .listingRow:last-child {
@@ -311,12 +310,15 @@
 }
 
 .viewAll {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-family: var(--font-sans);
   font-size: 13px;
   color: var(--panther-eyes-hex);
   text-decoration: underline;
   text-decoration-color: transparent;
-  transition: text-decoration-color 200ms ease;
+  transition: text-decoration-color var(--duration-micro) var(--ease-micro);
 }
 
 .viewAll:hover {
@@ -355,6 +357,96 @@
   color: var(--panther-resting-hex);
 }
 
+/* ── Bank Details ───────────────────────── */
+
+.bankSection {
+  border: 1px solid oklch(45% 0.03 225 / 0.15);
+  border-radius: 10px;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bankTitle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--panther-resting-hex);
+  margin: 0;
+}
+
+.bankHelper {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--panther-eyes-hex);
+  margin: 0;
+}
+
+.bankForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bankRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.bankField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.bankLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--panther-resting-hex);
+}
+
+.bankInput {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: var(--space-3);
+  border: 1px solid oklch(45% 0.03 225 / 0.2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--panther-resting-hex);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bankInput:focus {
+  outline: 2px solid var(--panther-eyes-hex);
+  outline-offset: 1px;
+}
+
+.bankHint {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--panther-eyes-hex);
+}
+
+.bankActions {
+  display: flex;
+  align-items: center;
+}
+
+.bankStatus {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: 6px;
+  background: oklch(90% 0.01 80);
+}
+
 /* ── Responsive ─────────────────────────── */
 
 @media (max-width: 768px) {
@@ -378,6 +470,10 @@
 
 @media (max-width: 480px) {
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bankRow {
     grid-template-columns: 1fr;
   }
 

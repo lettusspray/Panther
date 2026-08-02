@@ -11,14 +11,13 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 <BaseLayout
   title="List a Vehicle"
   posture="walking"
-  description="List your vehicle on Panther. GVO-verified identification, structured condition reports, transparent pricing."
+  description="List your vehicle on Panther. Verified identification, structured condition reports, clear pricing."
   ogUrl="https://panther.ng/listings/new"
 >
   <section class={styles.hero}>
     <h1 class={styles.heroTitle}>List a Vehicle</h1>
     <p class={styles.heroSubtitle}>
-      Every vehicle on Panther is identified through the Global Vehicle Ontology —
-      no free-text, no guesswork. Accurate condition reports increase your lead quality by 5x.
+      Every vehicle on Panther is matched to a standard national catalog, so your listing is findable and correct. Accurate condition reports bring serious buyers.
     </p>
   </section>
 
@@ -54,7 +53,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     {/* Step 1: Domain Selection */}
     <div class={`${styles.step} ${styles.stepActive}`} data-step="1">
       <h2 class={styles.stepTitle}>What type of vehicle?</h2>
-      <p class={styles.stepDesc}>Select the domain that best describes your vehicle.</p>
+      <p class={styles.stepDesc}>Select the vehicle type.</p>
       <div class={styles.domainGrid}>
         <button class={styles.domainBtn} data-domain="car" data-slug="car">
           <span class={styles.domainEmoji}><Icon name="car" size={36} /></span>
@@ -82,7 +81,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     {/* Step 2: GVO Cascading Selectors + VIN */}
     <div class={styles.step} data-step="2">
       <h2 class={styles.stepTitle}>Identify the vehicle</h2>
-      <p class={styles.stepDesc}>Enter VIN for instant auto-population, or select through the Global Vehicle Ontology.</p>
+      <p class={styles.stepDesc}>Enter the VIN to fill the details automatically, or pick your vehicle from the catalog.</p>
       <p class={styles.bulkHint}>Listing many vehicles? <a href="/listings/bulk">Use bulk upload →</a></p>
 
       {/* VIN Decode Section */}
@@ -168,7 +167,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     <div class={styles.step} data-step="3">
       <h2 class={styles.stepTitle}>Vehicle details & condition</h2>
       <p class={styles.stepDesc}>
-        Provide accurate details. Honest disclosure is a sales advantage — it increases lead quality by 5x.
+        Provide accurate details. A truthful listing is the best sales pitch.
       </p>
 
       <div class={styles.detailsGrid}>
@@ -201,8 +200,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     <div class={styles.step} data-step="4">
       <h2 class={styles.stepTitle}>Add photos of your vehicle</h2>
       <p class={styles.stepDesc}>
-        Good photos sell vehicles. Listings with 6+ clear photos get 5x more buyer interest.
-        Disclosure helps you sell — buyers want to see what they're getting.
+        Good photos sell vehicles. Show every angle so buyers aren't guessing.
       </p>
 
       <PhotoUploader />
@@ -213,7 +211,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           <span class={styles.videoPromoIcon}><Icon name="video-camera" size={24} /></span>
           <span class={styles.videoPromoTitle}>Add a walkaround video</span>
           <span class={styles.videoPromoDesc}>
-            Listings with a walkaround video sell 2x faster. Buyers want to see the car in motion — engine start, interior walkthrough, exterior sweep.
+            A short walkaround video shows the car as it is: engine start, interior, exterior. It answers the questions buyers would ask.
           </span>
         </div>
 
@@ -278,6 +276,27 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 </BaseLayout>
 
 <script>
+  import css from "./new.module.css";
+  const {
+    stepActive: stepActiveClass,
+    progressActive: progressActiveClass,
+    progressDone: progressDoneClass,
+    domainSelected: domainSelectedClass,
+    toggleActive: toggleActiveClass,
+    conditionField: conditionFieldClass,
+    conditionLabel: conditionLabelClass,
+    toggleGroup: toggleGroupClass,
+    toggleBtn: toggleBtnClass,
+    fieldSelect: fieldSelectClass,
+    fieldInput: fieldInputClass,
+    photoPreviewItem: photoPreviewItemClass,
+    photoPreviewRemove: photoPreviewRemoveClass,
+    submitStatus: submitStatusClass,
+    submitSuccess: submitSuccessClass,
+    submitError: submitErrorClass,
+  } = css;
+
+  import { iconSvg } from "@/lib/design-system/icons";
   // ── State ────────────────────────────────────────────────────────
   let currentStep = 1;
   let selectedDomain = "";
@@ -305,10 +324,10 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
   const progressSteps = document.querySelectorAll<HTMLElement>(".progress [data-step]");
   const progressDividers = document.querySelectorAll<HTMLElement>(".progressDivider");
   const domainBtns = document.querySelectorAll<HTMLElement>("[data-domain]");
-  const makeSelect = document.getElementById("make-select") as HTMLSelectElement;
-  const modelSelect = document.getElementById("model-select") as HTMLSelectElement;
-  const trimSelect = document.getElementById("trim-select") as HTMLSelectElement;
-  const yearSelect = document.getElementById("year-select") as HTMLSelectElement;
+  const makeSelect = document.getElementById("make-select") as unknown as HTMLSelectElement;
+  const modelSelect = document.getElementById("model-select") as unknown as HTMLSelectElement;
+  const trimSelect = document.getElementById("trim-select") as unknown as HTMLSelectElement;
+  const yearSelect = document.getElementById("year-select") as unknown as HTMLSelectElement;
   const mileageInput = document.getElementById("mileage-input") as HTMLInputElement;
   const priceInput = document.getElementById("price-input") as HTMLInputElement;
   const conditionContainer = document.getElementById("condition-fields")!;
@@ -331,18 +350,19 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
   function goToStep(step: number) {
     currentStep = step;
     steps.forEach((el) => {
-      el.classList.toggle("stepActive", Number(el.dataset.step) === step);
+      el.classList.toggle(stepActiveClass, Number(el.dataset.step) === step);
     });
     progressSteps.forEach((el) => {
       const s = Number(el.dataset.step);
-      el.classList.toggle("progressActive", s === step);
-      el.classList.toggle("progressDone", s < step);
+      el.classList.toggle(progressActiveClass, s === step);
+      el.classList.toggle(progressDoneClass, s < step);
     });
     progressDividers.forEach((el, i) => {
-      el.classList.toggle("progressDone", i < step - 1);
+      el.classList.toggle(progressDoneClass, i < step - 1);
     });
 
     if (step === 5) populateReview();
+    if (step === 3) buildConditionFields();
   }
 
   document.querySelectorAll("[data-goto]").forEach((btn) => {
@@ -356,8 +376,8 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     btn.addEventListener("click", () => {
       selectedDomain = btn.getAttribute("data-domain")!;
       selectedDomainSlug = btn.getAttribute("data-slug")!;
-      domainBtns.forEach((b) => b.classList.remove("domainSelected"));
-      btn.classList.add("domainSelected");
+      domainBtns.forEach((b) => b.classList.remove(domainSelectedClass));
+      btn.classList.add(domainSelectedClass);
       loadMakes();
       goToStep(2);
     });
@@ -373,7 +393,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       const vin = vinInput.value.trim().toUpperCase();
       if (vin.length < 11) {
         vinStatus.textContent = "VIN must be at least 11 characters.";
-        vinStatus.className = styles.vinStatusError || "vinStatusError";
+        vinStatus.className = css.vinStatusError || "vinStatusError";
         vinStatus.style.display = "block";
         return;
       }
@@ -391,7 +411,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ vin, domain: selectedDomain || "car" }),
         });
-        const data = await res.json();
+        const data = (await res.json()) as { ok: boolean; trimId?: string; make: string; model: string; trim?: string; year?: number; error?: string };
 
         if (res.ok && data.ok && data.trimId) {
           selectedTrimId = data.trimId;
@@ -411,7 +431,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           }
 
           vinStatus.textContent = `Decoded: ${data.make} ${data.model} ${data.trim || ""} (${data.year || "year unknown"})`;
-          vinStatus.className = styles.vinStatusOk || "vinStatusOk";
+          vinStatus.className = css.vinStatusOk || "vinStatusOk";
           vinInput.disabled = true;
           vinDecodeBtn.classList.remove("is-loading");
           setBtnLabel(vinDecodeBtn, "Decoded");
@@ -432,7 +452,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
             yearSelect.value = String(data.year);
           }
 
-          vinStatus.textContent = `Found: ${data.make} ${data.model} ${data.trim || ""}. Not in GVO yet — will save as custom entry.`;
+          vinStatus.textContent = `Found: ${data.make} ${data.model} ${data.trim || ""}. Not in the catalog yet — will save as a custom entry.`;
           vinStatus.className = "vinStatusWarn";
           vinInput.disabled = true;
           vinDecodeBtn.classList.remove("is-loading");
@@ -440,14 +460,14 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           vinDecodeBtn.disabled = true;
         } else {
           vinStatus.textContent = data.error || "Could not decode VIN. Try selecting manually below.";
-          vinStatus.className = styles.vinStatusError || "vinStatusError";
+          vinStatus.className = css.vinStatusError || "vinStatusError";
           vinDecodeBtn.classList.remove("is-loading");
           vinDecodeBtn.disabled = false;
           setBtnLabel(vinDecodeBtn, "Decode VIN");
         }
       } catch {
         vinStatus.textContent = "Network error. Try again or select manually.";
-        vinStatus.className = styles.vinStatusError || "vinStatusError";
+        vinStatus.className = css.vinStatusError || "vinStatusError";
         vinDecodeBtn.classList.remove("is-loading");
         vinDecodeBtn.disabled = false;
         setBtnLabel(vinDecodeBtn, "Decode VIN");
@@ -473,22 +493,22 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 
     try {
       const domainsRes = await fetch("/api/pricing/gvo/domains");
-      const domains = await domainsRes.json();
+      const domains = (await domainsRes.json()) as Array<{ id: string; slug: string }>;
       const domain = domains.find((d: { slug: string }) => d.slug === selectedDomainSlug);
       if (!domain) return;
 
       const catsRes = await fetch(`/api/pricing/gvo/categories/${domain.id}`);
-      const categories = await catsRes.json();
+      const categories = (await catsRes.json()) as Array<{ id: string }>;
 
       let allMakes: Array<{ id: string; name: string; slug: string }> = [];
       for (const cat of categories) {
         const makesRes = await fetch(`/api/pricing/gvo/makes/${cat.id}`);
-        const makes = await makesRes.json();
+        const makes = (await makesRes.json()) as Array<{ id: string; name: string; slug: string }>;
         allMakes.push(...makes);
       }
 
       const uniqueMakes = Array.from(
-        new Map(allMakes.map((m: { name: string }) => [m.name, m])).values(),
+        new Map(allMakes.map((m) => [m.name, m])).values(),
       );
 
       makeSelect.innerHTML = '<option value="">Select make...</option>';
@@ -526,7 +546,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 
     try {
       const res = await fetch(`/api/pricing/gvo/models/${makeId}`);
-      const models = await res.json();
+      const models = (await res.json()) as Array<{ id: string; name: string; firstModelYear?: string; lastModelYear?: string }>;
       modelSelect.innerHTML = '<option value="">Select model...</option>';
       for (const model of models) {
         const opt = document.createElement("option");
@@ -559,7 +579,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 
     try {
       const res = await fetch(`/api/pricing/gvo/trims/${modelId}`);
-      const trims = await res.json();
+      const trims = (await res.json()) as Array<{ id: string; name: string; engine?: string }>;
       trimSelect.innerHTML = '<option value="">Select trim...</option>';
       for (const trim of trims) {
         const opt = document.createElement("option");
@@ -682,33 +702,33 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 
     for (const field of fields) {
       const wrapper = document.createElement("div");
-      wrapper.className = "conditionField";
+      wrapper.className = conditionFieldClass;
 
       const label = document.createElement("label");
-      label.className = "conditionLabel";
+      label.className = conditionLabelClass;
       label.textContent = field.label + (field.required ? " *" : "");
       wrapper.appendChild(label);
 
       if (field.type === "toggle") {
         const btnGroup = document.createElement("div");
-        btnGroup.className = "toggleGroup";
+        btnGroup.className = toggleGroupClass;
         for (const opt of TOGGLE_OPTIONS) {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "toggleBtn";
+          btn.className = toggleBtnClass;
           btn.dataset.field = field.key;
           btn.dataset.value = opt;
           btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
           btn.addEventListener("click", () => {
-            btnGroup.querySelectorAll(".toggleBtn").forEach((b) => b.classList.remove("toggleActive"));
-            btn.classList.add("toggleActive");
+            btnGroup.querySelectorAll("." + toggleBtnClass).forEach((b) => b.classList.remove(toggleActiveClass));
+            btn.classList.add(toggleActiveClass);
           });
           btnGroup.appendChild(btn);
         }
         wrapper.appendChild(btnGroup);
       } else if (field.type === "select") {
         const select = document.createElement("select");
-        select.className = "fieldSelect";
+        select.className = fieldSelectClass;
         select.dataset.field = field.key;
         select.innerHTML = '<option value="">Select...</option>';
         for (const opt of field.options ?? []) {
@@ -721,7 +741,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       } else if (field.type === "hours") {
         const input = document.createElement("input");
         input.type = "number";
-        input.className = "fieldInput";
+        input.className = fieldInputClass;
         input.dataset.field = field.key;
         input.min = "0";
         input.placeholder = "e.g. 12000";
@@ -741,6 +761,21 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
   });
 
   // ── Video Upload ──────────────────────────────────────────────
+  async function uploadVideoToServer(file: File): Promise<string> {
+    const res = await fetch("/api/upload/video", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    });
+    if (!res.ok) throw new Error("Failed to get upload URL");
+    const { uploadUrl, publicUrl } = (await res.json()) as { uploadUrl: string; publicUrl: string };
+    const form = new FormData();
+    form.append("file", file);
+    const uploadRes = await fetch(uploadUrl, { method: "POST", body: form });
+    if (!uploadRes.ok) throw new Error("Upload failed");
+    return publicUrl;
+  }
+
   videoUploadArea.addEventListener("click", () => videoInput.click());
 
   videoInput.addEventListener("change", () => {
@@ -757,12 +792,12 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       renderVideoPreview();
 
       uploadVideoToServer(file)
-        .then((url) => {
+        .then((url: string) => {
           selectedVideos[idx].uploadedUrl = url;
           selectedVideos[idx].uploading = false;
           renderVideoPreview();
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           selectedVideos[idx].uploading = false;
           selectedVideos[idx].uploadError = err.message;
           renderVideoPreview();
@@ -792,10 +827,10 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
 
     selectedVideos.forEach((entry, idx) => {
       const div = document.createElement("div");
-      div.className = "photoPreviewItem";
+      div.className = photoPreviewItemClass;
 
       if (entry.uploadError) {
-        div.style.border = "2px solid #C0392B";
+        div.style.border = "2px solid var(--panther-danger-hex)";
       }
 
       if (entry.uploading) {
@@ -811,7 +846,8 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           fontSize: "24px",
           color: "var(--panther-eyes-hex)",
         });
-        spinner.textContent = "⏳";
+        spinner.innerHTML = iconSvg("spinner-gap", 16);
+        spinner.classList.add("icon-spin");
         div.appendChild(spinner);
       }
 
@@ -827,8 +863,8 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       div.appendChild(vid);
 
       const removeBtn = document.createElement("button");
-      removeBtn.className = "photoPreviewRemove";
-      removeBtn.textContent = "×";
+      removeBtn.className = photoPreviewRemoveClass;
+      removeBtn.innerHTML = iconSvg("x", 14);
       removeBtn.addEventListener("click", () => {
         selectedVideos.splice(idx, 1);
         renderVideoPreview();
@@ -880,14 +916,15 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
   // ── Step 5: Review & Activate ───────────────────────────────────
   function collectConditionData() {
     if (window.__collectConditionData) return window.__collectConditionData();
-    const data = {};
-    conditionContainer.querySelectorAll(".toggleActive").forEach((btn) => {
-      data[btn.getAttribute("data-field")] = btn.getAttribute("data-value");
+    const data: Record<string, string | null> = {};
+    conditionContainer.querySelectorAll(`.${toggleActiveClass}`).forEach((btn) => {
+      const field = btn.getAttribute("data-field");
+      if (field) data[field] = btn.getAttribute("data-value");
     });
     conditionContainer.querySelectorAll("select").forEach((sel) => {
       if (sel.dataset.field && sel.value) data[sel.dataset.field] = sel.value;
     });
-    conditionContainer.querySelectorAll("input[type='number']").forEach((inp) => {
+    conditionContainer.querySelectorAll<HTMLInputElement>("input[type='number']").forEach((inp) => {
       if (inp.dataset.field && inp.value) data[inp.dataset.field] = inp.value;
     });
     return data;
@@ -918,7 +955,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     const videoTaggedCount = selectedVideos.filter((p) => p.tag).length;
     photosEl.innerHTML = `
       <div class="reviewRow"><span>Photos</span><span>${photoCount} total, ${taggedCount} tagged</span></div>
-      <div class="reviewRow"><span>Videos</span><span>${videoCount} total, ${videoTaggedCount} tagged${videoCount > 0 ? "" : " — add one to boost interest"}</span></div>
+      <div class="reviewRow"><span>Videos</span><span>${videoCount} total, ${videoTaggedCount} tagged${videoCount > 0 ? "" : " — add one to show the car moving"}</span></div>
     `;
 
     const conditionData = collectConditionData();
@@ -939,7 +976,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
     const videoMissing = selectedVideos.length === 0;
     if (canActivate) {
       const videoPrompt = videoMissing
-        ? '<p style="margin-top:var(--space-2);font-family:var(--font-sans);font-size:13px;color:var(--panther-eyes-hex)">Add a walkaround video from the previous step to sell 2x faster.</p>'
+        ? '<p style="margin-top:var(--space-2);font-family:var(--font-sans);font-size:13px;color:var(--panther-eyes-hex)">Add a walkaround video from the previous step.</p>'
         : "";
       activationStatusEl.innerHTML = `
         <div class="activationReady">
@@ -996,20 +1033,20 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    return res.json();
+    return (await res.json()) as { ok: boolean; error?: string; listingId?: string };
   }
 
   async function activateListingData(listingId: string): Promise<{ ok: boolean; error?: string }> {
     const res = await fetch(`/api/listings/${listingId}/activate`, { method: "POST" });
-    return res.json();
+    return (await res.json()) as { ok: boolean; error?: string };
   }
 
   function showStatus(msg: string, type: "success" | "error") {
     submitStatus.style.display = "block";
     submitStatus.textContent = msg;
     submitStatus.className = type === "success"
-      ? `submitStatus submitSuccess`
-      : `submitStatus submitError`;
+      ? `${submitStatusClass} ${submitSuccessClass}`
+      : `${submitStatusClass} ${submitErrorClass}`;
   }
 
   activateBtn.addEventListener("click", async () => {
@@ -1132,7 +1169,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       if (!domain) {
         gvoLookupStatus.textContent = "Please select a vehicle domain first (Step 1).";
         gvoLookupStatus.hidden = false;
-        gvoLookupStatus.style.color = "#C0392B";
+        gvoLookupStatus.style.color = "var(--panther-danger-hex)";
         return;
       }
       const makeName = gvoRequestMake.value.trim();
@@ -1140,7 +1177,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       if (!makeName || !modelName) {
         gvoLookupStatus.textContent = "Make and model are required.";
         gvoLookupStatus.hidden = false;
-        gvoLookupStatus.style.color = "#C0392B";
+        gvoLookupStatus.style.color = "var(--panther-danger-hex)";
         return;
       }
 
@@ -1160,10 +1197,10 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
             vehicleType: domain,
           }),
         });
-        const data = await res.json();
+        const data = (await res.json()) as { found: boolean; trimId?: string; makeName: string; modelName: string };
         if (data.found && data.trimId) {
-          gvoLookupStatus.textContent = `Found: ${data.makeName} ${data.modelName}. Adding to GVO...`;
-          gvoLookupStatus.style.color = "#2E7D32";
+          gvoLookupStatus.textContent = `Adding ${data.makeName} ${data.modelName} to the catalog...`;
+          gvoLookupStatus.style.color = "var(--panther-success-strong-hex)";
           gvoLookupStatus.hidden = false;
 
           customMake = data.makeName;
@@ -1175,16 +1212,16 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
           selectedVehicleEl.style.display = "flex";
           selectedVehicleText.textContent = `${customMake} ${customModel} — ${customTrim}`;
           step2Next.disabled = false;
-          gvoRequestForm.hidden = true;
-          gvoRequestBtn.style.display = "none";
+          gvoRequestForm!.hidden = true;
+          gvoRequestBtn!.style.display = "none";
         } else {
           gvoLookupStatus.textContent = `Could not find "${makeName} ${modelName}" in databases. You can continue with custom details or submit a request.`;
-          gvoLookupStatus.style.color = "#8B6914";
+          gvoLookupStatus.style.color = "var(--panther-warning-strong-hex)";
           gvoLookupStatus.hidden = false;
         }
       } catch {
         gvoLookupStatus.textContent = "Network error during lookup.";
-        gvoLookupStatus.style.color = "#C0392B";
+        gvoLookupStatus.style.color = "var(--panther-danger-hex)";
         gvoLookupStatus.hidden = false;
       }
 
@@ -1203,7 +1240,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
         if (gvoLookupStatus) {
           gvoLookupStatus.textContent = "Make and model are required.";
           gvoLookupStatus.hidden = false;
-          gvoLookupStatus.style.color = "#C0392B";
+          gvoLookupStatus.style.color = "var(--panther-danger-hex)";
         }
         return;
       }
@@ -1217,20 +1254,20 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       selectedVehicleEl.style.display = "flex";
       selectedVehicleText.textContent = `${customMake} ${customModel}${customTrim ? " — " + customTrim : ""} (custom entry)`;
       step2Next.disabled = false;
-      gvoRequestForm.hidden = true;
-      gvoRequestBtn.style.display = "none";
+      gvoRequestForm!.hidden = true;
+      gvoRequestBtn!.style.display = "none";
     });
   }
 
   // Submit GVO request (existing mechanism)
-  const gvoRequestSubmit = document.getElementById("gvo-request-submit");
+  const gvoRequestSubmit = document.getElementById("gvo-request-submit") as HTMLButtonElement | null;
   if (gvoRequestSubmit && gvoRequestMake && gvoRequestModel && gvoRequestStatus && gvoRequestDomain) {
     gvoRequestSubmit.addEventListener("click", async () => {
       const domain = gvoRequestDomain.value;
       if (!domain) {
         gvoRequestStatus.textContent = "Please select a vehicle domain first (Step 1).";
         gvoRequestStatus.hidden = false;
-        gvoRequestStatus.style.color = "#C0392B";
+        gvoRequestStatus.style.color = "var(--panther-danger-hex)";
         return;
       }
       const makeName = gvoRequestMake.value.trim();
@@ -1238,7 +1275,7 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       if (!makeName || !modelName) {
         gvoRequestStatus.textContent = "Make and model are required.";
         gvoRequestStatus.hidden = false;
-        gvoRequestStatus.style.color = "#C0392B";
+        gvoRequestStatus.style.color = "var(--panther-danger-hex)";
         return;
       }
 
@@ -1258,22 +1295,22 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
             notes: gvoRequestNotes?.value.trim() || "",
           }),
         });
-        const data = await res.json();
+        const data = (await res.json()) as { ok: boolean; error?: string };
         if (res.ok && data.ok) {
           gvoRequestStatus.textContent = "Request submitted. We'll review and add this vehicle.";
-          gvoRequestStatus.style.color = "#2E7D32";
+          gvoRequestStatus.style.color = "var(--panther-success-strong-hex)";
           gvoRequestSubmit.hidden = true;
           setGvoFormDisabled(true);
         } else {
           gvoRequestStatus.textContent = data.error || "Failed to submit request.";
-          gvoRequestStatus.style.color = "#C0392B";
+          gvoRequestStatus.style.color = "var(--panther-danger-hex)";
           gvoRequestSubmit.classList.remove("is-loading");
           gvoRequestSubmit.disabled = false;
           setBtnLabel(gvoRequestSubmit, "Submit Request");
         }
       } catch {
         gvoRequestStatus.textContent = "Network error. Please try again.";
-        gvoRequestStatus.style.color = "#C0392B";
+        gvoRequestStatus.style.color = "var(--panther-danger-hex)";
         gvoRequestSubmit.classList.remove("is-loading");
         gvoRequestSubmit.disabled = false;
         setBtnLabel(gvoRequestSubmit, "Submit Request");

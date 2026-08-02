@@ -1,6 +1,42 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prata&display=swap");
 /* impeccable: overused-font Inter — Design system mandated per §VII. Deliberate choice. */
 
+/* ── GT Alpina (Primary serif, Design System §4.1) ────────────── */
+/* Licensed commercial font from Grilli Type. Drop the woff2 files into
+   public/fonts/ using these exact filenames and GT Alpina renders as the
+   primary serif; until then the stack falls back to Prata. */
+@font-face {
+  font-family: "GT Alpina";
+  src: url("/fonts/GT-Alpina-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GT Alpina";
+  src: url("/fonts/GT-Alpina-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GT Alpina";
+  src: url("/fonts/GT-Alpina-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GT Alpina";
+  src: url("/fonts/GT-Alpina-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ── Posture Colours (OKLCH + HEX) ─────────────────────────── */
   --panther-resting-oklch: oklch(20% 0.02 30);
@@ -13,7 +49,7 @@
   --panther-roaring-hex: #CB823F;
 
   /* ── Typography ────────────────────────────────────────────── */
-  --font-serif: "Prata", "Alike Angular", Georgia, serif;
+  --font-serif: "GT Alpina", "Prata", "Alike Angular", Georgia, serif;
   --font-sans: "Inter", "Arial", "Helvetica Neue", sans-serif;
 
   /* ── Spacing (8px base unit) ───────────────────────────────── */
@@ -52,6 +88,35 @@
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
   --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.16);
+
+  /* ── Semantic status (§9/§10 — derived, not posture) ─────────
+     Centralised so component status pills, banners and JS states
+     never hardcode hex. Tints via color-mix in oklch. */
+  --panther-success-hex: #27ae60;
+  --panther-success-strong-hex: #2E7D32;
+  --panther-success-bg: color-mix(in oklch, #27ae60 12%, #fff);
+  --panther-warning-hex: #D4A017;
+  --panther-warning-strong-hex: #8B6914;
+  --panther-warning-bg: color-mix(in oklch, #D4A017 14%, #fff);
+  --panther-danger-hex: #C0392B;
+  --panther-danger-strong-hex: #A93226;
+  --panther-danger-bg: color-mix(in oklch, #C0392B 10%, #fff);
+}
+
+/* ── Utility classes (referenced by BaseLayout/layouts) ──────── */
+
+.container-walking {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
 }
 
 /* ── Reset ────────────────────────────────────────────────────── */
@@ -145,6 +210,11 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
+.btn-label {
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .btn-spinner {
   display: none;
   width: 14px;
@@ -158,6 +228,16 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn.is-loading .btn-spinner {
   display: block;
+}
+
+/* Rotating loader for JS-injected spinner-gap icons (§8.4) */
+.icon-spin {
+  animation: iconSpin var(--duration-skeleton) linear infinite;
+  display: inline-block;
+}
+
+@keyframes iconSpin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes btnSpin {

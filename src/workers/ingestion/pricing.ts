@@ -26,6 +26,7 @@ import { db } from "../../lib/db";
 import { cohortPricing, systemConfig, gvoTrim, gvoModel, gvoMake } from "../../lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { fetchNcsRate } from "../../lib/scraper";
+import { readEnv } from "../../lib/env";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -62,8 +63,7 @@ const STATUTORY_RATES: { key: string; value: string; source: string }[] = [
 ];
 
 // ── auto.dev Listings Fetcher ───────────────────────────────────────
-
-const AUTO_DEV_BASE = import.meta.env.AUTO_DEV_API_URL ?? "https://api.auto.dev";
+const AUTO_DEV_BASE = readEnv("AUTO_DEV_API_URL") ?? "https://api.auto.dev";
 
 /**
  * Fetch active listings for a make/model/year from auto.dev.
@@ -77,7 +77,7 @@ async function fetchAutoDevListings(
   modelName: string,
   year: number,
 ): Promise<{ fobLow: number; fobHigh: number } | null> {
-  const apiKey = import.meta.env.AUTO_DEV_API_KEY;
+  const apiKey = readEnv("AUTO_DEV_API_KEY");
   if (!apiKey) return null;
 
   const params = new URLSearchParams({

@@ -92,7 +92,7 @@ export async function createListing(
   if (input.trimId) {
     const gvoPath = await resolveTrimPath(input.trimId);
     if (!gvoPath) {
-      return { ok: false, error: "Invalid vehicle trim. Please re-select from the ontology." };
+      return { ok: false, error: "That trim isn't available. Pick another from the catalog." };
     }
 
     if (
@@ -117,7 +117,7 @@ export async function createListing(
 
     domain = gvoPath.domain.name;
   } else if (!input.customMake || !input.customModel) {
-    return { ok: false, error: "Either select a vehicle from GVO or provide custom make/model." };
+    return { ok: false, error: "Pick a vehicle from the catalog or enter a custom make and model." };
   }
 
   const conditionError = validateConditionReport(domain, input.conditionReport);

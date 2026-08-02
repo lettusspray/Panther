@@ -29,7 +29,7 @@
   position: relative;
   flex: 0 0 auto;
   opacity: 0.3;
-  transition: opacity 200ms ease;
+  transition: opacity var(--duration-micro) var(--ease-micro);
 }
 
 .stepperActive {
@@ -52,7 +52,7 @@
   font-weight: 600;
   background: color-mix(in oklch, var(--panther-eyes-hex) 12%, transparent);
   color: var(--panther-resting-hex);
-  transition: all 200ms ease;
+  transition: all var(--duration-micro) var(--ease-micro);
 }
 
 .stepperActive .stepperCircle {
@@ -117,7 +117,7 @@
 
 /* ── Section Titles (serif, Resting posture) ─────────────────── */
 .sectionTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 18px;
   font-weight: 700;
   color: var(--panther-resting-hex);
@@ -151,18 +151,18 @@
 }
 
 .kvValueLarge {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 20px;
   font-weight: 700;
   color: var(--panther-resting-hex);
 }
 
 .kvValuePositive {
-  color: #27ae60;
+  color: var(--panther-success-hex);
 }
 
 .kvValueNegative {
-  color: #C0392B;
+  color: var(--panther-danger-hex);
 }
 
 /* ── Divider ──────────────────────────────────────────────────── */
@@ -195,8 +195,8 @@
 }
 
 .statusSuccess {
-  background: color-mix(in oklch, #27ae60 10%, #fff);
-  color: #27ae60;
+  background: color-mix(in oklch, var(--panther-success-hex) 10%, #fff);
+  color: var(--panther-success-hex);
 }
 
 .statusNeutral {
@@ -205,8 +205,8 @@
 }
 
 .statusError {
-  background: color-mix(in oklch, #C0392B 10%, #fff);
-  color: #C0392B;
+  background: color-mix(in oklch, var(--panther-danger-hex) 10%, #fff);
+  color: var(--panther-danger-hex);
 }
 
 /* ── Vehicle Card ─────────────────────────────────────────────── */
@@ -219,7 +219,7 @@
 }
 
 .vehicleName {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 20px;
   font-weight: 700;
   color: var(--panther-resting-hex);
@@ -250,7 +250,7 @@
 
 .priceValue {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 28px;
   font-weight: 700;
   margin-bottom: var(--space-4);
@@ -320,23 +320,8 @@
   font-weight: 500;
   z-index: 200;
   opacity: 0;
-  transition: opacity 200ms ease;
+  transition: opacity var(--duration-micro) var(--ease-micro);
   pointer-events: none;
-}
-
-.toastVisible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.toastSuccess {
-  background: var(--panther-resting-hex);
-  color: #fff;
-}
-
-.toastError {
-  background: #C0392B;
-  color: #fff;
 }
 
 /* ── Empty State ──────────────────────────────────────────────── */
@@ -346,7 +331,7 @@
 }
 
 .emptyTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 24px;
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-3);
@@ -377,7 +362,7 @@
   background: #fff;
   border-radius: 8px;
   box-shadow: var(--shadow-card);
-  transition: all 200ms ease;
+  transition: all var(--duration-micro) var(--ease-micro);
   text-decoration: none;
 }
 
@@ -393,7 +378,7 @@
 }
 
 .txVehicle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 17px;
   font-weight: 700;
   color: var(--panther-resting-hex);
@@ -419,7 +404,7 @@
 }
 
 .txPrice {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 18px;
   font-weight: 700;
   color: var(--panther-resting-hex);
@@ -448,7 +433,7 @@
   color: var(--panther-eyes-hex);
   background: transparent;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: all var(--duration-micro) var(--ease-micro);
 }
 
 .roleBtn:hover {
@@ -459,6 +444,165 @@
 .roleBtnActive {
   background: var(--panther-resting-hex);
   border-color: var(--panther-resting-hex);
+  color: #fff;
+}
+
+/* ── Page Header (Walking posture: sans title) ────────────────── */
+.pageHeader {
+  margin-bottom: var(--space-8);
+}
+
+.pageTitle {
+  font-family: var(--posture-font);
+  font-size: clamp(28px, 4vw, 40px);
+  color: var(--panther-resting-hex);
+  margin-bottom: var(--space-2);
+}
+
+.pageSubtitle {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--panther-eyes-hex);
+}
+
+/* ── Breadcrumb ───────────────────────────────────────────────── */
+.breadcrumb {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+.breadcrumbLink {
+  color: var(--panther-eyes-hex);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--duration-micro) var(--ease-micro);
+}
+
+.breadcrumbLink:hover {
+  text-decoration-color: currentColor;
+}
+
+.breadcrumbSep {
+  color: color-mix(in oklch, var(--panther-eyes-hex) 50%, transparent);
+}
+
+.breadcrumbCurrent {
+  color: var(--panther-resting-hex);
+  font-weight: 500;
+}
+
+/* ── Status Bar ───────────────────────────────────────────────── */
+.statusBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.statusRole {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+/* ── Vehicle Meta ─────────────────────────────────────────────── */
+.vehicleMeta {
+  display: flex;
+  gap: var(--space-6);
+  margin-top: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+/* ── Condition Grid ───────────────────────────────────────────── */
+.conditionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-2);
+}
+
+.conditionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  background: color-mix(in oklch, var(--panther-eyes-hex) 3%, #fff);
+  border-radius: 6px;
+}
+
+.conditionLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--panther-eyes-hex);
+}
+
+.conditionValue {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--panther-eyes-hex);
+}
+
+.conditionValueGood {
+  color: var(--panther-success-hex);
+}
+
+.conditionValueFair {
+  color: var(--panther-warning-hex);
+}
+
+.conditionValuePoor {
+  color: var(--panther-danger-hex);
+}
+
+/* ── Card Spacing Helpers ─────────────────────────────────────── */
+.cardTop {
+  margin-top: var(--space-6);
+}
+
+.cardBottom {
+  margin-bottom: var(--space-6);
+}
+
+/* ── Cancel Note ──────────────────────────────────────────────── */
+.cancelNote {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--panther-eyes-hex);
+  text-align: center;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ── Terminal / Dispute Copy ──────────────────────────────────── */
+.terminalText {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--panther-eyes-hex);
+  line-height: 1.5;
+}
+
+.disputeCard {
+  border: 1px solid color-mix(in oklch, var(--panther-danger-hex) 20%, transparent);
+}
+
+.disputeTitle {
+  color: var(--panther-danger-hex);
+}
+
+/* ── Toast state (JS drives data-toast, not classList literals) ─ */
+.toast[data-toast="success"] {
+  background: var(--panther-resting-hex);
+  color: #fff;
+}
+
+.toast[data-toast="error"] {
+  background: var(--panther-danger-hex);
   color: #fff;
 }
 

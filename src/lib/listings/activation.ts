@@ -132,7 +132,7 @@ export async function activateListing(
   if (!row.trimId || !row.modelYear) {
     return {
       ok: false,
-      error: "Vehicle identification incomplete. Please re-select from the ontology.",
+      error: "Vehicle identification incomplete. Please pick another from the catalog.",
     };
   }
 

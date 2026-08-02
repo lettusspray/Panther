@@ -1,3 +1,4 @@
+import { readEnv } from "../env";
 /**
  * Crawl4AI Client — TypeScript
  *
@@ -49,7 +50,7 @@ export interface MarkdownResult {
 // ── Client ──────────────────────────────────────────────────────────
 
 const CRAWL4AI_URL = "https://crawl4ai-production-e503.up.railway.app";
-const CRAWL4AI_KEY = "850da107bea2ec98bcf7dae7346aef1dd34e335b4e1c5eb02f4be1c06865dfc3";
+const CRAWL4AI_KEY = readEnv("CRAWL4AI_API_KEY") ?? "";
 
 let config: Crawl4AiConfig | null = null;
 
@@ -60,8 +61,8 @@ export function configure(cfg: Crawl4AiConfig): void {
 function getConfig(): Crawl4AiConfig {
   if (!config) {
     config = {
-      apiUrl: (import.meta as any).env?.CRAWL4AI_API_URL ?? process.env.CRAWL4AI_API_URL ?? CRAWL4AI_URL,
-      apiKey: (import.meta as any).env?.CRAWL4AI_API_KEY ?? process.env.CRAWL4AI_API_KEY ?? CRAWL4AI_KEY,
+      apiUrl: readEnv("CRAWL4AI_API_URL") ?? CRAWL4AI_URL,
+      apiKey: readEnv("CRAWL4AI_API_KEY") ?? CRAWL4AI_KEY,
     };
   }
   if (!config.apiUrl) throw new Error("CRAWL4AI_API_URL not configured");
@@ -93,9 +94,8 @@ const USER_AGENT =
 
 // iRoyal residential proxy — bypasses rate-limit on ev-database.org etc.
 // Web Unlocker (unblocker.iproyal.com) is reserved for total block scenarios.
-const IROYAL_PROXY_URL =
-  process.env.IROYAL_PROXY_URL ??
-  "http://14a07991fe1df:b53ce5ae33@174.140.207.69:12323";
+// Credential read from IROYAL_PROXY (set as a Cloudflare Pages dashboard secret).
+const IROYAL_PROXY_URL = readEnv("IROYAL_PROXY") ?? "";
 
 // Domains that require proxy (rate-limited or bot-blocked on direct fetch)
 const PROXY_DOMAINS = ["ev-database.org"];
@@ -159,7 +159,10 @@ export async function fetchDirect(
 ): Promise<CrawlResult> {
   const retries = opts.retries ?? 3;
   const timeout = opts.timeout ?? 30_000;
-  const useProxy = needsProxy(url);
+  if (needsProxy(url) && !IROYAL_PROXY_URL) {
+    console.warn(`[crawl4ai] IROYAL_PROXY not configured; skipping proxy for ${url}`);
+  }
+  const useProxy = needsProxy(url) && Boolean(IROYAL_PROXY_URL);
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {

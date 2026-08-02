@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   await db.insert(gvoRequest).values({
-    requesterId: user?.id ?? null,
+    requesterId: (user?.id as string | undefined) ?? null,
     domain: body.domain.trim().toLowerCase(),
     makeName: body.makeName.trim(),
     modelName: body.modelName.trim(),

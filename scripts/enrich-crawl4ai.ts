@@ -20,7 +20,7 @@ import {
   knowledgeEntry,
 } from "../src/lib/db/schema";
 import { crawlEvDatabase, type EvSpecs } from "../src/lib/data/ev-database";
-import { crawlAutoData, type AutoDataSpecs } from "../src/lib/data/auto-data";
+import { crawlAutoData } from "../src/lib/data/auto-data";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);

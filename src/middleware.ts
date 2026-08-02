@@ -22,7 +22,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Subdomain not found — render 404
     return context.rewrite("/404");
   }
-  if (host !== PANTHER_DOMAIN) {
+
+  // Allow the canonical host, local dev, and Cloudflare Pages previews
+  const isAllowedHost =
+    host === PANTHER_DOMAIN ||
+    host.endsWith(".pages.dev") ||
+    host === "localhost" ||
+    host.startsWith("127.0.0.1") ||
+    host.startsWith("0.0.0.0");
+  if (!isAllowedHost) {
     // Unknown host — render 404
     return context.rewrite("/404");
   }
@@ -38,21 +46,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Public paths — no auth required
-  if (PUBLIC_PATHS.some((p) => path === p) || path.startsWith("/pricing/")) {
-    return next();
-  }
-
-  // Vehicles, listings browse, and dealer storefronts are public
-  if (
-    path.startsWith("/vehicles/") ||
-    path.startsWith("/dealers/") ||
-    (path.startsWith("/listings/") && path !== "/listings/new")
-  ) {
-    return next();
-  }
-
-  // Check session for all other routes
+  // Resolve the session for every non-API request so public pages (e.g.
+  // listing detail) know whether the visitor is signed in.
   let session = null;
   try {
     session = await auth.api.getSession({
@@ -61,10 +56,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
   } catch {
     // Session check failed — treat as unauthenticated
   }
-
-  // Attach session to context for downstream use
   context.locals.user = session?.user ?? null;
   context.locals.session = session?.session ?? null;
+
+  // Public paths — no auth required
+  const isPublic =
+    PUBLIC_PATHS.some((p) => path === p) ||
+    path.startsWith("/pricing/") ||
+    path.startsWith("/vehicles/") ||
+    path.startsWith("/dealers/") ||
+    (path.startsWith("/listings/") && path !== "/listings/new");
+  if (isPublic) {
+    return next();
+  }
 
   // Protected routes — redirect to sign-in with return URL
   if (!session) {

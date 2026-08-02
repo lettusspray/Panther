@@ -176,6 +176,6 @@ export function calculateTco(input: TcoInput): TcoResult {
       roadTaxLabel: "Annual vehicle license + road worthiness",
     },
     disclaimer:
-      "Fuel prices are estimates based on average state-level data and may vary. Maintenance rates are by make group. Insurance is bracket-based on vehicle value. Verify actual costs with local providers in your specific State/LGA.",
+      "Fuel prices are estimates based on average state-level data and may vary. Maintenance rates are by make group. Insurance is bracket-based on vehicle value. Verify actual costs with local providers in your state.",
   };
 }

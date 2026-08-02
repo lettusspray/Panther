@@ -77,7 +77,7 @@ async function processRow(
         const trimId = await findOrCreateGvoTrim(domain, decoded.make, decoded.model, trimName, domain);
         return await createListingViaApi(sellerId, trimId, decoded.year || modelYear, mileageKm, askingPriceNgn, row);
       } catch (err) {
-        return { ok: false, error: `VIN ${vin.slice(0, 8)}… GVO error: ${(err as Error).message}` };
+        return { ok: false, error: `VIN ${vin.slice(0, 8)}… catalog error: ${(err as Error).message}` };
       }
     }
   }
@@ -91,7 +91,7 @@ async function processRow(
         const trimId = await findOrCreateGvoTrim(domain, nhtsa.makeName, nhtsa.modelName, trimName, domain);
         return await createListingViaApi(sellerId, trimId, modelYear, mileageKm, askingPriceNgn, row);
       } catch (err) {
-        return { ok: false, error: `Lookup ${makeName} ${modelName}: GVO error: ${(err as Error).message}` };
+        return { ok: false, error: `Lookup ${makeName} ${modelName}: catalog error: ${(err as Error).message}` };
       }
     }
 

@@ -191,7 +191,7 @@ function parseEvSpecs(html: string, url: string): EvSpecs | null {
   const slug = slugMatch?.[1] ?? "";
   const slugParts = slug.split("-");
   let brand = slugParts[0] ?? "";
-  let model = slugParts.slice(1).join(" ");
+  const model = slugParts.slice(1).join(" ");
   brand = brand.replace(/_/g, " ");
 
   const tables = extractTables(html);

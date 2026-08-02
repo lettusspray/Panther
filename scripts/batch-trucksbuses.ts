@@ -65,7 +65,7 @@ async function main() {
 
   const CONCURRENCY = 2;
   const DELAY_MS = 3000;
-  let created = 0, updated = 0, errors = 0;
+  let created = 0, errors = 0;
 
   for (let i = 0; i < urls.length; i += CONCURRENCY) {
     const batch = urls.slice(i, i + CONCURRENCY);

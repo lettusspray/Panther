@@ -10,7 +10,7 @@ import { db } from "../../../../lib/db";
 import { user } from "../../../../lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export const GET: APIRoute = async ({ url, request }) => {
+export const GET: APIRoute = async ({ url }) => {
   const userId = url.searchParams.get("userId");
 
   if (!userId) {

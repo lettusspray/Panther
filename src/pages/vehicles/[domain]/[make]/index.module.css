@@ -36,7 +36,7 @@
 }
 
 .heroTitle {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: clamp(28px, 4vw, 40px);
   color: var(--panther-resting-hex);
   margin-bottom: var(--space-2);
@@ -87,7 +87,7 @@
 }
 
 .modelInitial {
-  font-family: var(--font-serif);
+  font-family: var(--posture-font);
   font-size: 24px;
   font-weight: 700;
   color: color-mix(in oklch, var(--panther-walking-hex) 40%, var(--panther-eyes-hex));

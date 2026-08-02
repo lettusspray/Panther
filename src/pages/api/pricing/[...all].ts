@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import type { APIRoute } from "astro";
 import { getTrimPricingData } from "../../../lib/pricing/get-trim-pricing";
 
 const pricing = new Hono();
@@ -53,4 +54,4 @@ pricing.get("/gvo/trims/:modelId", async (c) => {
   return c.json(trims);
 });
 
-export default pricing;
+export const ALL: APIRoute = ({ request }) => pricing.fetch(request);

@@ -38,6 +38,13 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+interface Window {
+  __photoUploader?: {
+    getData(): Array<{ url: string; tag: string | null }>;
+  };
+  __collectConditionData?: () => Record<string, string | null>;
+}
+
 declare namespace App {
   interface Locals {
     user: Record<string, unknown> | null;

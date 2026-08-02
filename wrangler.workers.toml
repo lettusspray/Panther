@@ -1,0 +1,64 @@
+# Panther Pipeline Worker — nightly ingestion + queue consumers.
+# Deploy separately from the Pages app:
+#   npx wrangler deploy -c wrangler.workers.toml
+#
+# Dashboard setup required before deploy:
+#   1. Create the four queues: ingestion-ontology, ingestion-pricing, etl-knowledge, dead-letter
+#   2. Bind a Hyperdrive instance as `HYPERDRIVE` (this worker reads HYPERDRIVE.connectionString)
+#   3. Secrets (worker secrets): AUTO_DEV_API_KEY, GROQ_API_KEY, CRAWL4AI_API_KEY,
+#      SCRAPER_API_KEYS, IROYAL_PROXY, DATABASE_URL (fallback if no Hyperdrive)
+#   4. Cron trigger is declared below; verify it shows in the Workers dashboard.
+
+name = "panther-pipeline"
+main = "src/workers/index.ts"
+compatibility_date = "2025-07-10"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# ── Queue Producers (cron → queues, used by dead-letter push) ──
+[[queues.producers]]
+queue = "ingestion-ontology"
+binding = "ONTOLOGY_QUEUE"
+
+[[queues.producers]]
+queue = "ingestion-pricing"
+binding = "PRICING_QUEUE"
+
+[[queues.producers]]
+queue = "etl-knowledge"
+binding = "KNOWLEDGE_QUEUE"
+
+[[queues.producers]]
+queue = "dead-letter"
+binding = "DEAD_LETTER_QUEUE"
+
+# ── Queue Consumers ─────────────────────────────────────────────
+[[queues.consumers]]
+queue = "ingestion-ontology"
+max_batch_size = 100
+max_batch_timeout = 30
+max_retries = 3
+
+[[queues.consumers]]
+queue = "ingestion-pricing"
+max_batch_size = 50
+max_batch_timeout = 60
+max_retries = 3
+
+[[queues.consumers]]
+queue = "etl-knowledge"
+max_batch_size = 10
+max_batch_timeout = 120
+max_retries = 3
+
+[[queues.consumers]]
+queue = "dead-letter"
+max_batch_size = 25
+max_batch_timeout = 30
+max_retries = 1
+
+# ── Cron Trigger (02:00 UTC daily) ─────────────────────────────
+[triggers]
+crons = ["0 2 * * *"]

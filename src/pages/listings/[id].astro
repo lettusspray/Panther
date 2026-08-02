@@ -1,5 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import Button from "@/components/ui/Button.astro";
+import Icon from "@/components/ui/Icon.astro";
 import styles from "./[id].module.css";
 import "@/styles/global.css";
 import { db } from "@/lib/db";
@@ -151,7 +153,7 @@ if (item.trimId) {
         <div class={styles.section}>
           <div class={styles.imageGrid}>
             {images.map((img, i) => (
-              <div class={styles.imageCard} key={i}>
+              <div class={styles.imageCard}>
                 <img
                   class={styles.imageCardImg}
                   src={img.url}
@@ -171,7 +173,7 @@ if (item.trimId) {
           <h2 class={styles.sectionTitle}>Video Walkthrough</h2>
           <div class={styles.videoGrid}>
             {videos.map((v, i) => (
-              <div class={styles.videoCard} key={i}>
+              <div class={styles.videoCard}>
                 <video
                   class={styles.videoPlayer}
                   src={v.url}
@@ -216,7 +218,7 @@ if (item.trimId) {
           </div>
           <div class={styles.specItem}>
             <span class={styles.specLabel}>Mileage</span>
-            <span class={styles.specValue}>{item.mileageKm.toLocaleString()} km</span>
+            <span class={styles.specValue}>{item.mileageKm ? `${item.mileageKm.toLocaleString()} km` : "—"}</span>
           </div>
         </div>
       </div>
@@ -229,7 +231,7 @@ if (item.trimId) {
         <span class={styles.priceValue}>₦{Number(item.askingPriceNgn).toLocaleString()}</span>
         {item.domainSlug && item.makeName && item.modelName && item.trimName ? (
           <a href={`/pricing/${item.domainSlug}/${item.makeName.toLowerCase().replace(/ /g, "-")}/${item.modelName.toLowerCase().replace(/ /g, "-")}/${item.trimName.toLowerCase().replace(/ /g, "-")}`} class={styles.pricingLink}>
-            View landed cost breakdown →
+            View landed cost breakdown <Icon name="arrow-right" size={12} />
           </a>
         ) : item.askingPriceNgn ? (
           <p class={styles.pricingNote}>Pricing data not available for custom vehicle entries.</p>
@@ -271,9 +273,7 @@ if (item.trimId) {
             <span style="font-weight: 500; color: var(--panther-resting-hex);">Seller</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-lg btn-full" id="switchboard-buy-btn" style={`${!Astro.locals.user || Astro.locals.user.id === item.sellerId ? "display: none;" : ""}`}>
-          <span class="btn-label">Secure Deal</span>
-        </button>
+        <Button label="Secure Deal" variant="primary" size="lg" full id="switchboard-buy-btn" style={`${!Astro.locals.user || Astro.locals.user.id === item.sellerId ? "display: none;" : ""}`} />
         <p id="switchboard-status" style="display: none; font-family: var(--font-sans); font-size: 13px; text-align: center; padding: var(--space-3); border-radius: 6px;"></p>
       </div>
 
@@ -309,8 +309,8 @@ if (item.trimId) {
       }
     }
 
-    const buyBtn = document.getElementById("switchboard-buy-btn");
-    const statusEl = document.getElementById("switchboard-status");
+    const buyBtn = document.getElementById("switchboard-buy-btn") as HTMLButtonElement | null;
+    const statusEl = document.getElementById("switchboard-status")!;
 
     if (buyBtn) {
       buyBtn.addEventListener("click", async () => {
@@ -318,7 +318,7 @@ if (item.trimId) {
 
         buyBtn.disabled = true;
         buyBtn.classList.add("is-loading");
-        buyBtn.querySelector(".btn-label").textContent = "Initiating...";
+        buyBtn.querySelector(".btn-label")!.textContent = "Initiating...";
 
         try {
           const res = await fetch("/api/switchboard", {
@@ -326,7 +326,7 @@ if (item.trimId) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ listingId, agreedPriceNgn: price }),
           });
-          const data = await res.json();
+          const data = (await res.json()) as { ok: boolean; authorizationUrl?: string; transactionId?: string; error?: string };
 
           if (res.ok && data.ok) {
             // Redirect to Paystack authorization URL
@@ -338,22 +338,22 @@ if (item.trimId) {
           } else {
             statusEl.textContent = data.error || "Failed to initiate purchase.";
             statusEl.style.display = "block";
-            statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
-            statusEl.style.color = "#C0392B";
-            statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+            statusEl.style.background = "color-mix(in oklch, var(--panther-danger-hex) 5%, #fff)";
+            statusEl.style.color = "var(--panther-danger-hex)";
+            statusEl.style.border = "1px solid color-mix(in oklch, var(--panther-danger-hex) 20%, transparent)";
             buyBtn.classList.remove("is-loading");
             buyBtn.disabled = false;
-            buyBtn.querySelector(".btn-label").textContent = "Secure Deal";
+            buyBtn.querySelector(".btn-label")!.textContent = "Secure Deal";
           }
         } catch {
           statusEl.textContent = "Network error. Please try again.";
           statusEl.style.display = "block";
-          statusEl.style.background = "color-mix(in oklch, #C0392B 5%, #fff)";
-          statusEl.style.color = "#C0392B";
-          statusEl.style.border = "1px solid color-mix(in oklch, #C0392B 20%, transparent)";
+          statusEl.style.background = "color-mix(in oklch, var(--panther-danger-hex) 5%, #fff)";
+          statusEl.style.color = "var(--panther-danger-hex)";
+          statusEl.style.border = "1px solid color-mix(in oklch, var(--panther-danger-hex) 20%, transparent)";
           buyBtn.classList.remove("is-loading");
           buyBtn.disabled = false;
-          buyBtn.querySelector(".btn-label").textContent = "Secure Deal";
+          buyBtn.querySelector(".btn-label")!.textContent = "Secure Deal";
         }
       });
     }

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import Button from "@/components/ui/Button.astro";
 import Icon from "@/components/ui/Icon.astro";
 import styles from "./switchboard.module.css";
 import "@/styles/global.css";
@@ -108,14 +109,14 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
   title={`${vehicleName} — Transaction`}
   posture="resting"
   description={`Switchboard transaction for ${vehicleName}. Status: ${tx.status}.`}
-  ogUrl={`https://panther.ng/switchboard/${params.id}`}
+  ogUrl={`https://panther.ng/switchboard/${id}`}
 >
   <div class={styles.page}>
     {/* Breadcrumb */}
-    <nav style="margin-bottom: var(--space-6); font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex); display: flex; gap: var(--space-2);">
-      <a href="/switchboard" style="color: var(--panther-eyes-hex); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 200ms ease;">Transactions</a>
-      <span style="color: color-mix(in oklch, var(--panther-eyes-hex) 50%, transparent);">/</span>
-      <span style="color: var(--panther-resting-hex); font-weight: 500;">{vehicleName}</span>
+    <nav class={styles.breadcrumb}>
+      <a href="/switchboard" class={styles.breadcrumbLink}>Transactions</a>
+      <span class={styles.breadcrumbSep}>/</span>
+      <span class={styles.breadcrumbCurrent}>{vehicleName}</span>
     </nav>
 
     {/* Status Stepper */}
@@ -141,7 +142,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
     </div>
 
     {/* Status badge above grid */}
-    <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6);">
+    <div class={styles.statusBar}>
       <span class={`${styles.statusBadge} ${
         isRefunded ? styles.statusNeutral :
         isDisputed ? styles.statusError :
@@ -151,7 +152,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
       }`}>
         {isRefunded ? "Refunded" : isDisputed ? "Under Dispute" : isTerminal ? "Complete" : tx.status.replace(/_/g, " ")}
       </span>
-      <span style="font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+      <span class={styles.statusRole}>
         {isBuyer ? "You're buying" : "You're selling"}
       </span>
     </div>
@@ -163,7 +164,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
         <div class={styles.vehicleCard}>
           <div class={styles.vehicleName}>{vehicleName}</div>
           <div class={styles.vehicleTrim}>{tx.trimName}</div>
-          <div style="display: flex; gap: var(--space-6); margin-top: var(--space-3); font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+          <div class={styles.vehicleMeta}>
             {tx.mileageKm && <span>{tx.mileageKm.toLocaleString()} km</span>}
             <span>Listed by {tx.sellerName}</span>
           </div>
@@ -171,15 +172,19 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 
         {/* Condition Report */}
         {condition && Object.keys(condition).length > 0 && (
-          <div class={styles.card} style="margin-bottom: var(--space-6);">
+          <div class={`${styles.card} ${styles.cardBottom}`}>
             <h2 class={styles.sectionTitle}>Condition Report</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-2);">
+            <div class={styles.conditionGrid}>
               {Object.entries(condition).map(([key, value]) => (
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: color-mix(in oklch, var(--panther-eyes-hex) 3%, #fff); border-radius: 6px;">
-                  <span style="font-family: var(--font-sans); font-size: 13px; color: var(--panther-eyes-hex);">
+                <div class={styles.conditionRow}>
+                  <span class={styles.conditionLabel}>
                     {FIELD_LABELS[key] ?? key}
                   </span>
-                  <span style={`font-family: var(--font-sans); font-size: 13px; font-weight: 600; text-transform: capitalize; color: ${value === "good" ? "#27ae60" : value === "fair" ? "#f39c12" : value === "poor" ? "#C0392B" : "var(--panther-eyes-hex)"};`}>
+                  <span class={`${styles.conditionValue} ${
+                    value === "good" ? styles.conditionValueGood :
+                    value === "fair" ? styles.conditionValueFair :
+                    value === "poor" ? styles.conditionValuePoor : ""
+                  }`}>
                     {value}
                   </span>
                 </div>
@@ -223,7 +228,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
         </div>
 
         {/* Timeline */}
-        <div class={styles.card} style="margin-top: var(--space-6);">
+        <div class={`${styles.card} ${styles.cardTop}`}>
           <h2 class={styles.sectionTitle}>Timeline</h2>
           <div class={styles.kvRow}>
             <span class={styles.kvLabel}>Initiated</span>
@@ -243,36 +248,33 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 
         {/* Actions */}
         {isPreRelease && (
-          <div class={styles.card} style="margin-top: var(--space-6);">
+          <div class={`${styles.card} ${styles.cardTop}`}>
             <h2 class={styles.sectionTitle}>Actions</h2>
             <div class={styles.actions}>
               {/* Confirm button — buyer or seller confirms */}
               {(isBuyer || isSeller) && (tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
-                <button class="btn btn-primary btn-md btn-full" id="confirm-btn">
-                  <span class="btn-label">
-                    {tx.status === "inspection_window"
-                      ? (isBuyer ? "Confirm Vehicle" : "Waiting for buyer")
-                      : tx.status === "buyer_confirmed"
-                        ? (isSeller ? "Confirm & Release Funds" : "Waiting for seller")
-                        : (isBuyer ? "Confirm Vehicle" : "Confirm & Release Funds")
-                    }
-                  </span>
-                </button>
+                <Button
+                  id="confirm-btn"
+                  variant="primary"
+                  size="md"
+                  full
+                  label={tx.status === "inspection_window"
+                    ? (isBuyer ? "Confirm Vehicle" : "Waiting for buyer")
+                    : tx.status === "buyer_confirmed"
+                      ? (isSeller ? "Confirm & Release Funds" : "Waiting for seller")
+                      : (isBuyer ? "Confirm Vehicle" : "Confirm & Release Funds")}
+                />
               )}
 
               {/* Cancel — full refund, zero fee */}
-              <button class="btn btn-secondary btn-md btn-full" id="cancel-btn">
-                <span class="btn-label">Cancel Transaction</span>
-              </button>
-              <p style="font-family: var(--font-sans); font-size: 12px; color: var(--panther-eyes-hex); text-align: center; margin-top: calc(-1 * var(--space-2));">
+              <Button id="cancel-btn" variant="secondary" size="md" full label="Cancel Transaction" />
+              <p class={styles.cancelNote}>
                 Full refund. No cancellation fee. Ever.
               </p>
 
               {/* Dispute */}
               {(tx.status === "inspection_window" || tx.status === "buyer_confirmed" || tx.status === "seller_confirmed") && (
-                <button class="btn btn-danger btn-md btn-full" id="dispute-btn">
-                  <span class="btn-label">Raise Dispute</span>
-                </button>
+                <Button id="dispute-btn" variant="danger" size="md" full label="Raise Dispute" />
               )}
             </div>
           </div>
@@ -280,9 +282,9 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 
         {/* Terminal states */}
         {isTerminal && (
-          <div class={styles.card} style="margin-top: var(--space-6);">
+          <div class={`${styles.card} ${styles.cardTop}`}>
             <h2 class={styles.sectionTitle}>{isRefunded ? "Refunded" : "Transaction Complete"}</h2>
-            <p style="font-family: var(--font-sans); font-size: 14px; color: var(--panther-eyes-hex); line-height: 1.5;">
+            <p class={styles.terminalText}>
               {isRefunded
                 ? "The full amount has been returned to the buyer. No fees were charged."
                 : isSeller
@@ -293,9 +295,9 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
         )}
 
         {isDisputed && (
-          <div class={styles.card} style="margin-top: var(--space-6); border: 1px solid color-mix(in oklch, #C0392B 20%, transparent);">
-            <h2 class={styles.sectionTitle} style="color: #C0392B;">Dispute Active</h2>
-            <p style="font-family: var(--font-sans); font-size: 14px; color: var(--panther-eyes-hex); line-height: 1.5;">
+          <div class={`${styles.card} ${styles.cardTop} ${styles.disputeCard}`}>
+            <h2 class={`${styles.sectionTitle} ${styles.disputeTitle}`}>Dispute Active</h2>
+            <p class={styles.terminalText}>
               A dispute has been raised. Both parties will be contacted to resolve this. Funds remain held in escrow until resolution.
             </p>
           </div>
@@ -305,7 +307,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
   </div>
 
   {/* Toast */}
-  <div id="toast" class={`${styles.toast} ${styles.toastSuccess}`}></div>
+  <div id="toast" class={styles.toast} data-toast="success"></div>
 </BaseLayout>
 
 <script define:vars={{ transactionId: tx.id, isSellerView: isSeller }}>
@@ -314,7 +316,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 
   function showToast(msg, isError = false) {
     toast.textContent = msg;
-    toast.className = `toastVisible ${isError ? "toastError" : "toastSuccess"}`;
+    toast.setAttribute("data-toast", isError ? "error" : "success");
     toast.style.opacity = "1";
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
@@ -322,14 +324,14 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
     }, 3000);
   }
 
-  function setBtnLabel(btn: HTMLButtonElement, text: string) {
+  function setBtnLabel(btn, text) {
     const labelEl = btn.querySelector(".btn-label");
     if (labelEl) labelEl.textContent = text;
     else btn.textContent = text;
   }
 
   // Confirm
-  const confirmBtn = document.getElementById("confirm-btn") as HTMLButtonElement | null;
+  const confirmBtn = document.getElementById("confirm-btn");
   if (confirmBtn) {
     confirmBtn.addEventListener("click", async () => {
       confirmBtn.disabled = true;
@@ -357,7 +359,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
   }
 
   // Cancel
-  const cancelBtn = document.getElementById("cancel-btn") as HTMLButtonElement | null;
+  const cancelBtn = document.getElementById("cancel-btn");
   if (cancelBtn) {
     cancelBtn.addEventListener("click", async () => {
       if (!confirm("Cancel this transaction? You'll receive a full refund. No cancellation fee.")) return;
@@ -386,7 +388,7 @@ const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
   }
 
   // Dispute
-  const disputeBtn = document.getElementById("dispute-btn") as HTMLButtonElement | null;
+  const disputeBtn = document.getElementById("dispute-btn");
   if (disputeBtn) {
     disputeBtn.addEventListener("click", async () => {
       if (!confirm("Raise a dispute? This will pause the transaction and both parties will be contacted.")) return;

@@ -78,13 +78,13 @@ const modelsWithPricing = await Promise.all(
     </nav>
     <h1 class={styles.heroTitle}>{makeRow.name}</h1>
     <p class={styles.heroSubtitle}>
-      Explore models, view specs, and check landed costs.
+      Browse models, compare specs, and see the landed cost.
     </p>
   </section>
 
   {models.length === 0 ? (
     <div class={styles.emptyState}>
-      No models available for {makeRow.name} yet. The ontology is being populated.
+      No models for {makeRow.name} yet. New ones are being added.
     </div>
   ) : (
     <div class={styles.modelsGrid}>

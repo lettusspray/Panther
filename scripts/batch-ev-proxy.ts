@@ -21,7 +21,11 @@ const db = drizzle(sql);
 
 // ── Proxy fetch ──────────────────────────────────────────────────────
 
-const PROXY_URL = "http://14a07991fe1df:b53ce5ae33@174.140.207.69:12323";
+const PROXY_URL = process.env.IROYAL_PROXY ?? "";
+if (!PROXY_URL) {
+  console.warn("IROYAL_PROXY not set — this crawler requires the iRoyal proxy. Set IROYAL_PROXY and rerun.");
+  process.exit(1);
+}
 const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 async function fetchViaProxy(url: string, timeout = 45_000, retries = 2): Promise<{ status: number; html: string }> {
@@ -64,8 +68,8 @@ function parseEvSpecs(html: string, url: string): Record<string, unknown> | null
   const slugMatch = url.match(/\/car\/\d+\/([\w-]+)$/);
   const slug = slugMatch?.[1] ?? "";
   const slugParts = slug.split("-");
-  let brand = (slugParts[0] ?? "").replace(/_/g, " ");
-  let model = slugParts.slice(1).join(" ");
+  const brand = (slugParts[0] ?? "").replace(/_/g, " ");
+  const model = slugParts.slice(1).join(" ");
 
   const tables = extractTables(html);
   if (tables.length === 0) return null;

@@ -14,6 +14,12 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist/", ".wrangler/"],
+    ignores: [
+      "dist/",
+      ".wrangler/",
+      "node_modules/",
+      ".opencode/",
+      ".astro/",
+    ],
   },
 );
