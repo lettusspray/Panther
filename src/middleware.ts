@@ -2,10 +2,17 @@ import { defineMiddleware } from "astro:middleware";
 import { auth } from "./lib/auth";
 import { getDealerBySubdomain } from "./lib/dealer";
 import { extractSubdomain, PANTHER_DOMAIN } from "./lib/dealer/subdomain";
+import { hydrateFromCloudflareRuntime } from "./lib/env";
 
 const PUBLIC_PATHS = ["/", "/pricing", "/api/health", "/auth/sign-in", "/auth/sign-up"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Bridge the Cloudflare runtime env binding (vars + secrets) onto
+  // globalThis so readEnv()/db can see DATABASE_URL etc. Only the pipeline
+  // worker used to hydrate bindings; the site worker must too or every
+  // DB-touching page 500s despite the secret being set on the worker.
+  await hydrateFromCloudflareRuntime();
+
   const url = new URL(context.request.url);
   const path = url.pathname;
   const host = url.hostname;

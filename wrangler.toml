@@ -1,4 +1,5 @@
 name = "panther"
+account_id = "2b78d2d436beef8cb4a0c47c53a85632"
 compatibility_date = "2025-07-10"
 compatibility_flags = ["nodejs_compat"]
 

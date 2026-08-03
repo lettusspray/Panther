@@ -18,6 +18,7 @@ import { handleOntologyBatch } from "./queues/ontology";
 import { handlePricingBatch } from "./queues/pricing";
 import { handleKnowledgeBatch } from "./queues/knowledge";
 import { handleDeadLetterBatch } from "./queues/dead-letter";
+import { hydrateWorkerEnv } from "../lib/env";
 
 type QueueMessage = {
   id: string;
@@ -26,18 +27,9 @@ type QueueMessage = {
   attemptsRemaining: number;
 };
 
-function hydrate(env: Record<string, unknown>): void {
-  const hydrated: Record<string, unknown> = { ...env };
-  const hyperdrive = env.HYPERDRIVE as { connectionString?: string } | undefined;
-  if (hyperdrive?.connectionString) {
-    hydrated.HYPERDRIVE_CONNECTION_STRING = hyperdrive.connectionString;
-  }
-  (globalThis as { __WORKER_ENV__?: Record<string, unknown> }).__WORKER_ENV__ = hydrated;
-}
-
 export default {
   async scheduled(event: unknown, env: Record<string, unknown>): Promise<void> {
-    hydrate(env);
+    hydrateWorkerEnv(env);
     await (cron as { scheduled: (e: unknown, env: unknown) => Promise<void> }).scheduled(event, env);
   },
 
@@ -45,7 +37,7 @@ export default {
     batch: { queue: string; messages: QueueMessage[] },
     env: Record<string, unknown>,
   ): Promise<void> {
-    hydrate(env);
+    hydrateWorkerEnv(env);
     const messages = batch.messages;
     switch (batch.queue) {
       case "ingestion-ontology":
