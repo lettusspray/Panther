@@ -76,7 +76,7 @@ Order of operations is statutory. Key pitfalls:
 - Step 7: CISS = 1% × **FOB** in Naira, not CIF
 - Step 9: VAT = 7.5% of (Steps 4–8 sum)
 - Step 12: Non-statutory costs use real sourced ranges, not magic numbers
-- NAC levy for used vehicles = **5%** (corrected May 2026 from 15% — see `docs/Intinal_Idea.md` §2.6)
+- NAC levy for used vehicles = **5%** (corrected May 2026 from 15%)
 
 ## Data Freshness Kill Switch
 
@@ -84,7 +84,7 @@ Pricing Engine **must** check `effective_timestamp` on NCS/CBN rates. If stale: 
 
 ## Design System Constraints
 
-`docs/Panther Design System.md` defines four postures. Key rules:
+Design tokens are enforced by `npm run design:lint` (`src/lib/design-system/lint.ts`, rules PANTHER-01..06). Key rules:
 - 8px base unit, OKLCH colour space, locked per-posture tokens
 - Serif (GT Alpina/Alike Angular/Prata) for Roaring/Resting postures only
 - Sans (Inter) for Walking/Eyes-Forward only

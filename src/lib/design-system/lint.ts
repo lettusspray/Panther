@@ -1,9 +1,9 @@
 // PANTHER-01..06 design-system enforcement.
 // Re-derived per AGENTS.md §First Principles: the forbidden colour
 // pairings guard posture discipline at the layer where it is decided
-// (the .posture-* classes, per Design System §15.3). Text-ink use of
-// --panther-resting-hex on light backgrounds is sanctioned by §3.3 and
-// is therefore NOT a violation.
+// (the .posture-* classes enforced by this linter). Text-ink use of
+// --panther-resting-hex on light backgrounds is sanctioned and is
+// therefore NOT a violation.
 
 export type PantherRule =
   | "PANTHER-01"
@@ -159,7 +159,7 @@ function isRestingPalette(value: string): boolean {
   return hex === TOKEN_HEX["--panther-resting-hex"];
 }
 
-// ── Posture-class pairing checks (PANTHER-05/06, §15.3 scope) ─
+// ── Posture-class pairing checks (PANTHER-05/06) ─
 
 export function lintPostureClasses(source: string, file: string): Violation[] {
   const violations: Violation[] = [];

@@ -3,6 +3,51 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Button from "@/components/ui/Button.astro";
 import "@/styles/global.css";
 import styles from "./index.module.css";
+import { db } from "@/lib/db";
+import { gvoDomain, gvoCategory, gvoMake, gvoModel } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { getRequiredConfig } from "@/lib/config";
+
+// Live statutory rates from system_config — never hardcoded figures.
+let rates: Record<string, string> | null = null;
+try {
+  const [surcharge, nac, ciss, duty, vat] = await Promise.all([
+    getRequiredConfig("surcharge_rate"),
+    getRequiredConfig("nac_levy_rate"),
+    getRequiredConfig("ciss_rate"),
+    getRequiredConfig("import_duty_rate"),
+    getRequiredConfig("vat_rate"),
+  ]);
+  rates = {
+    surcharge: String(Number(surcharge.value) * 100),
+    nac: String(Number(nac.value) * 100),
+    ciss: String(Number(ciss.value) * 100),
+    duty: String(Number(duty.value) * 100),
+    vat: String(Number(vat.value) * 100),
+  };
+} catch {
+  // Rates unavailable — the step cards render without numbers rather than lying.
+}
+
+// Example vehicle for the CTA — resolved from the DB, never a hardcoded model.
+let exampleUrl = "/pricing";
+let exampleLabel = "What's a vehicle worth?";
+try {
+  const [sample] = await db
+    .select({ makeSlug: gvoMake.slug, makeName: gvoMake.name, modelSlug: gvoModel.slug, modelName: gvoModel.name })
+    .from(gvoModel)
+    .innerJoin(gvoMake, eq(gvoModel.makeId, gvoMake.id))
+    .innerJoin(gvoCategory, eq(gvoMake.categoryId, gvoCategory.id))
+    .innerJoin(gvoDomain, eq(gvoCategory.domainId, gvoDomain.id))
+    .where(eq(gvoDomain.slug, "car"))
+    .limit(1);
+  if (sample) {
+    exampleUrl = `/pricing/car/${sample.makeSlug}/${sample.modelSlug}`;
+    exampleLabel = `What's a ${sample.makeName} ${sample.modelName} worth?`;
+  }
+} catch {
+  // DB unavailable — fall back to the pricing hub.
+}
 
 const faqSchema = {
   "@context": "https://schema.org",
@@ -13,7 +58,7 @@ const faqSchema = {
       "name": "What is the landed cost of a 2015 Toyota Camry in Nigeria?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The landed cost of a 2015 Toyota Camry in Nigeria ranges from approximately NGN 8-12 million depending on condition, trim, and port of entry. The price is computed from the 13-step statutory formula: FOB anchor + CIF + Import Duty (20%) + NAC Levy (5%) + Surcharge + CISS + ETLS + VAT (7.5%) + non-statutory port and clearing fees. Panther computes this live using current NCS exchange rates."
+        "text": "The landed cost of a 2015 Toyota Camry in Nigeria depends on trim, model year, and port of entry. Panther computes it from the 13-step statutory breakdown — FOB anchor, CIF, NCS naira conversion, import duty, NAC levy, surcharge, CISS, ETLS, VAT, and non-statutory port charges — using live NCS exchange rates. When those rates go stale, the engine halts rather than publish an outdated figure."
       }
     }
   ]
@@ -89,22 +134,22 @@ const faqSchema = {
       <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
         <div class={styles.stepNumber}>Step 3</div>
         <div class={styles.stepTitle}>Naira conversion</div>
-        <div class={styles.stepDesc}>CIF x NCS customs rate. Pulled live. NCS rate runs 20-50% above CBN retail.</div>
+        <div class={styles.stepDesc}>CIF × NCS customs rate. Pulled live, not guessed.</div>
       </div>
       <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
         <div class={styles.stepNumber}>Step 6</div>
         <div class={styles.stepTitle}>Surcharge</div>
-        <div class={styles.stepDesc}>7% of Import Duty. Not 7% of CIF — the most common miscalculation in the formula.</div>
+        <div class={styles.stepDesc}>{rates ? `${rates.surcharge}% of Import Duty` : "Percentage of Import Duty"}. Not on CIF — the most common miscalculation in the formula.</div>
       </div>
       <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
         <div class={styles.stepNumber}>Step 5</div>
         <div class={styles.stepTitle}>NAC levy</div>
-        <div class={styles.stepDesc}>5% of CIF for used vehicles. Reduced from 15% under May 2026 NCS policy.</div>
+        <div class={styles.stepDesc}>{rates ? `${rates.nac}% of CIF for used vehicles` : "Levy on CIF for used vehicles"}. Set from live NCS policy.</div>
       </div>
       <div class={`${styles.stepCard} ${styles.stepCardHighlight}`}>
         <div class={styles.stepNumber}>Step 7</div>
         <div class={styles.stepTitle}>CISS / FCS</div>
-        <div class={styles.stepDesc}>1% of FOB in Naira. Configured from live NCS enforcement data.</div>
+        <div class={styles.stepDesc}>{rates ? `${rates.ciss}% of FOB in Naira` : "Percentage of FOB in Naira"}. Configured from live NCS enforcement data.</div>
       </div>
     </div>
     <div class={styles.freshnessBanner}>
@@ -139,7 +184,7 @@ const faqSchema = {
     </p>
     <div class={styles.ctaActions}>
       <Button label="Browse Listings" href="/listings" variant="primary" size="lg" />
-      <Button label="What's a 2015 Camry worth?" href="/pricing/car/toyota/camry" variant="tertiary" size="lg" />
+      <Button label={exampleLabel} href={exampleUrl} variant="tertiary" size="lg" />
     </div>
   </section>
 </BaseLayout>

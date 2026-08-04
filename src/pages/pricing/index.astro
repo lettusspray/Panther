@@ -2,6 +2,20 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import styles from "./index.module.css";
 import "@/styles/global.css";
+import { getDomains, getCategoriesByDomain, getMakesByCategory } from "@/lib/gvo";
+
+const domains = await getDomains();
+const carDomain = domains.find((d) => d.slug === "car") ?? domains[0];
+const categories = carDomain ? await getCategoriesByDomain(carDomain.id) : [];
+
+const allMakes: Array<{ name: string; slug: string; domainSlug: string }> = [];
+for (const cat of categories) {
+  const makes = await getMakesByCategory(cat.id);
+  for (const m of makes) {
+    allMakes.push({ name: m.name, slug: m.slug, domainSlug: carDomain!.slug });
+  }
+}
+allMakes.sort((a, b) => a.name.localeCompare(b.name));
 ---
 
 <BaseLayout
@@ -58,9 +72,9 @@ import "@/styles/global.css";
       Pick a manufacturer to see pricing by model and trim.
     </p>
     <div class={styles.makesGrid}>
-      {["Toyota", "Honda", "Mercedes-Benz", "BMW", "Hyundai", "Kia", "Lexus", "Ford", "Nissan", "Volkswagen"].map((name) => (
-        <a href={`/vehicles/car/${name.toLowerCase().replace(/ /g, "-")}`} class={styles.makeCard}>
-          <span class={styles.makeName}>{name}</span>
+      {allMakes.map((m) => (
+        <a href={`/vehicles/${m.domainSlug}/${m.slug}`} class={styles.makeCard}>
+          <span class={styles.makeName}>{m.name}</span>
         </a>
       ))}
     </div>

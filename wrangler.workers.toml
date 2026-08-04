@@ -3,10 +3,11 @@
 #   npx wrangler deploy -c wrangler.workers.toml
 #
 # Dashboard setup required before deploy:
-#   1. Create the four queues: ingestion-ontology, ingestion-pricing, etl-knowledge, dead-letter
-#   2. Bind a Hyperdrive instance as `HYPERDRIVE` (this worker reads HYPERDRIVE.connectionString)
+#    1. Create the four queues: ingestion-ontology, ingestion-pricing, etl-knowledge, dead-letter
+#   2. The [[hyperdrive]] binding is injected at deploy time by
+#      scripts/setup-hyperdrive.mjs (creates the instance + writes its id).
 #   3. Secrets (worker secrets): AUTO_DEV_API_KEY, GROQ_API_KEY, CRAWL4AI_API_KEY,
-#      SCRAPER_API_KEYS, IROYAL_PROXY, DATABASE_URL (fallback if no Hyperdrive)
+#      SCRAPER_API_KEYS, IROYAL_PROXY (DATABASE_URL is NOT a fallback — Hyperdrive only)
 #   4. Cron trigger is declared below; verify it shows in the Workers dashboard.
 
 name = "panther-pipeline"

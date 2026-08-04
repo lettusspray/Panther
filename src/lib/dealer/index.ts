@@ -1,6 +1,8 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
-import { dealer, dealerReview, listing, user } from "../db/schema";
+import { dealer, dealerReview, listing, listingStatusEnum, user } from "../db/schema";
+
+type ListingStatus = (typeof listingStatusEnum.enumValues)[number];
 
 export async function getDealerBySlug(slug: string) {
   const rows = await db
@@ -50,7 +52,7 @@ export async function getDealerListings(dealerId: string, status?: string | stri
   const conditions = [eq(listing.sellerId, dealerId)];
   if (status) {
     if (Array.isArray(status)) {
-      conditions.push(sql`${listing.status} = any(${status}::text[])`);
+      conditions.push(inArray(listing.status, status as ListingStatus[]));
     } else {
       conditions.push(eq(listing.status, status as "active"));
     }

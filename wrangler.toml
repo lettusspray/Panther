@@ -14,14 +14,16 @@ ENVIRONMENT = "production"
 CRAWL4AI_API_URL = "https://crawl4ai-production-e503.up.railway.app"
 # CRAWL4AI_API_KEY — set as a Cloudflare Pages dashboard secret
 
-# Database
-# In production, HYPERDRIVE_CONNECTION_STRING is injected automatically
-# by the Hyperdrive binding configured in the Cloudflare Pages dashboard.
-# For local dev, set it in .env or a .dev.vars file.
-HYPERDRIVE_CONNECTION_STRING = ""
-
+# Database — Cloudflare Hyperdrive only (no direct Postgres, per Constitution).
+# The [[hyperdrive]] binding is NOT committed here: it is injected at deploy
+# time by scripts/setup-hyperdrive.mjs (creates the instance + writes its id).
+# Why: a binding in this file forces astro dev's miniflare to emulate a local
+# Hyperdrive, which cannot reach Neon from the dev sandbox. Deploy paths:
+#   npm run deploy   → runs setup-hyperdrive.mjs then builds & deploys
+#   npx wrangler deploy   → run `npm run hyperdrive:setup` first
+#
 # Auth
-BETTER_AUTH_URL = "https://panther.pages.dev"
+BETTER_AUTH_URL = "https://panther.ng"
 
 # Cloudflare Images
 CF_IMAGES_ACCOUNT = ""

@@ -15,10 +15,11 @@
     "lint": "eslint .",
     "design:lint": "tsx scripts/design-lint.ts",
     "typecheck": "astro check",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "node scripts/setup-hyperdrive.mjs && astro build && wrangler deploy",
     "deploy:all": "npm run build && npm run db:migrate && wrangler deploy",
     "db:seed:launch": "tsx scripts/seed-launch.ts",
-    "worker:deploy": "wrangler deploy -c wrangler.workers.toml",
+    "hyperdrive:setup": "node scripts/setup-hyperdrive.mjs",
+    "worker:deploy": "node scripts/setup-hyperdrive.mjs && wrangler deploy -c wrangler.workers.toml",
     "worker:build": "wrangler deploy --dry-run --outdir=dist-worker -c wrangler.workers.toml",
     "dev:worker": "astro build && wrangler dev"
   },
@@ -30,13 +31,15 @@
     "astro": "^7.1.2",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.31"
+    "hono": "^4.12.31",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^5.20260714.1",
     "@eslint/js": "^9.28.0",
     "@phosphor-icons/core": "^2.1.1",
+    "@types/pg": "^8.20.3",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.28.0",
     "globals": "^16.2.0",

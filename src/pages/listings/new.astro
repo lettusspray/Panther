@@ -3,9 +3,30 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Icon from "@/components/ui/Icon.astro";
 import styles from "./new.module.css";
 import "@/styles/global.css";
-import { getConditionFields } from "@/lib/listings/condition-reports";
+import { getConditionFields, CONDITION_SCHEMAS } from "@/lib/listings/condition-reports";
+import { getDomains } from "@/lib/gvo";
 import ConditionReportForm from "@/components/listings/ConditionReportForm.astro";
 import PhotoUploader from "@/components/listings/PhotoUploader.astro";
+
+// Presentation copy only — the domain SET comes from gvo_domain in the DB.
+const DOMAIN_COPY: Record<string, { name: string; icon: string; desc: string }> = {
+  car: { name: "Car", icon: "car", desc: "Sedans, SUVs, pickups, coupes" },
+  motorcycle: { name: "Motorcycle", icon: "motorcycle", desc: "Sport, cruiser, touring, commuter" },
+  tricycle: { name: "Tricycle (Keke)", icon: "scooter", desc: "Passenger and cargo tricycles" },
+  commercial: { name: "Commercial", icon: "truck", desc: "Trucks, buses, heavy-duty vehicles" },
+  ev: { name: "Electric", icon: "car", desc: "EVs and hybrids" },
+};
+
+let domains: Array<{ slug: string; name: string }> = [];
+try {
+  domains = await getDomains();
+} catch {
+  // Guarded so a slow DB can't take the (authenticated) listing flow down
+}
+
+// Single source of truth for the client-side condition form — serialized
+// from src/lib/listings/condition-reports.ts, never duplicated in the script.
+const conditionSchemasJson = JSON.stringify(CONDITION_SCHEMAS);
 ---
 
 <BaseLayout
@@ -55,26 +76,20 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       <h2 class={styles.stepTitle}>What type of vehicle?</h2>
       <p class={styles.stepDesc}>Select the vehicle type.</p>
       <div class={styles.domainGrid}>
-        <button class={styles.domainBtn} data-domain="car" data-slug="car">
-          <span class={styles.domainEmoji}><Icon name="car" size={36} /></span>
-          <span class={styles.domainName}>Car</span>
-          <span class={styles.domainDesc}>Sedans, SUVs, pickups, coupes</span>
-        </button>
-        <button class={styles.domainBtn} data-domain="motorcycle" data-slug="motorcycle">
-          <span class={styles.domainEmoji}><Icon name="motorcycle" size={36} /></span>
-          <span class={styles.domainName}>Motorcycle</span>
-          <span class={styles.domainDesc}>Sport, cruiser, touring, commuter</span>
-        </button>
-        <button class={styles.domainBtn} data-domain="tricycle" data-slug="tricycle">
-          <span class={styles.domainEmoji}><Icon name="scooter" size={36} /></span>
-          <span class={styles.domainName}>Tricycle (Keke)</span>
-          <span class={styles.domainDesc}>Passenger and cargo tricycles</span>
-        </button>
-        <button class={styles.domainBtn} data-domain="commercial" data-slug="commercial">
-          <span class={styles.domainEmoji}><Icon name="truck" size={36} /></span>
-          <span class={styles.domainName}>Commercial</span>
-          <span class={styles.domainDesc}>Trucks, buses, heavy-duty vehicles</span>
-        </button>
+        {domains.length === 0 ? (
+          <p class={styles.stepDesc}>The vehicle catalog is loading. Refresh to try again.</p>
+        ) : (
+          domains.map((domain) => {
+            const copy = DOMAIN_COPY[domain.slug] ?? { name: domain.name, icon: "car", desc: "Vehicles in this catalog." };
+            return (
+              <button class={styles.domainBtn} data-domain={domain.slug} data-slug={domain.slug}>
+                <span class={styles.domainEmoji}><Icon name={copy.icon as "car"} size={36} /></span>
+                <span class={styles.domainName}>{copy.name}</span>
+                <span class={styles.domainDesc}>{copy.desc}</span>
+              </button>
+            );
+          })
+        )}
       </div>
     </div>
 
@@ -273,6 +288,8 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
       <div id="submit-status" class={styles.submitStatus} style="display: none;"></div>
     </div>
   </div>
+
+  <script type="application/json" id="condition-schemas" set:html={conditionSchemasJson}></script>
 </BaseLayout>
 
 <script>
@@ -623,78 +640,12 @@ import PhotoUploader from "@/components/listings/PhotoUploader.astro";
   // ── Step 3: Condition Report Fields ─────────────────────────────
   const TOGGLE_OPTIONS = ["good", "fair", "poor", "absent"];
 
-  const CONDITION_SCHEMAS: Record<string, Array<{ key: string; label: string; type: string; options?: string[]; required: boolean }>> = {
-    car: [
-      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
-      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
-      { key: "interior_upholstery", label: "Interior Upholstery", type: "toggle", required: true },
-      { key: "dashboard_instrument_cluster", label: "Dashboard & Instrument Cluster", type: "toggle", required: true },
-      { key: "air_conditioning", label: "Air Conditioning", type: "toggle", required: true },
-      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
-      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
-      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
-      { key: "suspension", label: "Suspension", type: "toggle", required: true },
-      { key: "engine_bay", label: "Engine Bay", type: "toggle", required: true },
-      { key: "transmission", label: "Transmission", type: "toggle", required: true },
-      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
-      { key: "undercarriage", label: "Undercarriage", type: "toggle", required: true },
-      { key: "frame_structural", label: "Frame / Structural Integrity", type: "toggle", required: true },
-      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
-      { key: "trunk_space", label: "Trunk Space", type: "toggle", required: true },
-      { key: "windshield_glass", label: "Windshield & Glass", type: "toggle", required: true },
-    ],
-    motorcycle: [
-      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
-      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
-      { key: "seat_condition", label: "Seat Condition", type: "toggle", required: true },
-      { key: "chain_belt", label: "Chain / Belt Condition", type: "toggle", required: true },
-      { key: "spoke_integrity", label: "Spoke Integrity", type: "toggle", required: true },
-      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
-      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
-      { key: "suspension", label: "Suspension", type: "toggle", required: true },
-      { key: "engine_bay", label: "Engine Condition", type: "toggle", required: true },
-      { key: "transmission", label: "Transmission / Gearbox", type: "toggle", required: true },
-      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
-      { key: "cold_start_smoke", label: "Cold-Start Smoke Colour", type: "select", options: ["none", "white", "blue", "black"], required: true },
-      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
-      { key: "frame_structural", label: "Frame / Chassis Integrity", type: "toggle", required: true },
-      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
-    ],
-    tricycle: [
-      { key: "exterior_body", label: "Body / Canopy Condition", type: "toggle", required: true },
-      { key: "seat_condition", label: "Seat Condition", type: "toggle", required: true },
-      { key: "tire_condition", label: "Tire Condition (3 wheels)", type: "toggle", required: true },
-      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
-      { key: "engine_bay", label: "Engine Condition", type: "toggle", required: true },
-      { key: "chain_belt", label: "Chain / Belt Condition", type: "toggle", required: true },
-      { key: "spoke_integrity", label: "Spoke Integrity", type: "toggle", required: true },
-      { key: "steering_mechanism", label: "Steering / Handlebar Mechanism", type: "toggle", required: true },
-      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
-      { key: "cold_start_smoke", label: "Cold-Start Smoke Colour", type: "select", options: ["none", "white", "blue", "black"], required: true },
-      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
-    ],
-    commercial: [
-      { key: "exterior_body", label: "Exterior Body Condition", type: "toggle", required: true },
-      { key: "paint_quality", label: "Paint Quality", type: "toggle", required: true },
-      { key: "interior_upholstery", label: "Interior Upholstery", type: "toggle", required: true },
-      { key: "dashboard_instrument_cluster", label: "Dashboard & Instrument Cluster", type: "toggle", required: true },
-      { key: "air_conditioning", label: "Air Conditioning", type: "toggle", required: true },
-      { key: "electrical_system", label: "Electrical System", type: "toggle", required: true },
-      { key: "tire_condition", label: "Tire Condition", type: "toggle", required: true },
-      { key: "brake_system", label: "Brake System", type: "toggle", required: true },
-      { key: "suspension", label: "Suspension", type: "toggle", required: true },
-      { key: "engine_bay", label: "Engine Bay", type: "toggle", required: true },
-      { key: "transmission", label: "Transmission", type: "toggle", required: true },
-      { key: "exhaust_system", label: "Exhaust System", type: "toggle", required: true },
-      { key: "undercarriage", label: "Undercarriage", type: "toggle", required: true },
-      { key: "frame_structural", label: "Frame / Structural Integrity", type: "toggle", required: true },
-      { key: "has_accident_history", label: "Known Accident History", type: "select", options: ["none", "minor", "moderate", "major"], required: true },
-      { key: "engine_hours", label: "Engine Hours (Critical)", type: "hours", required: true },
-      { key: "chassis_crossmember", label: "Chassis Crossmember Integrity", type: "toggle", required: true },
-      { key: "air_brake_pressure_hold", label: "Air Brake Pressure Hold Test", type: "toggle", required: true },
-      { key: "cargo_area", label: "Cargo Area / Bed Condition", type: "toggle", required: true },
-    ],
-  };
+  // Serialized from src/lib/listings/condition-reports.ts at SSR — the
+  // schemas are never duplicated in this script.
+  const conditionSchemasEl = document.getElementById("condition-schemas");
+  const CONDITION_SCHEMAS: Record<string, Array<{ key: string; label: string; type: string; options?: string[]; required: boolean }>> = conditionSchemasEl
+    ? JSON.parse(conditionSchemasEl.textContent || "{}")
+    : {};
 
   function buildConditionFields() {
     const fields = CONDITION_SCHEMAS[selectedDomain] ?? CONDITION_SCHEMAS.car;

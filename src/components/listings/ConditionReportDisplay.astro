@@ -5,37 +5,9 @@ export interface Props {
 
 const { condition } = Astro.props;
 
-const FIELD_LABELS: Record<string, string> = {
-  exterior_body: "Exterior Body",
-  paint_quality: "Paint Quality",
-  interior_upholstery: "Interior Upholstery",
-  dashboard_instrument_cluster: "Dashboard & Instruments",
-  air_conditioning: "Air Conditioning",
-  electrical_system: "Electrical System",
-  tire_condition: "Tire Condition",
-  brake_system: "Brake System",
-  suspension: "Suspension",
-  engine_bay: "Engine Bay",
-  transmission: "Transmission",
-  exhaust_system: "Exhaust System",
-  undercarriage: "Undercarriage",
-  frame_structural: "Frame / Structure",
-  has_accident_history: "Accident History",
-  trunk_space: "Trunk Space",
-  windshield_glass: "Windshield & Glass",
-  wiper_system: "Wiper System",
-  chain_belt: "Chain / Belt",
-  spoke_integrity: "Spoke Integrity",
-  seat_condition: "Seat Condition",
-  cold_start_smoke: "Cold-Start Smoke",
-  steering_mechanism: "Steering",
-  engine_hours: "Engine Hours",
-  chassis_crossmember: "Chassis Crossmember",
-  air_brake_pressure_hold: "Air Brake Pressure",
-  cargo_area: "Cargo Area",
-  fifth_wheel_coupling: "Fifth Wheel / Coupling",
-  hydraulic_system: "Hydraulic System",
-};
+// Labels derive from the schema module — the display never carries its own copy.
+import { buildConditionLabels } from "@/lib/listings/condition-reports";
+const FIELD_LABELS = buildConditionLabels();
 
 const summary = condition
   ? {

@@ -81,7 +81,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Public pages that DO need to know the visitor (listing detail shows the
   // escrow CTA to signed-in buyers; dealer storefronts show review state).
+  // API routes resolve the session too so handlers see `locals.user`, but
+  // they are never redirected client-side — an unauthenticated handler must
+  // answer with its own 401 JSON, not a sign-in redirect.
   const needsUser =
+    isOrUnder("/api") ||
     isOrUnder("/dealers") ||
     (isOrUnder("/listings") && path !== "/listings" && path !== "/listings/new");
 

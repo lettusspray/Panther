@@ -15,6 +15,9 @@ import { generateListingJsonLd } from "@/lib/listings/json-ld";
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/listings");
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+if (!UUID_RE.test(id)) return Astro.redirect("/listings");
+
 const [item] = await db
   .select({
     id: listing.id,

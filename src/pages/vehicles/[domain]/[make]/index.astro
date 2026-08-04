@@ -4,7 +4,7 @@ import styles from "./index.module.css";
 import "@/styles/global.css";
 import { db } from "../../../../lib/db";
 import { gvoDomain, gvoCategory, gvoMake, gvoModel, gvoTrim, cohortPricing } from "../../../../lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 
 const { domain, make } = Astro.params;
 if (!domain || !make) return Astro.redirect("/vehicles");
@@ -43,23 +43,29 @@ const models = await db
   .where(eq(gvoModel.makeId, makeRow.id))
   .orderBy(gvoModel.name);
 
-const modelsWithPricing = await Promise.all(
-  models.map(async (model) => {
-    const pricing = await db
-      .select({
-        minYear: sql<number>`min(${cohortPricing.modelYear})`,
-        maxYear: sql<number>`max(${cohortPricing.modelYear})`,
-      })
-      .from(cohortPricing)
-      .innerJoin(gvoTrim, eq(cohortPricing.trimId, gvoTrim.id))
-      .where(eq(gvoTrim.modelId, model.id));
+const modelIds = models.map((m) => m.id);
+const pricingRanges =
+  modelIds.length === 0
+    ? []
+    : await db
+        .select({
+          modelId: gvoTrim.modelId,
+          minYear: sql<number>`min(${cohortPricing.modelYear})`,
+          maxYear: sql<number>`max(${cohortPricing.modelYear})`,
+        })
+        .from(cohortPricing)
+        .innerJoin(gvoTrim, eq(cohortPricing.trimId, gvoTrim.id))
+        .where(inArray(gvoTrim.modelId, modelIds))
+        .groupBy(gvoTrim.modelId);
 
-    return {
-      ...model,
-      yearRange: pricing[0],
-    };
-  }),
+const pricingByModel = new Map(
+  pricingRanges.map((r) => [r.modelId, r]),
 );
+
+const modelsWithPricing = models.map((model) => ({
+  ...model,
+  yearRange: pricingByModel.get(model.id),
+}));
 ---
 
 <BaseLayout

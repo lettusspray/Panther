@@ -3,7 +3,12 @@ import { cors } from "hono/cors";
 import type { APIRoute } from "astro";
 import { getTrimPricingData } from "../../../lib/pricing/get-trim-pricing";
 
-const pricing = new Hono();
+const pricing = new Hono().basePath("/api/pricing");
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const requireUuid = (id: string) => (id && UUID_RE.test(id))
+  ? null
+  : "Invalid identifier";
 
 pricing.use("/*", cors());
 
@@ -31,24 +36,32 @@ pricing.get("/gvo/domains", async (c) => {
 });
 
 pricing.get("/gvo/categories/:domainId", async (c) => {
+  const bad = requireUuid(c.req.param("domainId"));
+  if (bad) return c.json({ error: bad }, 400);
   const { getCategoriesByDomain } = await import("../../../lib/gvo");
   const categories = await getCategoriesByDomain(c.req.param("domainId"));
   return c.json(categories);
 });
 
 pricing.get("/gvo/makes/:categoryId", async (c) => {
+  const bad = requireUuid(c.req.param("categoryId"));
+  if (bad) return c.json({ error: bad }, 400);
   const { getMakesByCategory } = await import("../../../lib/gvo");
   const makes = await getMakesByCategory(c.req.param("categoryId"));
   return c.json(makes);
 });
 
 pricing.get("/gvo/models/:makeId", async (c) => {
+  const bad = requireUuid(c.req.param("makeId"));
+  if (bad) return c.json({ error: bad }, 400);
   const { getModelsByMake } = await import("../../../lib/gvo");
   const models = await getModelsByMake(c.req.param("makeId"));
   return c.json(models);
 });
 
 pricing.get("/gvo/trims/:modelId", async (c) => {
+  const bad = requireUuid(c.req.param("modelId"));
+  if (bad) return c.json({ error: bad }, 400);
   const { getTrimsByModel } = await import("../../../lib/gvo");
   const trims = await getTrimsByModel(c.req.param("modelId"));
   return c.json(trims);

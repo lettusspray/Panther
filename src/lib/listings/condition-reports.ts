@@ -114,3 +114,14 @@ export function getConditionFields(domain: string): ConditionField[] {
   }
   return schema;
 }
+
+/** Full label vocabulary derived from the schemas — single source for display components. */
+export function buildConditionLabels(): Record<string, string> {
+  const labels: Record<string, string> = {};
+  for (const fields of Object.values(CONDITION_SCHEMAS)) {
+    for (const field of fields) {
+      labels[field.key] = field.label;
+    }
+  }
+  return labels;
+}

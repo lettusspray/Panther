@@ -79,28 +79,8 @@ const isPreRelease = !isTerminal && tx.status !== "disputed";
 
 // Condition report
 const condition = tx.conditionReport as Record<string, string> | null;
-const FIELD_LABELS: Record<string, string> = {
-  exterior_body: "Exterior Body",
-  paint_quality: "Paint Quality",
-  interior_upholstery: "Interior Upholstery",
-  dashboard_instrument_cluster: "Dashboard",
-  air_conditioning: "A/C",
-  electrical_system: "Electrical",
-  tire_condition: "Tires",
-  brake_system: "Brakes",
-  suspension: "Suspension",
-  engine_bay: "Engine Bay",
-  transmission: "Transmission",
-  exhaust_system: "Exhaust",
-  undercarriage: "Undercarriage",
-  frame_structural: "Frame",
-  has_accident_history: "Accident History",
-  seat_condition: "Seat",
-  chain_belt: "Chain/Belt",
-  spoke_integrity: "Spokes",
-  cold_start_smoke: "Cold-Start Smoke",
-  steering_mechanism: "Steering",
-};
+import { buildConditionLabels } from "@/lib/listings/condition-reports";
+const FIELD_LABELS = buildConditionLabels();
 
 const vehicleName = `${tx.modelYear} ${tx.makeName} ${tx.modelName}`;
 ---

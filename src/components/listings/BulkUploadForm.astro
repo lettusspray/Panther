@@ -51,10 +51,7 @@ const { maxRows = 100 } = Astro.props;
       <label class="bulk-field">
         <span class="bulk-field-label">Domain</span>
         <select id="bulk-vin-domain" class="bulk-select">
-          <option value="car">Car</option>
-          <option value="motorcycle">Motorcycle</option>
-          <option value="tricycle">Tricycle</option>
-          <option value="commercial">Commercial</option>
+          <option value="">Loading domains...</option>
         </select>
       </label>
       <label class="bulk-field">
@@ -197,6 +194,20 @@ const { maxRows = 100 } = Astro.props;
     const vinStatus = document.getElementById("bulk-vin-status");
     const vinResults = document.getElementById("bulk-vin-results");
     const vinResultsBody = document.getElementById("bulk-vin-results-body");
+
+    // Domain options come from the GVO in the DB, not hardcoded markup.
+    fetch("/api/pricing/gvo/domains")
+      .then((r) => r.json())
+      .then((domains) => {
+        if (Array.isArray(domains) && domains.length > 0 && vinDomain) {
+          vinDomain.innerHTML = domains
+            .map((d) => `<option value="${d.slug}">${d.name}</option>`)
+            .join("");
+        }
+      })
+      .catch(() => {
+        // Keep the server-rendered options as fallback
+      });
 
     vinCreate.addEventListener("click", async () => {
       const vins = vinTextarea.value.split("\n").map((v) => v.trim().toUpperCase()).filter((v) => v.length === 17);

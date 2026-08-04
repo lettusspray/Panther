@@ -3,13 +3,23 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Icon from "@/components/ui/Icon.astro";
 import styles from "./index.module.css";
 import "@/styles/global.css";
+import { getDomains } from "@/lib/gvo";
 
-const domains = [
-  { slug: "car", name: "Cars", icon: "car" as const, desc: "Sedans, SUVs, pickups, and everything in between. Standard passenger vehicles imported into Nigeria." },
-  { slug: "motorcycle", name: "Motorcycles", icon: "motorcycle" as const, desc: "Sport, cruiser, touring, and commuter motorcycles. From Kawasaki to Bajaj." },
-  { slug: "tricycle", name: "Tricycles (Keke)", icon: "scooter" as const, desc: "Passenger and cargo tricycles — the backbone of intra-city transport across Nigeria." },
-  { slug: "commercial", name: "Commercial Vehicles", icon: "truck" as const, desc: "Trucks, buses, and heavy-duty vehicles built for work. Engine hours matter more than mileage." },
-];
+// Presentation copy only — the domain SET comes from gvo_domain in the DB.
+const DOMAIN_COPY: Record<string, { name: string; icon: string; desc: string }> = {
+  car: { name: "Cars", icon: "car", desc: "Sedans, SUVs, pickups, and everything in between. Standard passenger vehicles imported into Nigeria." },
+  motorcycle: { name: "Motorcycles", icon: "motorcycle", desc: "Sport, cruiser, touring, and commuter motorcycles. From Kawasaki to Bajaj." },
+  tricycle: { name: "Tricycles (Keke)", icon: "scooter", desc: "Passenger and cargo tricycles — the backbone of intra-city transport across Nigeria." },
+  commercial: { name: "Commercial Vehicles", icon: "truck", desc: "Trucks, buses, and heavy-duty vehicles built for work. Engine hours matter more than mileage." },
+  ev: { name: "Electric Vehicles", icon: "car", desc: "EVs and hybrids — battery and charging hardware matter more than mileage." },
+};
+
+let domains: Array<{ slug: string; name: string }> = [];
+try {
+  domains = await getDomains();
+} catch {
+  // DB unavailable — render the empty state instead of taking the page down
+}
 ---
 
 <BaseLayout
@@ -28,14 +38,25 @@ const domains = [
   </section>
 
   <div class={styles.domainsGrid}>
-    {domains.map((domain) => (
-      <a href={`/vehicles/${domain.slug}`} class={styles.domainCard}>
-        <span class={styles.domainEmoji}>
-          <Icon name={domain.icon} size={40} />
-        </span>
-        <h2 class={styles.domainName}>{domain.name}</h2>
-        <p class={styles.domainDesc}>{domain.desc}</p>
-      </a>
-    ))}
+    {domains.length === 0 ? (
+      <p class={styles.domainDesc}>The vehicle catalog is loading. Check back in a moment.</p>
+    ) : (
+      domains.map((domain) => {
+        const copy = DOMAIN_COPY[domain.slug] ?? {
+          name: domain.name,
+          icon: "car",
+          desc: "Vehicles in this catalog.",
+        };
+        return (
+          <a href={`/vehicles/${domain.slug}`} class={styles.domainCard}>
+            <span class={styles.domainEmoji}>
+              <Icon name={copy.icon as "car"} size={40} />
+            </span>
+            <h2 class={styles.domainName}>{copy.name}</h2>
+            <p class={styles.domainDesc}>{copy.desc}</p>
+          </a>
+        );
+      })
+    )}
   </div>
 </BaseLayout>
