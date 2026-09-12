@@ -1,24 +1,4 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import BulkUploadForm from "../../components/listings/BulkUploadForm.astro";
-import styles from "./bulk.module.css";
-import "@/styles/global.css";
 ---
-
-<BaseLayout
-  title="Bulk Upload Listings"
-  posture="walking"
-  description="Upload multiple vehicle listings at once via CSV or VIN list."
-  ogUrl="https://panther.ng/listings/bulk"
->
-  <section class={styles.hero}>
-    <h1 class={styles.heroTitle}>Bulk Upload Listings</h1>
-    <p class={styles.heroSubtitle}>
-      Upload a CSV file with listing data, or paste a list of VINs to decode and create listings automatically.
-    </p>
-  </section>
-
-  <div class={styles.container}>
-    <BulkUploadForm />
-  </div>
-</BaseLayout>
+<BaseLayout title="Bulk inventory — Panther"><section class="page-head"><div class="shell"><p class="eyebrow">BULK INVENTORY</p><h1>Move multiple vehicles into Panther without a spreadsheet maze.</h1><p class="lead">Bulk purchase and bulk seller workflows are being rebuilt around orders and settlement rather than disconnected listings.</p><div class="callout"><strong>Current upload API retained</strong><span>The backend endpoint remains available while the new guided bulk workflow is implemented.</span></div></div></section></BaseLayout>

@@ -198,44 +198,33 @@ export async function searchVehicleImages(
   providerStatus: Record<ImageProvider, ProviderStatus>;
 }> {
   const vehicleQuery = buildVehicleQuery(options);
-  const providers = options.providers ?? VEHICLE_PROVIDERS;
-  const perProvider = Math.ceil(
-    (options.count ?? 10) / providers.length,
-  );
+  const requestedCount = options.count ?? 10;
 
-  let result = await searchImages(
-    { query: vehicleQuery.query, perPage: perProvider, color: options.color as ImageColor | undefined, make: options.make, model: options.model, year: options.year },
-    { ...options, providers },
-  );
-
-  let fallbackUsed = false;
-  let fallbackQuery = vehicleQuery.query;
-
-  if (
-    result.images.length < (options.count ?? 10) &&
-    vehicleQuery.fallback.length > 0
-  ) {
-    for (const fb of vehicleQuery.fallback) {
-      const fbResult = await searchImages(
-        { query: fb.query, perPage: perProvider, color: options.color as ImageColor | undefined, make: options.make, model: options.model, year: options.year },
-        { ...options, providers },
-      );
-
-      if (fbResult.images.length > result.images.length) {
-        result = fbResult;
-        fallbackQuery = fb.query;
-        fallbackUsed = true;
-      }
-
-      if (result.images.length >= (options.count ?? 10)) break;
-    }
+  // Vehicle imagery is a correctness-sensitive surface. Never silently
+  // substitute generic stock photography for an exact vehicle request.
+  // CarImages receives structured make/model/year fields, so when it is
+  // configured it is the only provider used for vehicle-specific imagery.
+  if (CARIMAGES_KEY && CARIMAGES_SECRET) {
+    const result = await searchImages(
+      { query: vehicleQuery.query, perPage: 1, make: options.make, model: options.model, year: options.year },
+      { providers: ["carimages"], perProvider: 1 },
+    );
+    return {
+      images: result.images.slice(0, requestedCount),
+      query: vehicleQuery.query,
+      fallbackUsed: false,
+      providerStatus: result.providerStatus,
+    };
   }
 
+  // If the vehicle-specific provider is not configured, return no image rather
+  // than displaying a plausible-looking but incorrect vehicle. The UI can show
+  // a neutral placeholder and the operator can fix the provider configuration.
   return {
-    images: result.images.slice(0, options.count ?? 10),
-    query: fallbackQuery,
-    fallbackUsed,
-    providerStatus: result.providerStatus,
+    images: [],
+    query: vehicleQuery.query,
+    fallbackUsed: false,
+    providerStatus: getProviderStatus(),
   };
 }
 
