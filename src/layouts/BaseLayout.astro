@@ -1,0 +1,22 @@
+---
+import "../styles/global.css";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+interface Props { title?: string; description?: string; canonical?: string; }
+const { title = "Panther — Buy, sell and source cars", description = "A trusted vehicle marketplace for Nigeria, with vehicle intelligence, verified sellers and structured cross-border buying.", canonical } = Astro.props;
+---
+<!doctype html>
+<html lang="en-NG">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content={description} />
+{canonical && <link rel="canonical" href={canonical} />}
+<title>{title}</title>
+</head>
+<body>
+<SiteHeader />
+<main><slot /></main>
+<SiteFooter />
+</body>
+</html>

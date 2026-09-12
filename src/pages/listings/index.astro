@@ -1,0 +1,8 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VehicleCard from "../../components/VehicleCard.astro";
+import { getMarketplaceListings } from "../../lib/marketplace";
+const q = Astro.url.searchParams.get("q") ?? undefined; const make = Astro.url.searchParams.get("make") ?? undefined;
+let listings:any[]=[]; try { listings=await getMarketplaceListings({q,make,limit:48}); } catch(e){console.error(e);}
+---
+<BaseLayout title="Marketplace — Panther" description="Browse active vehicle listings on Panther."><section class="page-head"><div class="shell"><p class="eyebrow">MARKETPLACE</p><h1>Find a car you can buy with confidence.</h1><p class="lead">Search the live marketplace. Every listing exposes the information that matters before you commit.</p><form class="filters" action="/listings"><input name="q" value={q ?? ""} placeholder="Search make, model or trim"/><input name="make" value={make ?? ""} placeholder="Make e.g. Toyota"/><button class="button primary" type="submit">Search</button>{(q||make)&&<a class="button ghost" href="/listings">Clear</a>}</form></div></section><section class="section"><div class="shell"><div class="results-head"><strong>{listings.length} {listings.length===1?"vehicle":"vehicles"}</strong><span class="muted">Sorted by newest active inventory</span></div>{listings.length?<div class="vehicle-grid">{listings.map((listing)=><VehicleCard listing={listing}/>)}</div>:<div class="empty-state"><h3>No matching vehicles.</h3><p>Try a broader make/model search or browse the catalog.</p><a class="button secondary" href="/vehicles">Browse catalog</a></div>}</div></section></BaseLayout>
