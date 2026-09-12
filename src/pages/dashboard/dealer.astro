@@ -8,6 +8,7 @@ import {
   getDealerListings,
   getUpcomingDealerCareEvents,
 } from "../../lib/dealer";
+import { getDealerInquiries, getDealerInquirySummary } from "../../lib/dealer/inquiries";
 
 const user = (Astro.locals as { user?: Record<string, unknown> | null }).user;
 if (!user?.id) Astro.redirect("/auth/sign-in");
@@ -15,15 +16,17 @@ if (!user?.id) Astro.redirect("/auth/sign-in");
 const dealer = user?.id ? await getDealerByUserId(String(user.id)) : null;
 if (!dealer) Astro.redirect("/dashboard/profile");
 
-const [commitment, quality, reliability, listings, upcoming] = dealer
+const [commitment, quality, reliability, listings, upcoming, inquirySummary, inquiries] = dealer
   ? await Promise.all([
       getDealerCommitment(dealer.id),
       getDealerInventoryQuality(dealer.userId),
       getDealerReliability(dealer.userId),
       getDealerListings(dealer.userId, "active"),
       getUpcomingDealerCareEvents(dealer.id),
+      getDealerInquirySummary(dealer.id),
+      getDealerInquiries(dealer.id, 10),
     ])
-  : [null, { averageScore: 0, listings: [] }, { completedOrders: 0, trackedOrders: 0, settlementRate: null }, [], []];
+  : [null, { averageScore: 0, listings: [] }, { completedOrders: 0, trackedOrders: 0, settlementRate: null }, [], [], { trackedInquiries: 0, respondedInquiries: 0, responseRate: null }, []];
 
 const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).slice(0, 8);
 ---
@@ -55,6 +58,11 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
           </p>
         </div>
         <div class="info-card">
+          <strong>{inquirySummary.responseRate === null ? "—" : `${inquirySummary.responseRate}%`}</strong>
+          <span>Tracked contact response</span>
+          <p>{inquirySummary.trackedInquiries ? `${inquirySummary.respondedInquiries} of ${inquirySummary.trackedInquiries} tracked contacts marked responded.` : "No Panther-tracked contact history yet."}</p>
+        </div>
+        <div class="info-card">
           <strong>{listings.length}</strong>
           <span>Active vehicles</span>
           <p>Keep live stock complete and current.</p>
@@ -82,6 +90,26 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
           ) : (
             <p>Current active inventory is complete against the four core checks.</p>
           )}
+        </div>
+
+        <div class="info-card">
+          <p class="eyebrow">Contact queue</p>
+          {inquiries.length > 0 ? (
+            inquiries.map((inquiry) => (
+              <div class="ops-row inquiry-row" data-inquiry-id={inquiry.id}>
+                <div>
+                  <strong>{inquiry.channel}</strong>
+                  <span>{new Date(inquiry.createdAt).toLocaleString("en-NG")}</span>
+                </div>
+                <button class="button secondary mark-response" type="button" data-inquiry-id={inquiry.id} disabled={inquiry.status === "responded"}>
+                  {inquiry.status === "responded" ? "Responded" : "Mark responded"}
+                </button>
+              </div>
+            ))
+          ) : (
+            <p>No Panther-tracked contact initiations yet.</p>
+          )}
+          <p class="muted">This metric tracks contact initiation through Panther. WhatsApp and phone responses are marked manually because the conversation leaves Panther.</p>
         </div>
 
         <div class="info-card">
@@ -204,6 +232,24 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
       const response = await fetch("/api/dealers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const body = await response.json();
       if (commitmentResult) commitmentResult.textContent = body.ok ? "Saved. The public dealer page now reflects these commitments." : body.error ?? "Could not save commitments.";
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".mark-response").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const inquiryId = button.dataset.inquiryId;
+        if (!inquiryId) return;
+        button.disabled = true;
+        const response = await fetch("/api/dealers/inquiries", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inquiryId }),
+        });
+        if (response.ok) {
+          button.textContent = "Responded";
+        } else {
+          button.disabled = false;
+        }
+      });
     });
   </script>
 </BaseLayout>
