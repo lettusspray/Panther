@@ -18,9 +18,9 @@ export const GET: APIRoute = async () => {
     db.select({ slug: dealer.slug, updatedAt: dealer.updatedAt }).from(dealer).limit(2000),
   ]);
 
-  for (const row of activeListings) urls.push({ loc: `/listings/${row.id}`, priority: "0.7", changefreq: "daily" });
-  for (const row of dealers) urls.push({ loc: `/dealers/${row.slug}`, priority: "0.7", changefreq: "weekly" });
+  for (const row of activeListings) urls.push({ loc: `/listings/${row.id}`, priority: "0.7", changefreq: "daily", lastmod: row.updatedAt } as typeof urls[number] & { lastmod?: Date | null });
+  for (const row of dealers) urls.push({ loc: `/dealers/${row.slug}`, priority: "0.7", changefreq: "weekly", lastmod: row.updatedAt } as typeof urls[number] & { lastmod?: Date | null });
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url>\n    <loc>${absoluteUrl(u.loc)}</loc>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join("\n")}\n</urlset>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u: typeof urls[number] & { lastmod?: Date | null }) => `  <url>\n    <loc>${absoluteUrl(u.loc)}</loc>\n    ${u.lastmod ? `<lastmod>${new Date(u.lastmod).toISOString()}</lastmod>\n    ` : ""}<changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join("\n")}\n</urlset>`;
   return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
 };
