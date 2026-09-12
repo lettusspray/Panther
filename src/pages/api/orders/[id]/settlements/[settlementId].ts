@@ -1,39 +1,56 @@
 import type { APIRoute } from "astro";
-import { settleOrderItemManually } from "../../../../../../lib/orders";
+import { db } from "../../../../../lib/db";
+import { orderSettlement, user } from "../../../../../lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import { isAdmin } from "../../../../../lib/admin";
+import { notifySlack } from "../../../../../lib/notifications/slack";
+import { settleOrderSettlement } from "../../../../../lib/orders";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
 }
 
-function isAdmin(user: { email?: string | null }) {
-  const allowed = (import.meta.env.PANTHER_ADMIN_EMAILS ?? "")
-    .split(",").map((x: string) => x.trim().toLowerCase()).filter(Boolean);
-  return !!user.email && allowed.includes(user.email.toLowerCase());
-}
-
-export const PATCH: APIRoute = async ({ request, locals, params }) => {
-  const user = (locals as { user: { id?: string; email?: string | null } | null }).user;
-  if (!user?.id) return json({ error: "Authentication required" }, 401);
-  if (!isAdmin(user)) return json({ error: "Admin access required" }, 403);
-  if (!params.settlementId) return json({ error: "settlementId is required" }, 400);
+export const POST: APIRoute = async ({ request, locals, params }) => {
+  const currentUser = (locals as { user?: { id?: string; email?: string | null } }).user;
+  if (!isAdmin(currentUser)) return json({ error: "Admin access required" }, 403);
+  const orderId = params.id;
+  const settlementId = params.settlementId;
+  if (!orderId || !settlementId) return json({ error: "Order and settlement are required" }, 400);
 
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
-  const fiatReference = typeof body.fiatReference === "string" ? body.fiatReference.trim() : "";
-  const amountNgn = typeof body.amountNgn === "number" ? body.amountNgn : Number(body.amountNgn);
-  if (!fiatReference) return json({ error: "fiatReference is required" }, 400);
-  if (!Number.isFinite(amountNgn) || amountNgn <= 0) return json({ error: "amountNgn must be positive" }, 400);
+  const amountNgn = Number(body.amountNgn);
+  const manualFiatReference = typeof body.manualFiatReference === "string" ? body.manualFiatReference.trim() : "";
+  if (!Number.isFinite(amountNgn) || amountNgn <= 0 || !manualFiatReference) return json({ error: "A positive amount and fiat reference are required" }, 422);
 
-  try {
-    const result = await settleOrderItemManually({
-      settlementId: params.settlementId,
-      adminUserId: user.id,
-      fiatReference,
-      amountNgn,
-      notes: typeof body.notes === "string" ? body.notes.slice(0, 1000) : undefined,
-    });
-    return json({ ok: true, ...result });
-  } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Unable to settle seller." }, 422);
-  }
+  const [existing] = await db.select({ settlement: orderSettlement, sellerName: user.name })
+    .from(orderSettlement)
+    .innerJoin(user, eq(orderSettlement.sellerId, user.id))
+    .where(and(eq(orderSettlement.id, settlementId), eq(orderSettlement.orderId, orderId)))
+    .limit(1);
+  if (!existing) return json({ error: "Settlement not found" }, 404);
+
+  const result = await settleOrderSettlement({
+    settlementId,
+    orderId,
+    amountNgn,
+    manualFiatReference,
+    settledBy: currentUser?.id as string,
+  });
+  if (!result.ok) return json({ error: result.error ?? "Settlement could not be completed" }, 422);
+
+  await notifySlack({
+    type: "settlement.completed",
+    title: "Seller settlement completed",
+    summary: `${existing.sellerName ?? "Seller"} settlement was recorded against order ${orderId.slice(0, 8)}.`,
+    fields: [
+      { label: "Amount", value: `₦${amountNgn.toLocaleString("en-NG", { maximumFractionDigits: 2 })}` },
+      { label: "Reference", value: manualFiatReference },
+      { label: "Settlement", value: settlementId.slice(0, 8) },
+      { label: "Operator", value: (currentUser?.email ?? "admin").replace(/\s/g, "") },
+    ],
+    url: `${(import.meta.env.PUBLIC_SITE_URL ?? "https://panther.ng").replace(/\/$/, "")}/admin/reconciliation`,
+  });
+
+  return json({ ok: true, settlement: result.settlement });
 };
