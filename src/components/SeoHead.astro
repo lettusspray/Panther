@@ -3,6 +3,7 @@ import { buildSeo } from "../lib/seo";
 const input = Astro.props;
 const seo = buildSeo(input);
 const siteName = "Panther";
+const schema = input.schema ?? null;
 ---
 <meta name="description" content={seo.description} />
 <link rel="canonical" href={seo.canonical} />
@@ -17,4 +18,4 @@ const siteName = "Panther";
 <meta name="twitter:title" content={seo.title} />
 <meta name="twitter:description" content={seo.description} />
 {seo.image && <meta name="twitter:image" content={seo.image} />}
-<link rel="alternate" type="application/ld+json" href={seo.canonical} />
+{schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
