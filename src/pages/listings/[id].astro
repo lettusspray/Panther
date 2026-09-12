@@ -88,8 +88,14 @@ const schema = listing
                   <div>
                     <b>{event.title}</b>
                     <span>{new Date(event.eventDate).toLocaleDateString("en-NG")} · {event.type.replaceAll("_", " ")}</span>
+                    {(event.provider || event.location) && <span>{[event.provider, event.location].filter(Boolean).join(" · ")}</span>}
+                    {event.nextDueAt && <span>Next due {new Date(event.nextDueAt).toLocaleDateString("en-NG")}</span>}
+                    {event.nextDueMileageKm != null && <span>Next due at {new Intl.NumberFormat("en-NG").format(Number(event.nextDueMileageKm))} km</span>}
                   </div>
-                  {event.mileageKm != null && <span>{new Intl.NumberFormat("en-NG").format(Number(event.mileageKm))} km</span>}
+                  <div>
+                    {event.mileageKm != null && <span>{new Intl.NumberFormat("en-NG").format(Number(event.mileageKm))} km</span>}
+                    {event.evidenceUrl && <a href={event.evidenceUrl} target="_blank" rel="noopener">Evidence</a>}
+                  </div>
                 </div>
               ))}
             </div>
