@@ -1,0 +1,15 @@
+---
+interface Props { listing: any; }
+const { listing } = Astro.props;
+const title = [listing.modelYear, listing.make, listing.model, listing.trim].filter(Boolean).join(" ");
+const images = Array.isArray(listing.images) ? listing.images : [];
+const image = images.find((x:any) => x?.url)?.url;
+const money = listing.askingPriceNgn ? new Intl.NumberFormat("en-NG", {style:"currency", currency:"NGN", maximumFractionDigits:0}).format(Number(listing.askingPriceNgn)) : "Price on request";
+---
+<article class="vehicle-card">
+  <a href={`/listings/${listing.id}`} class="vehicle-photo">
+    {image ? <img src={image} alt={title} loading="lazy" /> : <img src="/car-placeholder.svg" alt="Vehicle placeholder" loading="lazy" />}
+    {listing.isVerified && <span class="photo-badge">Verified seller</span>}
+  </a>
+  <div class="vehicle-body"><div class="vehicle-meta"><span>{listing.modelYear}</span><span>·</span><span>{listing.mileageKm != null ? `${new Intl.NumberFormat("en-NG").format(Number(listing.mileageKm))} km` : "Mileage n/a"}</span></div><h3><a href={`/listings/${listing.id}`}>{title || "Vehicle listing"}</a></h3><p class="price">{money}</p><p class="seller-line">{listing.businessName || "Private seller"}{listing.dealerVerified ? " · Verified" : ""}</p></div>
+</article>
