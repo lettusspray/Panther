@@ -24,6 +24,7 @@ export const vehicleDomainEnum = pgEnum("vehicle_domain", [
 export const listingStatusEnum = pgEnum("listing_status", [
   "draft",
   "active",
+  "reserved",
   "sold",
   "removed",
 ]);
@@ -47,6 +48,51 @@ export const disclosureTierEnum = pgEnum("disclosure_tier", [
 ]);
 
 export const feePayerEnum = pgEnum("fee_payer", ["buyer", "seller", "split"]);
+
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending_payment",
+  "paid",
+  "verification",
+  "ready_for_settlement",
+  "partially_settled",
+  "settled",
+  "disputed",
+  "cancelled",
+  "refunded",
+]);
+
+export const paymentMethodEnum = pgEnum("payment_method", ["paystack", "nowpayments"]);
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "confirming",
+  "paid",
+  "partially_paid",
+  "failed",
+  "refunded",
+  "expired",
+]);
+export const settlementStatusEnum = pgEnum("settlement_status", [
+  "pending",
+  "processing",
+  "settled",
+  "failed",
+  "reversed",
+]);
+export const settlementMethodEnum = pgEnum("settlement_method", [
+  "paystack_transfer",
+  "manual_fiat",
+]);
+export const ledgerEntryTypeEnum = pgEnum("ledger_entry_type", [
+  "collection",
+  "platform_fee",
+  "seller_payable",
+  "manual_settlement",
+  "refund",
+  "reversal",
+  "adjustment",
+]);
+export const ledgerDirectionEnum = pgEnum("ledger_direction", ["credit", "debit"]);
 
 export const reportStatusEnum = pgEnum("report_status", [
   "pending",
@@ -295,6 +341,137 @@ export const switchboardTransaction = pgTable(
     index("switchboard_listing_idx").on(t.listingId),
     index("switchboard_buyer_idx").on(t.buyerId),
     index("switchboard_seller_idx").on(t.sellerId),
+  ],
+);
+
+// ── Orders / Payments / Settlement Ledger ──────────────────────────
+// One customer order may contain many vehicles from many sellers.
+// Provider collection and seller settlement are deliberately decoupled.
+
+export const order = pgTable(
+  "order",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    buyerId: uuid("buyer_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    status: orderStatusEnum("status").notNull().default("pending_payment"),
+    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    totalNgn: decimal("total_ngn", { precision: 16, scale: 2 }).notNull(),
+    platformFeeNgn: decimal("platform_fee_ngn", { precision: 16, scale: 2 }).notNull(),
+    paymentCurrency: text("payment_currency").notNull(),
+    paymentAmount: decimal("payment_amount", { precision: 18, scale: 8 }).notNull(),
+    fxRateNgnPerUnit: decimal("fx_rate_ngn_per_unit", { precision: 18, scale: 8 }).notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("order_buyer_idx").on(t.buyerId),
+    index("order_status_idx").on(t.status),
+    index("order_created_idx").on(t.createdAt),
+  ],
+);
+
+export const orderItem = pgTable(
+  "order_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull().references(() => order.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id").notNull().references(() => listing.id, { onDelete: "restrict" }),
+    sellerId: uuid("seller_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+    agreedPriceNgn: decimal("agreed_price_ngn", { precision: 16, scale: 2 }).notNull(),
+    platformFeeNgn: decimal("platform_fee_ngn", { precision: 16, scale: 2 }).notNull(),
+    sellerReceivableNgn: decimal("seller_receivable_ngn", { precision: 16, scale: 2 }).notNull(),
+    listingSnapshot: jsonb("listing_snapshot"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("order_item_listing_unique").on(t.orderId, t.listingId),
+    index("order_item_order_idx").on(t.orderId),
+    index("order_item_seller_idx").on(t.sellerId),
+    index("order_item_listing_idx").on(t.listingId),
+  ],
+);
+
+export const orderPayment = pgTable(
+  "order_payment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull().references(() => order.id, { onDelete: "cascade" }),
+    method: paymentMethodEnum("method").notNull(),
+    status: paymentStatusEnum("status").notNull().default("pending"),
+    providerRef: text("provider_ref").notNull().unique(),
+    providerPaymentId: text("provider_payment_id"),
+    priceAmount: decimal("price_amount", { precision: 18, scale: 8 }).notNull(),
+    priceCurrency: text("price_currency").notNull(),
+    payAmount: decimal("pay_amount", { precision: 30, scale: 12 }),
+    payCurrency: text("pay_currency"),
+    actuallyPaidAmount: decimal("actually_paid_amount", { precision: 30, scale: 12 }),
+    outcomeAmount: decimal("outcome_amount", { precision: 30, scale: 12 }),
+    outcomeCurrency: text("outcome_currency"),
+    providerMetadata: jsonb("provider_metadata"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("order_payment_order_idx").on(t.orderId),
+    index("order_payment_provider_payment_idx").on(t.providerPaymentId),
+    index("order_payment_status_idx").on(t.status),
+  ],
+);
+
+export const orderSettlement = pgTable(
+  "order_settlement",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull().references(() => order.id, { onDelete: "cascade" }),
+    orderItemId: uuid("order_item_id").notNull().references(() => orderItem.id, { onDelete: "cascade" }),
+    sellerId: uuid("seller_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+    amountNgn: decimal("amount_ngn", { precision: 16, scale: 2 }).notNull(),
+    status: settlementStatusEnum("status").notNull().default("pending"),
+    method: settlementMethodEnum("method").notNull().default("manual_fiat"),
+    paystackTransferRef: text("paystack_transfer_ref"),
+    manualFiatReference: text("manual_fiat_reference"),
+    manualSettledAt: timestamp("manual_settled_at", { withTimezone: true }),
+    manualSettledBy: uuid("manual_settled_by").references(() => user.id, { onDelete: "set null" }),
+    destinationSnapshot: jsonb("destination_snapshot"),
+    evidence: jsonb("evidence"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("order_settlement_item_unique").on(t.orderItemId),
+    index("order_settlement_order_idx").on(t.orderId),
+    index("order_settlement_seller_idx").on(t.sellerId),
+    index("order_settlement_status_idx").on(t.status),
+  ],
+);
+
+export const ledgerEntry = pgTable(
+  "ledger_entry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull().references(() => order.id, { onDelete: "restrict" }),
+    orderItemId: uuid("order_item_id").references(() => orderItem.id, { onDelete: "set null" }),
+    type: ledgerEntryTypeEnum("type").notNull(),
+    direction: ledgerDirectionEnum("direction").notNull(),
+    currency: text("currency").notNull(),
+    amount: decimal("amount", { precision: 30, scale: 12 }).notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    externalReference: text("external_reference"),
+    createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("ledger_order_idx").on(t.orderId),
+    index("ledger_order_item_idx").on(t.orderItemId),
+    index("ledger_created_idx").on(t.createdAt),
   ],
 );
 

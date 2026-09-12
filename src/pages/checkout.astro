@@ -1,0 +1,129 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getListing } from "../lib/marketplace";
+
+const raw = new URL(Astro.request.url).searchParams.get("listings") ?? "";
+const listingIds = [...new Set(raw.split(",").map((x) => x.trim()).filter(Boolean))].slice(0, 100);
+const listings = (await Promise.all(listingIds.map((id) => getListing(id)))).filter(Boolean);
+if (!listings.length) Astro.response.status = 404;
+const totalNgn = listings.reduce((sum, item) => sum + Number(item?.askingPriceNgn ?? 0), 0);
+---
+<BaseLayout title="Checkout — Panther">
+  <section class="section">
+    <div class="shell narrow">
+      {listings.length ? (
+        <>
+          <div class="eyebrow">CHECKOUT</div>
+          <h1>Review your vehicle order</h1>
+          <p class="lead">One order can contain vehicles from multiple sellers. Panther records each seller obligation separately.</p>
+          <div class="checkout-grid">
+            <div class="card">
+              <h2>Vehicles</h2>
+              {listings.map((item) => (
+                <div class="checkout-line">
+                  <div>
+                    <strong>{item.modelYear} {item.make ?? item.customMake ?? ""} {item.model ?? item.customModel ?? ""}</strong>
+                    <span>{item.businessName ?? "Private seller"}</span>
+                  </div>
+                  <strong>₦{new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(Number(item.askingPriceNgn))}</strong>
+                </div>
+              ))}
+              <div class="checkout-total"><span>Total vehicle price</span><strong id="total-ngn">₦{new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(totalNgn)}</strong></div>
+            </div>
+
+            <div class="card">
+              <h2>Payment</h2>
+              <label class="field-label" for="method">Payment method</label>
+              <select id="method" class="input">
+                <option value="paystack">Paystack — NGN</option>
+                <option value="nowpayments">Crypto — NOWPayments</option>
+              </select>
+              <div id="crypto-field" hidden>
+                <label class="field-label" for="currency">Crypto asset</label>
+                <select id="currency" class="input"><option>Loading supported assets…</option></select>
+                <p class="fine-print">The quoted NGN total is converted using the live USD/NGN rate stored by Panther and then locked into the order.</p>
+              </div>
+              <button id="pay" class="button primary full" type="button">Continue to payment</button>
+              <p id="status" class="fine-print" aria-live="polite"></p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div class="empty-state"><h1>No vehicles selected</h1><p>Return to the marketplace and choose at least one active vehicle.</p><a class="button secondary" href="/listings">Browse vehicles</a></div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow { max-width: 980px; }
+  .checkout-grid { display: grid; grid-template-columns: 1.3fr .7fr; gap: 1.25rem; margin-top: 2rem; }
+  .checkout-line { display:flex; justify-content:space-between; gap:1rem; padding:.95rem 0; border-bottom:1px solid var(--line); }
+  .checkout-line span { display:block; margin-top:.25rem; color:var(--muted); font-size:.9rem; }
+  .checkout-total { display:flex; justify-content:space-between; padding-top:1rem; margin-top:.35rem; }
+  .field-label { display:block; margin:.9rem 0 .4rem; font-weight:600; }
+  .input { width:100%; min-height:46px; border:1px solid var(--line); border-radius:8px; padding:0 .8rem; background:var(--surface); }
+  .full { width:100%; margin-top:1rem; }
+  @media (max-width: 800px) { .checkout-grid { grid-template-columns:1fr; } }
+</style>
+
+<script define:vars={{ listingIds }}>
+  const method = document.querySelector("#method");
+  const cryptoField = document.querySelector("#crypto-field");
+  const currency = document.querySelector("#currency");
+  const pay = document.querySelector("#pay");
+  const status = document.querySelector("#status");
+  const key = () => `order:${listingIds.join(",")}:${Date.now()}:${crypto.randomUUID()}`;
+
+  async function loadCurrencies() {
+    if (!currency) return;
+    try {
+      const res = await fetch("/api/orders?resource=crypto-currencies");
+      const json = await res.json();
+      const list = Array.isArray(json.currencies) ? json.currencies : [];
+      const preferred = ["usdt", "usdc", "btc", "eth"];
+      const ordered = [...preferred.filter((x) => list.includes(x)), ...list.filter((x) => !preferred.includes(x))].slice(0, 100);
+      currency.innerHTML = ordered.length ? ordered.map((x) => `<option value="${x}">${x.toUpperCase()}</option>`).join("") : `<option value="">No assets available</option>`;
+    } catch {
+      currency.innerHTML = `<option value="">Unable to load assets</option>`;
+    }
+  }
+
+  method?.addEventListener("change", () => {
+    const crypto = method.value === "nowpayments";
+    if (cryptoField) cryptoField.hidden = !crypto;
+    if (crypto) void loadCurrencies();
+  });
+
+  pay?.addEventListener("click", async () => {
+    if (!method || !status) return;
+    pay.disabled = true;
+    status.textContent = "Creating your order…";
+    try {
+      const selectedMethod = method.value;
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingIds,
+          paymentMethod: selectedMethod,
+          payCurrency: selectedMethod === "nowpayments" ? currency?.value : undefined,
+          idempotencyKey: key(),
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 401) {
+        window.location.href = `/auth/sign-in?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        return;
+      }
+      if (!res.ok) throw new Error(data.error ?? "Unable to create order.");
+      if (selectedMethod === "paystack" && data.payment?.authorizationUrl) window.location.href = data.payment.authorizationUrl;
+      else if (selectedMethod === "nowpayments" && data.payment?.payAddress) {
+        status.textContent = `Send ${data.payment.payAmount} ${String(data.payment.payCurrency ?? "").toUpperCase()} to the payment address shown in your order. Your order ID is ${data.order.id}.`;
+      } else throw new Error("Payment instructions were not returned.");
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : "Unable to create order.";
+      pay.disabled = false;
+    }
+  });
+</script>
