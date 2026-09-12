@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getDealerByUserId, getDealerCommitment, getDealerInventoryQuality, getDealerReliability, getDealerListings, getUpcomingDealerCareEvents } from "../../lib/dealer";
+const user = (Astro.locals as { user: Record<string, unknown> | null }).user;
+if (!user?.id) Astro.redirect("/auth/sign-in");
+const dealer = user?.id ? await getDealerByUserId(user.id as string) : null;
+if (!dealer) Astro.redirect("/dashboard/profile");
+const [commitment, quality, reliability, listings, upcoming] = dealer ? await Promise.all([getDealerCommitment(dealer.id), getDealerInventoryQuality(dealer.userId), getDealerReliability(dealer.userId), getDealerListings(dealer.userId, "active"), getUpcomingDealerCareEvents(dealer.id)]) : [null,{averageScore:0,listings:[]},{completedOrders:0,trackedOrders:0,settlementRate:null},[],[]];
+---
+<BaseLayout title={`Dealer operations — ${dealer?.businessName ?? "Panther"}`} noindex={true}>
+<section class="page-head"><div class="shell"><p class="eyebrow">DEALER OPERATIONS</p><h1>{dealer?.businessName ?? "Dealer"}</h1><p class="lead">Run the inventory, commitments and vehicle-care work that customers can actually verify.</p></div></section>
+<section class="section"><div class="shell">
+<div class="dashboard-grid dealer-ops-grid">
+<div><strong>{quality.averageScore}%</strong><span>Inventory quality</span><p>Price, mileage, photos and condition report completeness.</p></div>
+<div><strong>{reliability.completedOrders}</strong><span>Settled vehicle orders</span><p>{reliability.settlementRate == null ? "Reliability history builds from completed transactions." : `${reliability.settlementRate}% of tracked orders settled.`}</p></div>
+<div><strong>{listings.length}</strong><span>Active vehicles</span><p>Keep the live stock complete and current.</p></div>
+<div><strong>{commitment?.warrantyMonths ?? 0}{commitment?.warrantyMonths ? " mo" : ""}</strong><span>Warranty commitment</span><p>{commitment?.warrantyMonths ? "Published commitment" : "Add a warranty commitment when you can honour it."}</p></div>
+</div>
+<div class="dealer-ops-columns">
+<div class="info-card"><p class="eyebrow">INVENTORY HEALTH</p>{quality.listings.filter((x:any)=>x.needs.length).slice(0,8).map((x:any)=><div class="ops-row"><div><b>{x.id.slice(0,8)}</b><span>{x.needs.join(", ")}</span></div><a href={`/listings/${x.id}`}>Open</a></div>)}{!quality.listings.some((x:any)=>x.needs.length)&&<p>Current active inventory is complete against the four core checks.</p>}</div>
+<div class="info-card"><p class="eyebrow">UPCOMING CARE</p>{upcoming.length?upcoming.map((x:any)=><div class="ops-row"><div><b>{x.title}</b><span>{x.nextDueAt ? new Date(x.nextDueAt).toLocaleDateString("en-NG") : "Mileage-based"}</span></div><span>{x.type.replaceAll("_"," ")}</span></div>):<p>No scheduled service or inspection events yet.</p>}<form id="care-form" class="care-form"><select name="type"><option value="inspection">Inspection</option><option value="service">Service</option><option value="warranty">Warranty</option><option value="import_clearance">Import / clearance</option><option value="shipment">Shipment</option><option value="ownership">Ownership</option></select><select name="listingId">{listings.map((x:any)=><option value={x.id}>{x.id.slice(0,8)} — {x.modelYear}</option>)}</select><input name="title" placeholder="Record title" required/><input name="eventDate" type="date" required/><input name="nextDueAt" type="date" placeholder="Next due date"/><textarea name="notes" placeholder="What happened and what the buyer should know"></textarea><button class="button primary" type="submit">Record vehicle event</button><p id="care-result" class="muted"></p></form></div>
+</div>
+<div class="info-card"><p class="eyebrow">AFTER-SALE COMMITMENTS</p><div class="commitment-list"><span>{commitment?.annualInspectionIncluded ? "Annual inspection included" : "Annual inspection not published"}</span><span>{commitment?.complimentaryServiceMonths ? `${commitment.complimentaryServiceMonths}-month complimentary service` : "Complimentary service not published"}</span><span>{commitment?.importDocumentationAvailable ? "Import documentation available" : "Import documentation not published"}</span><span>{commitment?.bulkSalesAvailable ? "Bulk sales supported" : "Bulk sales capability not published"}</span></div><a class="button secondary" href="/dashboard/profile">Update dealer profile</a> <a class="button secondary" href="/listings/bulk">Bulk sourcing</a></div>
+</div></section>
+<script>
+const form=document.querySelector('#care-form'); const result=document.querySelector('#care-result');
+form?.addEventListener('submit', async (event)=>{ event.preventDefault(); const data=Object.fromEntries(new FormData(form as HTMLFormElement).entries()); const res=await fetch('/api/dealers/care',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); const body=await res.json(); if(body.ok){ result!.textContent='Recorded. Refresh to see it in the queue.'; (form as HTMLFormElement).reset(); } else result!.textContent=body.error ?? 'Could not record event.'; });
+</script>
+</BaseLayout>
