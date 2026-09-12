@@ -4,7 +4,7 @@ import { orderSettlement, user } from "../../../../../lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { isAdmin } from "../../../../../lib/admin";
 import { notifySlack } from "../../../../../lib/notifications/slack";
-import { settleOrderSettlement } from "../../../../../lib/orders";
+import { settleOrderItemManually } from "../../../../../lib/orders";
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
@@ -20,8 +20,9 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
   const amountNgn = Number(body.amountNgn);
-  const manualFiatReference = typeof body.manualFiatReference === "string" ? body.manualFiatReference.trim() : "";
-  if (!Number.isFinite(amountNgn) || amountNgn <= 0 || !manualFiatReference) return json({ error: "A positive amount and fiat reference are required" }, 422);
+  const fiatReference = typeof body.manualFiatReference === "string" ? body.manualFiatReference.trim() : "";
+  const notes = typeof body.notes === "string" ? body.notes.trim() : undefined;
+  if (!Number.isFinite(amountNgn) || amountNgn <= 0 || !fiatReference) return json({ error: "A positive amount and fiat reference are required" }, 422);
 
   const [existing] = await db.select({ settlement: orderSettlement, sellerName: user.name })
     .from(orderSettlement)
@@ -30,12 +31,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     .limit(1);
   if (!existing) return json({ error: "Settlement not found" }, 404);
 
-  const result = await settleOrderSettlement({
+  const result = await settleOrderItemManually({
     settlementId,
-    orderId,
+    adminUserId: currentUser?.id as string,
+    fiatReference,
     amountNgn,
-    manualFiatReference,
-    settledBy: currentUser?.id as string,
+    notes,
   });
   if (!result.ok) return json({ error: result.error ?? "Settlement could not be completed" }, 422);
 
@@ -45,12 +46,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     summary: `${existing.sellerName ?? "Seller"} settlement was recorded against order ${orderId.slice(0, 8)}.`,
     fields: [
       { label: "Amount", value: `₦${amountNgn.toLocaleString("en-NG", { maximumFractionDigits: 2 })}` },
-      { label: "Reference", value: manualFiatReference },
+      { label: "Reference", value: fiatReference },
       { label: "Settlement", value: settlementId.slice(0, 8) },
-      { label: "Operator", value: (currentUser?.email ?? "admin").replace(/\s/g, "") },
+      { label: "Operator", value: currentUser?.email ?? "admin" },
     ],
     url: `${(import.meta.env.PUBLIC_SITE_URL ?? "https://panther.ng").replace(/\/$/, "")}/admin/reconciliation`,
   });
 
-  return json({ ok: true, settlement: result.settlement });
+  return json({ ok: true, settlement: result });
 };
