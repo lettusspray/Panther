@@ -171,8 +171,8 @@ export class PaystackProvider implements PaymentProvider {
         reference: params.reference,
         callback_url: params.callbackUrl,
         metadata: {
-          switchboard_tx_id: params.switchboardTxId,
-          ...params,
+          ...(params.switchboardTxId ? { switchboard_tx_id: params.switchboardTxId } : {}),
+          ...(params.orderId ? { order_id: params.orderId } : {}),
         },
       },
     );

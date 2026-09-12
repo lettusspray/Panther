@@ -32,6 +32,9 @@ interface ImportMetaEnv {
   readonly R2_PUBLIC_URL: string;
   readonly CRAWL4AI_API_URL: string;
   readonly CRAWL4AI_API_KEY: string;
+  readonly NOWPAYMENTS_API_KEY: string;
+  readonly NOWPAYMENTS_IPN_SECRET: string;
+  readonly PANTHER_ADMIN_EMAILS: string;
 }
 
 interface ImportMeta {

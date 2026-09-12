@@ -14,7 +14,9 @@
 
 export interface InitializeTransactionParams {
   /** Switchboard transaction ID — stored as PSP metadata for webhook binding */
-  switchboardTxId: string;
+  switchboardTxId?: string;
+  /** New marketplace order ID — used by the multi-item order ledger */
+  orderId?: string;
   /** Amount in the smallest currency unit (kobo for NGN) */
   amountKobo: number;
   /** ISO 4217 currency code */
