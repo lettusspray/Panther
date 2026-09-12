@@ -1,6 +1,6 @@
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
-import { dealer, dealerReview, dealerCommitment, vehicleCareEvent, listing, listingStatusEnum, order, orderItem, orderSettlement, user } from "../db/schema";
+import { dealer, dealerReview, dealerCommitment, vehicleCareEvent, vehicleCareEventTypeEnum, listing, listingStatusEnum, order, orderItem, orderSettlement, user } from "../db/schema";
 
 type ListingStatus = (typeof listingStatusEnum.enumValues)[number];
 
@@ -319,12 +319,12 @@ export async function getDealerReliability(dealerUserId: string) {
 }
 
 export async function getDealerCareEvents(dealerId: string, limit = 20) {
-  return db.select().from(vehicleCareEvent).where(and(eq(vehicleCareEvent.dealerId, dealerId), eq(vehicleCareEvent.isPublic, true))).orderBy(vehicleCareEvent.eventDate).limit(limit);
+  return db.select().from(vehicleCareEvent).where(and(eq(vehicleCareEvent.dealerId, dealerId), eq(vehicleCareEvent.isPublic, true))).orderBy(sql`${vehicleCareEvent.eventDate} desc`).limit(limit);
 }
 
 export async function getVehicleCareEvents(listingId: string, includePrivate = false) {
   const conditions = includePrivate ? eq(vehicleCareEvent.listingId, listingId) : and(eq(vehicleCareEvent.listingId, listingId), eq(vehicleCareEvent.isPublic, true));
-  return db.select().from(vehicleCareEvent).where(conditions).orderBy(vehicleCareEvent.eventDate);
+  return db.select().from(vehicleCareEvent).where(conditions).orderBy(sql`${vehicleCareEvent.eventDate} desc`);
 }
 
 export async function getUpcomingDealerCareEvents(dealerId: string, limit = 10) {
