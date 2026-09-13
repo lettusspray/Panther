@@ -619,6 +619,29 @@ export const dealerCommitment = pgTable(
   (t) => [index("dealer_commitment_dealer_idx").on(t.dealerId)],
 );
 
+// ── Dealer Inquiries ───────────────────────────────────────────────
+// Contact initiations are tracked separately from conversations because
+// WhatsApp and phone handoffs leave Panther's system.
+
+export const dealerInquiry = pgTable(
+  "dealer_inquiry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dealerId: uuid("dealer_id").notNull().references(() => dealer.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id").references(() => listing.id, { onDelete: "set null" }),
+    buyerId: uuid("buyer_id").references(() => user.id, { onDelete: "set null" }),
+    channel: text("channel").notNull(),
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("dealer_inquiry_dealer_idx").on(t.dealerId, t.createdAt),
+    index("dealer_inquiry_status_idx").on(t.status, t.createdAt),
+    index("dealer_inquiry_listing_idx").on(t.listingId, t.createdAt),
+  ],
+);
+
 // ── Vehicle Care / Ownership Timeline ─────────────────────────────
 // One table covers inspection, servicing, warranty, import, shipping and ownership records.
 

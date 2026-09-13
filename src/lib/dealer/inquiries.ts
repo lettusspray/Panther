@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { dealer } from "../db/schema";
+import { dealer, listing } from "../db/schema";
 
 export type DealerInquiryChannel = "whatsapp" | "phone" | "platform";
 export type DealerInquiryStatus = "new" | "responded";
@@ -14,13 +14,13 @@ export type DealerInquiry = {
   firstResponseAt: Date | null;
 };
 
-async function getDealerIdBySlug(slug: string) {
+async function getDealerBySlug(slug: string) {
   const rows = await db
-    .select({ id: dealer.id })
+    .select({ id: dealer.id, userId: dealer.userId })
     .from(dealer)
     .where(eq(dealer.slug, slug))
     .limit(1);
-  return rows[0]?.id ?? null;
+  return rows[0] ?? null;
 }
 
 export async function createDealerInquiry(params: {
@@ -29,12 +29,18 @@ export async function createDealerInquiry(params: {
   listingId?: string | null;
   buyerId?: string | null;
 }) {
-  const dealerId = await getDealerIdBySlug(params.dealerSlug);
-  if (!dealerId) return null;
+  const dealerRecord = await getDealerBySlug(params.dealerSlug);
+  if (!dealerRecord) return null;
+
+  if (params.listingId) {
+    const listingRows = await db.select({ id: listing.id }).from(listing).where(and(eq(listing.id, params.listingId), eq(listing.sellerId, dealerRecord.userId))).limit(1);
+    if (!listingRows[0]) return null;
+  }
+  if (params.buyerId && params.buyerId === dealerRecord.userId) return null;
 
   const rows = await db.execute(sql`
     insert into dealer_inquiry (dealer_id, listing_id, buyer_id, channel)
-    values (${dealerId}, ${params.listingId ?? null}, ${params.buyerId ?? null}, ${params.channel})
+    values (${dealerRecord.id}, ${params.listingId ?? null}, ${params.buyerId ?? null}, ${params.channel})
     returning id, dealer_id as "dealerId", listing_id as "listingId", buyer_id as "buyerId", channel, status,
       created_at as "createdAt", first_response_at as "firstResponseAt"
   `);
