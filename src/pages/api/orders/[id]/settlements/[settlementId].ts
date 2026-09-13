@@ -38,8 +38,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     amountNgn,
     notes,
   });
-  if (!result.ok) return json({ error: result.error ?? "Settlement could not be completed" }, 422);
-
   await notifySlack({
     type: "settlement.completed",
     title: "Seller settlement completed",

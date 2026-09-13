@@ -190,8 +190,8 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
   </section>
 
   <script>
-    const careForm = document.querySelector("#care-form");
-    const careResult = document.querySelector("#care-result");
+    const careForm = document.querySelector<HTMLFormElement>("#care-form");
+    const careResult = document.querySelector<HTMLElement>("#care-result");
     careForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(careForm);
@@ -210,13 +210,13 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
         isPublic: form.has("isPublic"),
       };
       const response = await fetch("/api/dealers/care", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const body = await response.json();
+      const body = (await response.json()) as { ok?: boolean; error?: string };
       if (careResult) careResult.textContent = body.ok ? "Recorded. Refresh to see it in the queue." : body.error ?? "Could not record event.";
       if (body.ok) careForm.reset();
     });
 
-    const commitmentForm = document.querySelector("#commitment-form");
-    const commitmentResult = document.querySelector("#commitment-result");
+    const commitmentForm = document.querySelector<HTMLFormElement>("#commitment-form");
+    const commitmentResult = document.querySelector<HTMLElement>("#commitment-result");
     commitmentForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(commitmentForm);
@@ -230,7 +230,7 @@ const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).
         serviceNotes: String(form.get("serviceNotes") ?? ""),
       };
       const response = await fetch("/api/dealers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const body = await response.json();
+      const body = (await response.json()) as { ok?: boolean; error?: string };
       if (commitmentResult) commitmentResult.textContent = body.ok ? "Saved. The public dealer page now reflects these commitments." : body.error ?? "Could not save commitments.";
     });
 

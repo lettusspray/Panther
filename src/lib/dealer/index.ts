@@ -300,21 +300,20 @@ export async function getDealerInventoryQuality(dealerUserId: string) {
     ].filter(Boolean).length;
     return n + (bits / 4) * 100;
   }, 0) / rows.length) : 0;
-  return { averageScore: average, listings: rows };
+  return { averageScore: average, listings: checks };
 }
 
 export async function getDealerReliability(dealerUserId: string) {
-  const [rows] = await Promise.all([
-    db.select({
-      orders: sql<number>`count(distinct ${order.id})`,
-      settled: sql<number>`count(distinct case when ${orderSettlement.status} = 'settled' then ${order.id} end)`,
-    }).from(orderItem)
-      .innerJoin(order, eq(orderItem.orderId, order.id))
-      .leftJoin(orderSettlement, eq(orderSettlement.orderItemId, orderItem.id))
-      .where(eq(orderItem.sellerId, dealerUserId)),
-  ]);
-  const orders = Number(rows?.orders ?? 0);
-  const settled = Number(rows?.settled ?? 0);
+  const rows = await db.select({
+    orders: sql<number>`count(distinct ${order.id})`,
+    settled: sql<number>`count(distinct case when ${orderSettlement.status} = 'settled' then ${order.id} end)`,
+  }).from(orderItem)
+    .innerJoin(order, eq(orderItem.orderId, order.id))
+    .leftJoin(orderSettlement, eq(orderSettlement.orderItemId, orderItem.id))
+    .where(eq(orderItem.sellerId, dealerUserId));
+  const row = rows[0];
+  const orders = Number(row?.orders ?? 0);
+  const settled = Number(row?.settled ?? 0);
   return { completedOrders: settled, trackedOrders: orders, settlementRate: orders ? Math.round((settled / orders) * 100) : null };
 }
 

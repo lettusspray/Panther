@@ -1,6 +1,7 @@
 ---
-import { buildSeo } from "../lib/seo";
-const input = Astro.props;
+import { buildSeo, type SeoInput } from "../lib/seo";
+type Props = SeoInput & { schema?: unknown };
+const input = Astro.props as Props;
 const seo = buildSeo(input);
 const siteName = "Panther";
 const schema = input.schema ?? null;
@@ -18,4 +19,4 @@ const schema = input.schema ?? null;
 <meta name="twitter:title" content={seo.title} />
 <meta name="twitter:description" content={seo.description} />
 {seo.image && <meta name="twitter:image" content={seo.image} />}
-{schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+{schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} is:inline />}
