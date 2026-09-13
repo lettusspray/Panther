@@ -2,75 +2,17 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1784588465834,
-      "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1744588466000,
-      "tag": "0001_payment_infra",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1744588467000,
-      "tag": "0002_video_media",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1785351797925,
-      "tag": "0003_listing_reports",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1785351923571,
-      "tag": "0004_gvo_requests",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1785352016664,
-      "tag": "0005_custom_gvo",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1785397711579,
-      "tag": "0006_left_tomorrow_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1785400000000,
-      "tag": "0007_google_business",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1785410000000,
-      "tag": "0008_subdomain",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1789176000000,
-      "tag": "0009_order_payment_ledger",
-      "breakpoints": true
-    }
+    { "idx": 0, "version": "7", "when": 1784588465834, "tag": "0000_init", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1744588466000, "tag": "0001_payment_infra", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1744588467000, "tag": "0002_video_media", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1785351797925, "tag": "0003_listing_reports", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1785351923571, "tag": "0004_gvo_requests", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1785352016664, "tag": "0005_custom_gvo", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1785397711579, "tag": "0006_left_tomorrow_man", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1785400000000, "tag": "0007_google_business", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1785410000000, "tag": "0008_subdomain", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1789176000000, "tag": "0009_order_payment_ledger", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1789204500000, "tag": "0010_dealer_care", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1789254000000, "tag": "0011_dealer_inquiries", "breakpoints": true }
   ]
 }

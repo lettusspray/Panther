@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { upsertDealerProfile, slugExists, subdomainExists, getDealerByUserId } from "../../../lib/dealer";
+import { upsertDealerProfile, upsertDealerCommitment, slugExists, subdomainExists, getDealerByUserId } from "../../../lib/dealer";
 import { normalizeSubdomain } from "../../../lib/dealer/subdomain";
 
 function resolveSubdomain(input: unknown, fallback: string | null): { error?: string; value: string | null } {
@@ -158,6 +158,16 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     googleBusinessUrl: body.googleBusinessUrl as string | undefined,
     inspectionAvailable: body.inspectionAvailable !== undefined ? Boolean(body.inspectionAvailable) : existing.inspectionAvailable,
     deliveryAvailable: body.deliveryAvailable !== undefined ? Boolean(body.deliveryAvailable) : existing.deliveryAvailable,
+  });
+
+  await upsertDealerCommitment(existing.id, {
+    warrantyMonths: typeof body.warrantyMonths === "number" ? body.warrantyMonths : undefined,
+    warrantyMileageKm: typeof body.warrantyMileageKm === "number" ? body.warrantyMileageKm : undefined,
+    complimentaryServiceMonths: typeof body.complimentaryServiceMonths === "number" ? body.complimentaryServiceMonths : undefined,
+    annualInspectionIncluded: body.annualInspectionIncluded !== undefined ? Boolean(body.annualInspectionIncluded) : undefined,
+    importDocumentationAvailable: body.importDocumentationAvailable !== undefined ? Boolean(body.importDocumentationAvailable) : undefined,
+    bulkSalesAvailable: body.bulkSalesAvailable !== undefined ? Boolean(body.bulkSalesAvailable) : undefined,
+    serviceNotes: typeof body.serviceNotes === "string" ? body.serviceNotes : undefined,
   });
 
   return new Response(JSON.stringify({ ok: true, ...result }), {

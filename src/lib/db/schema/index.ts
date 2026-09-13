@@ -94,6 +94,15 @@ export const ledgerEntryTypeEnum = pgEnum("ledger_entry_type", [
 ]);
 export const ledgerDirectionEnum = pgEnum("ledger_direction", ["credit", "debit"]);
 
+export const vehicleCareEventTypeEnum = pgEnum("vehicle_care_event_type", [
+  "inspection",
+  "service",
+  "warranty",
+  "import_clearance",
+  "shipment",
+  "ownership",
+]);
+
 export const reportStatusEnum = pgEnum("report_status", [
   "pending",
   "reviewed",
@@ -587,6 +596,81 @@ export const dealer = pgTable(
   (t) => [
     index("dealer_user_idx").on(t.userId),
     uniqueIndex("dealer_slug_idx").on(t.slug),
+  ],
+);
+
+// ── Dealer Commitments ─────────────────────────────────────────────
+// Small, factual commitment surface for dealer trust and after-sale care.
+
+export const dealerCommitment = pgTable(
+  "dealer_commitment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dealerId: uuid("dealer_id").notNull().unique().references(() => dealer.id, { onDelete: "cascade" }),
+    warrantyMonths: integer("warranty_months").notNull().default(0),
+    warrantyMileageKm: integer("warranty_mileage_km"),
+    complimentaryServiceMonths: integer("complimentary_service_months").notNull().default(0),
+    annualInspectionIncluded: boolean("annual_inspection_included").notNull().default(false),
+    importDocumentationAvailable: boolean("import_documentation_available").notNull().default(false),
+    bulkSalesAvailable: boolean("bulk_sales_available").notNull().default(false),
+    serviceNotes: text("service_notes"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("dealer_commitment_dealer_idx").on(t.dealerId)],
+);
+
+// ── Dealer Inquiries ───────────────────────────────────────────────
+// Contact initiations are tracked separately from conversations because
+// WhatsApp and phone handoffs leave Panther's system.
+
+export const dealerInquiry = pgTable(
+  "dealer_inquiry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dealerId: uuid("dealer_id").notNull().references(() => dealer.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id").references(() => listing.id, { onDelete: "set null" }),
+    buyerId: uuid("buyer_id").references(() => user.id, { onDelete: "set null" }),
+    channel: text("channel").notNull(),
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("dealer_inquiry_dealer_idx").on(t.dealerId, t.createdAt),
+    index("dealer_inquiry_status_idx").on(t.status, t.createdAt),
+    index("dealer_inquiry_listing_idx").on(t.listingId, t.createdAt),
+  ],
+);
+
+// ── Vehicle Care / Ownership Timeline ─────────────────────────────
+// One table covers inspection, servicing, warranty, import, shipping and ownership records.
+
+export const vehicleCareEvent = pgTable(
+  "vehicle_care_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listingId: uuid("listing_id").notNull().references(() => listing.id, { onDelete: "cascade" }),
+    dealerId: uuid("dealer_id").notNull().references(() => dealer.id, { onDelete: "cascade" }),
+    orderItemId: uuid("order_item_id").references(() => orderItem.id, { onDelete: "set null" }),
+    ownerId: uuid("owner_id").references(() => user.id, { onDelete: "set null" }),
+    type: vehicleCareEventTypeEnum("type").notNull(),
+    eventDate: timestamp("event_date", { withTimezone: true }).notNull(),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    provider: text("provider"),
+    location: text("location"),
+    mileageKm: integer("mileage_km"),
+    nextDueAt: timestamp("next_due_at", { withTimezone: true }),
+    nextDueMileageKm: integer("next_due_mileage_km"),
+    evidenceUrl: text("evidence_url"),
+    isPublic: boolean("is_public").notNull().default(true),
+    createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("vehicle_care_listing_idx").on(t.listingId, t.eventDate),
+    index("vehicle_care_dealer_idx").on(t.dealerId, t.eventDate),
+    index("vehicle_care_due_idx").on(t.nextDueAt),
   ],
 );
 

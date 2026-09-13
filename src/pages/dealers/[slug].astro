@@ -1,7 +1,166 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro"; import VehicleCard from "../../components/VehicleCard.astro"; import { getDealerBySlug, getDealerListings, getDealerReviews, getDealerStats } from "../../lib/dealer";
-const dealer=Astro.params.slug?await getDealerBySlug(Astro.params.slug):null; if(!dealer) Astro.response.status=404;
-let listings:any[]=[], reviews:any[]=[], stats:any={total:0,active:0,sold:0,avgRating:null,reviewCount:0}; if(dealer){[listings,reviews,stats]=await Promise.all([getDealerListings(dealer.userId,"active"),getDealerReviews(dealer.id),getDealerStats(dealer.userId)]);}
-const dealerListings=listings.map((x:any)=>({...x,businessName:dealer?.businessName,dealerVerified:dealer?.isVerified}));
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VehicleCard from "../../components/VehicleCard.astro";
+import {
+  getDealerBySlug,
+  getDealerListings,
+  getDealerReviews,
+  getDealerStats,
+  getDealerCommitment,
+  getDealerInventoryQuality,
+  getDealerReliability,
+  getDealerCareEvents,
+} from "../../lib/dealer";
+import { dealerJsonLd, breadcrumbJsonLd } from "../../lib/seo";
+
+const dealer = Astro.params.slug ? await getDealerBySlug(Astro.params.slug) : null;
+if (!dealer) Astro.response.status = 404;
+let listings: any[] = [];
+let stats: any = { total: 0, active: 0, sold: 0, avgRating: null, reviewCount: 0 };
+let commitment: any = null;
+let quality: any = { averageScore: 0, listings: [] };
+let reliability: any = { completedOrders: 0, trackedOrders: 0, settlementRate: null };
+let care: any[] = [];
+if (dealer) {
+  [listings, stats, commitment, quality, reliability, care] = await Promise.all([
+    getDealerListings(dealer.userId, "active"),
+    getDealerStats(dealer.userId),
+    getDealerCommitment(dealer.id),
+    getDealerInventoryQuality(dealer.userId),
+    getDealerReliability(dealer.userId),
+    getDealerCareEvents(dealer.id, 12),
+  ]);
+}
+const schema = dealer
+  ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        dealerJsonLd({ name: dealer.businessName, url: `/dealers/${dealer.slug}`, phone: dealer.contactPhone ?? undefined, city: dealer.city ?? undefined, state: dealer.state ?? undefined, description: dealer.about ?? undefined }),
+        breadcrumbJsonLd([
+          { name: "Dealers", url: "/dealers" },
+          { name: dealer.businessName, url: `/dealers/${dealer.slug}` },
+        ]),
+      ],
+    }
+  : undefined;
+const whatsapp = dealer?.whatsappNumber
+  ? dealer.whatsappNumber.replaceAll(" ", "").replaceAll("-", "").replaceAll("(", "").replaceAll(")", "")
+  : "";
 ---
-<BaseLayout title={`${dealer?.businessName||"Dealer"} — Panther`}><section class="dealer-hero"><div class="shell"><a class="back-link" href="/dealers">← Dealer network</a>{dealer?<div class="dealer-heading"><div><div class="dealer-name-row"><h1>{dealer.businessName}</h1>{dealer.isVerified&&<span class="verified">Verified business</span>}</div><p class="lead">{[dealer.city,dealer.state].filter(Boolean).join(", ")||"Nigeria"}</p></div><div class="dealer-actions">{dealer.whatsappNumber&&<a class="button primary" href={`https://wa.me/${dealer.whatsappNumber.replace(/[^0-9]/g,"")}`}>WhatsApp</a>}{dealer.contactPhone&&<a class="button secondary" href={`tel:${dealer.contactPhone}`}>Call</a>}</div></div><div class="dealer-stats"><div><b>{stats.active}</b><span>Active cars</span></div><div><b>{stats.sold}</b><span>Sold</span></div><div><b>{stats.avgRating??"—"}</b><span>{stats.reviewCount?`${stats.reviewCount} reviews`:"Reviews"}</span></div><div><b>{dealer.inspectionAvailable?"Yes":"—"}</b><span>Inspection</span></div><div><b>{dealer.deliveryAvailable?"Yes":"—"}</b><span>Delivery</span></div></div></div></section><section class="section"><div class="shell dealer-layout"><div><div class="section-head"><div><p class="eyebrow">INVENTORY</p><h2>Current vehicles</h2></div></div>{dealerListings.length?<div class="vehicle-grid">{dealerListings.map((l)=><VehicleCard listing={l}/>)}</div>:<div class="empty-state"><h3>No active inventory</h3><p>This dealer currently has no active vehicles.</p></div>}</div><aside class="dealer-sidebar"><div class="info-card"><p class="eyebrow">ABOUT</p><p>{dealer.about||"This business has not added an about section yet."}</p></div><div class="info-card"><p class="eyebrow">TRUST & SERVICE</p><ul class="check-list"><li>{dealer.isVerified?"Business identity verified":"Business identity not yet verified"}</li><li>{dealer.inspectionAvailable?"Vehicle inspection available":"Inspection not listed"}</li><li>{dealer.deliveryAvailable?"Delivery available":"Delivery not listed"}</li><li>{dealer.naddcRegistrationId?`NADDC registration: ${dealer.naddcRegistrationId}`:"NADDC registration not listed"}</li></ul></div></aside></div></section></BaseLayout>
+
+<BaseLayout title={`${dealer?.businessName ?? "Dealer"} — Panther`} description={dealer?.about || `Vehicle dealer profile for ${dealer?.businessName ?? "a Panther seller"}.`} schema={schema}>
+  {dealer ? (
+    <>
+      <section class="dealer-hero">
+        <div class="shell">
+          <a class="back-link" href="/dealers">← Dealer network</a>
+          <div class="dealer-heading-row">
+            <div>
+              <div class="dealer-name-row">
+                <h1>{dealer.businessName}</h1>
+                {dealer.isVerified && <span class="verified">Verified business</span>}
+              </div>
+              <p class="lead">{[dealer.city, dealer.state].filter(Boolean).join(", ") || "Nigeria"}</p>
+            </div>
+            <div class="dealer-actions">
+              {whatsapp && <a class="button primary" href={`https://wa.me/${whatsapp}`}>WhatsApp</a>}
+              {dealer.contactPhone && <a class="button secondary" href={`tel:${dealer.contactPhone}`}>Call</a>}
+            </div>
+          </div>
+          <div class="dealer-stats">
+            <div><b>{stats.active}</b><span>Active cars</span></div>
+            <div><b>{stats.sold}</b><span>Sold</span></div>
+            <div><b>{stats.avgRating ?? "—"}</b><span>{stats.reviewCount ? `${stats.reviewCount} reviews` : "Reviews"}</span></div>
+            <div><b>{reliability.completedOrders}</b><span>Settled orders</span></div>
+            <div><b>{quality.averageScore}%</b><span>Inventory quality</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="shell dealer-layout">
+          <main>
+            <div class="section-head"><div><p class="eyebrow">Inventory</p><h2>Current vehicles</h2></div></div>
+            {listings.length > 0 ? (
+              <div class="vehicle-grid">{listings.map((listing) => <VehicleCard listing={listing} />)}</div>
+            ) : (
+              <div class="empty-state"><h3>No active inventory</h3><p>This dealer currently has no active vehicles published on Panther.</p></div>
+            )}
+
+            {care.length > 0 && (
+              <div class="info-card">
+                <p class="eyebrow">Vehicle care & records</p>
+                {care.map((event: any) => (
+                  <div class="ops-row">
+                    <div>
+                      <b>{event.title}</b>
+                      <span>{new Date(event.eventDate).toLocaleDateString("en-NG")} · {event.type.replaceAll("_", " ")}</span>
+                    </div>
+                    <span>{event.provider || event.location || "Panther record"}{event.mileageKm != null ? ` · ${new Intl.NumberFormat("en-NG").format(Number(event.mileageKm))} km` : ""}{event.nextDueAt ? ` · Next due ${new Date(event.nextDueAt).toLocaleDateString("en-NG")}` : ""}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </main>
+
+          <aside class="dealer-sidebar">
+            <div class="info-card">
+              <p class="eyebrow">What Panther verified</p>
+              <ul class="check-list">
+                <li>{dealer.isVerified ? "Business identity verified" : "Business identity not yet verified"}</li>
+                <li>{dealer.naddcRegistrationId ? `NADDC registration: ${dealer.naddcRegistrationId}` : "NADDC registration not listed"}</li>
+                <li>{dealer.inspectionAvailable ? "Vehicle inspection available" : "Inspection not listed"}</li>
+                <li>{dealer.deliveryAvailable ? "Delivery available" : "Delivery not listed"}</li>
+              </ul>
+            </div>
+
+            <div class="info-card">
+              <p class="eyebrow">After-sale commitments</p>
+              <ul class="check-list">
+                <li>{commitment?.warrantyMonths ? `${commitment.warrantyMonths}-month warranty` : "Warranty commitment not published"}</li>
+                <li>{commitment?.complimentaryServiceMonths ? `${commitment.complimentaryServiceMonths}-month complimentary service` : "Service commitment not published"}</li>
+                <li>{commitment?.annualInspectionIncluded ? "Annual inspection included" : "Annual inspection not published"}</li>
+                <li>{commitment?.importDocumentationAvailable ? "Import documentation available" : "Import documentation not published"}</li>
+              </ul>
+            </div>
+
+            <div class="info-card">
+              <p class="eyebrow">For fleets & bulk buyers</p>
+              <p>{commitment?.bulkSalesAvailable ? "This dealer accepts bulk vehicle requests." : "Ask this dealer about multi-vehicle sourcing."}</p>
+              <a class="button secondary full" href="/listings/bulk">Request multiple vehicles</a>
+            </div>
+
+            {dealer.googleBusinessUrl && (
+              <div class="info-card">
+                <a class="button ghost full" href={dealer.googleBusinessUrl} target="_blank" rel="noopener noreferrer">View business location</a>
+              </div>
+            )}
+          </aside>
+        </div>
+      </section>
+    </>
+  ) : (
+    <section class="section"><div class="shell empty-state"><h1>Dealer not found</h1><p>This dealer profile is unavailable or no longer public.</p><a class="button secondary" href="/dealers">Back to dealer network</a></div></section>
+  )}
+
+  <script>
+    const slug = window.location.pathname.split("/").filter(Boolean).pop() || "";
+    document.querySelectorAll<HTMLAnchorElement>("a[href^=\"https://wa.me/\"], a[href^=\"tel:\"]").forEach((link) => {
+      link.addEventListener("click", async (event) => {
+        const channel = link.href.startsWith("https://wa.me/") ? "whatsapp" : "phone";
+        event.preventDefault();
+        const destination = link.href;
+        try {
+          await fetch("/api/dealers/inquiries", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ dealerSlug: slug, channel }),
+          });
+        } finally {
+          window.location.href = destination;
+        }
+      });
+    });
+  </script>
+</BaseLayout>

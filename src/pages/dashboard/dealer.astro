@@ -1,0 +1,255 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  getDealerByUserId,
+  getDealerCommitment,
+  getDealerInventoryQuality,
+  getDealerReliability,
+  getDealerListings,
+  getUpcomingDealerCareEvents,
+} from "../../lib/dealer";
+import { getDealerInquiries, getDealerInquirySummary } from "../../lib/dealer/inquiries";
+
+const user = (Astro.locals as { user?: Record<string, unknown> | null }).user;
+if (!user?.id) Astro.redirect("/auth/sign-in");
+
+const dealer = user?.id ? await getDealerByUserId(String(user.id)) : null;
+if (!dealer) Astro.redirect("/dashboard/profile");
+
+const [commitment, quality, reliability, listings, upcoming, inquirySummary, inquiries] = dealer
+  ? await Promise.all([
+      getDealerCommitment(dealer.id),
+      getDealerInventoryQuality(dealer.userId),
+      getDealerReliability(dealer.userId),
+      getDealerListings(dealer.userId, "active"),
+      getUpcomingDealerCareEvents(dealer.id),
+      getDealerInquirySummary(dealer.id),
+      getDealerInquiries(dealer.id, 10),
+    ])
+  : [null, { averageScore: 0, listings: [] }, { completedOrders: 0, trackedOrders: 0, settlementRate: null }, [], [], { trackedInquiries: 0, respondedInquiries: 0, responseRate: null }, []];
+
+const inventoryQueue = quality.listings.filter((item) => item.needs.length > 0).slice(0, 8);
+---
+
+<BaseLayout title={`Dealer operations — ${dealer?.businessName ?? "Panther"}`} noindex={true}>
+  <section class="page-head">
+    <div class="shell">
+      <p class="eyebrow">Dealer operations</p>
+      <h1>{dealer?.businessName ?? "Dealer"}</h1>
+      <p class="lead">Run the inventory, commitments and vehicle-care work that customers can actually verify.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="dashboard-grid dealer-ops-grid">
+        <div class="info-card">
+          <strong>{quality.averageScore}%</strong>
+          <span>Inventory quality</span>
+          <p>Price, mileage, photos and condition report completeness.</p>
+        </div>
+        <div class="info-card">
+          <strong>{reliability.completedOrders}</strong>
+          <span>Settled vehicle orders</span>
+          <p>
+            {reliability.settlementRate === null
+              ? "Reliability history builds from completed transactions."
+              : `${reliability.settlementRate}% of tracked orders settled.`}
+          </p>
+        </div>
+        <div class="info-card">
+          <strong>{inquirySummary.responseRate === null ? "—" : `${inquirySummary.responseRate}%`}</strong>
+          <span>Tracked contact response</span>
+          <p>{inquirySummary.trackedInquiries ? `${inquirySummary.respondedInquiries} of ${inquirySummary.trackedInquiries} tracked contacts marked responded.` : "No Panther-tracked contact history yet."}</p>
+        </div>
+        <div class="info-card">
+          <strong>{listings.length}</strong>
+          <span>Active vehicles</span>
+          <p>Keep live stock complete and current.</p>
+        </div>
+        <div class="info-card">
+          <strong>{commitment?.warrantyMonths ?? 0}</strong>
+          <span>Warranty commitment</span>
+          <p>{commitment?.warrantyMonths ? "Published commitment" : "Add a warranty commitment when you can honor it."}</p>
+        </div>
+      </div>
+
+      <div class="dealer-ops-columns">
+        <div class="info-card">
+          <p class="eyebrow">Inventory health</p>
+          {inventoryQueue.length > 0 ? (
+            inventoryQueue.map((item) => (
+              <div class="ops-row">
+                <div>
+                  <strong>{item.id.slice(0, 8)}</strong>
+                  <span>{item.needs.join(", ")}</span>
+                </div>
+                <a href={`/listings/${item.id}`}>Open</a>
+              </div>
+            ))
+          ) : (
+            <p>Current active inventory is complete against the four core checks.</p>
+          )}
+        </div>
+
+        <div class="info-card">
+          <p class="eyebrow">Contact queue</p>
+          {inquiries.length > 0 ? (
+            inquiries.map((inquiry) => (
+              <div class="ops-row inquiry-row" data-inquiry-id={inquiry.id}>
+                <div>
+                  <strong>{inquiry.channel}</strong>
+                  <span>{new Date(inquiry.createdAt).toLocaleString("en-NG")}</span>
+                </div>
+                <button class="button secondary mark-response" type="button" data-inquiry-id={inquiry.id} disabled={inquiry.status === "responded"}>
+                  {inquiry.status === "responded" ? "Responded" : "Mark responded"}
+                </button>
+              </div>
+            ))
+          ) : (
+            <p>No Panther-tracked contact initiations yet.</p>
+          )}
+          <p class="muted">This metric tracks contact initiation through Panther. WhatsApp and phone responses are marked manually because the conversation leaves Panther.</p>
+        </div>
+
+        <div class="info-card">
+          <p class="eyebrow">Upcoming care</p>
+          {upcoming.length > 0 ? (
+            upcoming.map((event) => (
+              <div class="ops-row">
+                <div>
+                  <strong>{event.title}</strong>
+                  <span>{event.nextDueAt ? new Date(event.nextDueAt).toLocaleDateString("en-NG") : event.nextDueMileageKm ? `Due at ${new Intl.NumberFormat("en-NG").format(event.nextDueMileageKm)} km` : "No reminder date"}</span>
+                </div>
+                <span>{event.type.replaceAll("_", " ")}</span>
+              </div>
+            ))
+          ) : (
+            <p>No scheduled service or inspection events yet.</p>
+          )}
+
+          <form id="care-form" class="care-form">
+            <select name="type" aria-label="Care event type">
+              <option value="inspection">Inspection</option>
+              <option value="service">Service</option>
+              <option value="warranty">Warranty</option>
+              <option value="import_clearance">Import / clearance</option>
+              <option value="shipment">Shipment</option>
+              <option value="ownership">Ownership</option>
+            </select>
+            <select name="listingId" aria-label="Vehicle">
+              {listings.map((item) => (
+                <option value={item.id}>{item.id.slice(0, 8)} — {item.modelYear}</option>
+              ))}
+            </select>
+            <input name="title" placeholder="Record title" required />
+            <input name="eventDate" type="date" required />
+            <input name="mileageKm" type="number" min="0" placeholder="Current mileage km" />
+            <input name="provider" placeholder="Service provider / inspector" />
+            <input name="location" placeholder="Service / inspection location" />
+            <input name="nextDueAt" type="date" placeholder="Next due date" />
+            <input name="nextDueMileageKm" type="number" min="0" placeholder="Next due mileage km" />
+            <input name="evidenceUrl" type="url" placeholder="Evidence URL (optional)" />
+            <textarea name="notes" placeholder="What happened and what the buyer should know"></textarea>
+            <label><input name="isPublic" type="checkbox" checked /> Publish this record to buyers</label>
+            <button class="button primary" type="submit">Record vehicle event</button>
+            <p id="care-result" class="muted"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <p class="eyebrow">After-sale commitments</p>
+        <form id="commitment-form" class="care-form">
+          <div class="form-grid">
+            <label>Warranty months<input name="warrantyMonths" type="number" min="0" value={commitment?.warrantyMonths ?? 0} /></label>
+            <label>Warranty mileage km<input name="warrantyMileageKm" type="number" min="0" value={commitment?.warrantyMileageKm ?? ""} /></label>
+            <label>Complimentary service months<input name="complimentaryServiceMonths" type="number" min="0" value={commitment?.complimentaryServiceMonths ?? 0} /></label>
+          </div>
+          <label>Service notes<textarea name="serviceNotes" placeholder="Scope, exclusions or service terms">{commitment?.serviceNotes ?? ""}</textarea></label>
+          <label><input name="annualInspectionIncluded" type="checkbox" checked={commitment?.annualInspectionIncluded ?? false} /> Annual inspection included</label>
+          <label><input name="importDocumentationAvailable" type="checkbox" checked={commitment?.importDocumentationAvailable ?? false} /> Import documentation available</label>
+          <label><input name="bulkSalesAvailable" type="checkbox" checked={commitment?.bulkSalesAvailable ?? false} /> Bulk sales supported</label>
+          <button class="button primary" type="submit">Save commitments</button>
+          <p id="commitment-result" class="muted"></p>
+        </form>
+      </div>
+
+      <div class="info-card">
+        <p class="eyebrow">Published terms</p>
+        <div class="commitment-list">
+          <span>{commitment?.annualInspectionIncluded ? "Annual inspection included" : "Annual inspection not published"}</span>
+          <span>{commitment?.complimentaryServiceMonths ? `${commitment.complimentaryServiceMonths}-month complimentary service` : "Complimentary service not published"}</span>
+          <span>{commitment?.importDocumentationAvailable ? "Import documentation available" : "Import documentation not published"}</span>
+          <span>{commitment?.bulkSalesAvailable ? "Bulk sales supported" : "Bulk sales capability not published"}</span>
+        </div>
+        <a class="button secondary" href="/dashboard/profile">Update dealer profile</a>
+        <a class="button secondary" href="/listings/bulk">Bulk sourcing</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const careForm = document.querySelector<HTMLFormElement>("#care-form");
+    const careResult = document.querySelector<HTMLElement>("#care-result");
+    careForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(careForm);
+      const payload = {
+        type: String(form.get("type") ?? ""),
+        listingId: String(form.get("listingId") ?? ""),
+        title: String(form.get("title") ?? ""),
+        eventDate: String(form.get("eventDate") ?? ""),
+        mileageKm: form.get("mileageKm") ? Number(form.get("mileageKm")) : undefined,
+        provider: String(form.get("provider") ?? "") || undefined,
+        location: String(form.get("location") ?? "") || undefined,
+        nextDueAt: String(form.get("nextDueAt") ?? "") || undefined,
+        nextDueMileageKm: form.get("nextDueMileageKm") ? Number(form.get("nextDueMileageKm")) : undefined,
+        evidenceUrl: String(form.get("evidenceUrl") ?? "") || undefined,
+        notes: String(form.get("notes") ?? "") || undefined,
+        isPublic: form.has("isPublic"),
+      };
+      const response = await fetch("/api/dealers/care", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const body = (await response.json()) as { ok?: boolean; error?: string };
+      if (careResult) careResult.textContent = body.ok ? "Recorded. Refresh to see it in the queue." : body.error ?? "Could not record event.";
+      if (body.ok) careForm.reset();
+    });
+
+    const commitmentForm = document.querySelector<HTMLFormElement>("#commitment-form");
+    const commitmentResult = document.querySelector<HTMLElement>("#commitment-result");
+    commitmentForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(commitmentForm);
+      const payload = {
+        warrantyMonths: Number(form.get("warrantyMonths") || 0),
+        warrantyMileageKm: form.get("warrantyMileageKm") ? Number(form.get("warrantyMileageKm")) : null,
+        complimentaryServiceMonths: Number(form.get("complimentaryServiceMonths") || 0),
+        annualInspectionIncluded: form.has("annualInspectionIncluded"),
+        importDocumentationAvailable: form.has("importDocumentationAvailable"),
+        bulkSalesAvailable: form.has("bulkSalesAvailable"),
+        serviceNotes: String(form.get("serviceNotes") ?? ""),
+      };
+      const response = await fetch("/api/dealers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const body = (await response.json()) as { ok?: boolean; error?: string };
+      if (commitmentResult) commitmentResult.textContent = body.ok ? "Saved. The public dealer page now reflects these commitments." : body.error ?? "Could not save commitments.";
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".mark-response").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const inquiryId = button.dataset.inquiryId;
+        if (!inquiryId) return;
+        button.disabled = true;
+        const response = await fetch("/api/dealers/inquiries", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inquiryId }),
+        });
+        if (response.ok) {
+          button.textContent = "Responded";
+        } else {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
+</BaseLayout>

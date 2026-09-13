@@ -1,0 +1,73 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { db } from "../../lib/db";
+import { isAdmin } from "../../lib/admin";
+import { order, orderSettlement, user } from "../../lib/db/schema";
+import { eq } from "drizzle-orm";
+
+const currentUser = (Astro.locals as { user?: { id?: string; email?: string | null } }).user;
+if (!isAdmin(currentUser)) Astro.response.status = 403;
+
+const rows = currentUser && isAdmin(currentUser)
+  ? await db
+      .select({
+        id: orderSettlement.id,
+        orderId: orderSettlement.orderId,
+        amountNgn: orderSettlement.amountNgn,
+        status: orderSettlement.status,
+        method: orderSettlement.method,
+        manualFiatReference: orderSettlement.manualFiatReference,
+        manualSettledAt: orderSettlement.manualSettledAt,
+        sellerName: user.name,
+        orderStatus: order.status,
+        paymentMethod: order.paymentMethod,
+        createdAt: orderSettlement.createdAt,
+      })
+      .from(orderSettlement)
+      .innerJoin(order, eq(orderSettlement.orderId, order.id))
+      .innerJoin(user, eq(orderSettlement.sellerId, user.id))
+      .orderBy(orderSettlement.createdAt)
+      .limit(500)
+  : [];
+
+const outstanding = rows
+  .filter((row) => row.status === "pending" || row.status === "processing")
+  .reduce((sum, row) => sum + Number(row.amountNgn), 0);
+const settled = rows
+  .filter((row) => row.status === "settled")
+  .reduce((sum, row) => sum + Number(row.amountNgn), 0);
+---
+<BaseLayout title="Reconciliation — Panther" description="Panther administrator reconciliation for seller receivables and manual fiat settlements." noindex>
+  <section class="section">
+    <div class="shell">
+      {isAdmin(currentUser) ? <>
+        <div class="page-head">
+          <p class="eyebrow">OPERATIONS</p>
+          <h1>Settlement reconciliation</h1>
+          <p class="lead">The database ledger is authoritative. Slack mirrors operational events; it never changes settlement state.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="info-card"><b>{rows.filter((r) => r.status === "pending").length}</b><span>Pending</span></div>
+          <div class="info-card"><b>₦{outstanding.toLocaleString("en-NG", { maximumFractionDigits: 0 })}</b><span>Outstanding seller receivables</span></div>
+          <div class="info-card"><b>₦{settled.toLocaleString("en-NG", { maximumFractionDigits: 0 })}</b><span>Settled</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Settlement</th><th>Order</th><th>Seller</th><th>Amount</th><th>Method</th><th>Status</th><th>Reference</th></tr></thead>
+            <tbody>
+              {rows.map((row) => <tr>
+                <td>{row.id.slice(0, 8)}</td>
+                <td><a href={`/admin/reconciliation?order=${row.orderId}`}>{row.orderId.slice(0, 8)}</a></td>
+                <td>{row.sellerName ?? "Seller"}</td>
+                <td>₦{Number(row.amountNgn).toLocaleString("en-NG", { maximumFractionDigits: 0 })}</td>
+                <td>{row.method === "manual_fiat" ? "Manual fiat" : "Paystack"}</td>
+                <td>{row.status}</td>
+                <td>{row.manualFiatReference ?? "—"}</td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+      </> : <div class="empty-state"><h1>Admin access required</h1><p>This operational surface is restricted to configured Panther administrators.</p></div>}
+    </div>
+  </section>
+</BaseLayout>

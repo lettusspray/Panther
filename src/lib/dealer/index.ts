@@ -1,6 +1,6 @@
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
-import { dealer, dealerReview, listing, listingStatusEnum, user } from "../db/schema";
+import { dealer, dealerReview, dealerCommitment, vehicleCareEvent, vehicleCareEventTypeEnum, listing, listingStatusEnum, order, orderItem, orderSettlement, user } from "../db/schema";
 
 type ListingStatus = (typeof listingStatusEnum.enumValues)[number];
 
@@ -244,4 +244,113 @@ export async function slugExists(slug: string, excludeUserId?: string): Promise<
     return d?.slug !== slug;
   }
   return true;
+}
+
+
+export async function getDealerCommitment(dealerId: string) {
+  const rows = await db.select().from(dealerCommitment).where(eq(dealerCommitment.dealerId, dealerId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertDealerCommitment(dealerId: string, data: {
+  warrantyMonths?: number;
+  warrantyMileageKm?: number | null;
+  complimentaryServiceMonths?: number;
+  annualInspectionIncluded?: boolean;
+  importDocumentationAvailable?: boolean;
+  bulkSalesAvailable?: boolean;
+  serviceNotes?: string | null;
+}) {
+  const existing = await getDealerCommitment(dealerId);
+  if (existing) {
+    const [updated] = await db.update(dealerCommitment).set({ ...data, updatedAt: new Date() }).where(eq(dealerCommitment.dealerId, dealerId)).returning();
+    return updated;
+  }
+  const [created] = await db.insert(dealerCommitment).values({ dealerId, ...data }).returning();
+  return created;
+}
+
+export async function getDealerInventoryQuality(dealerUserId: string) {
+  const rows = await db.select({
+    id: listing.id,
+    mileageKm: listing.mileageKm,
+    askingPriceNgn: listing.askingPriceNgn,
+    conditionReport: listing.conditionReport,
+    images: listing.images,
+  }).from(listing).where(and(eq(listing.sellerId, dealerUserId), eq(listing.status, "active")));
+  const checks = rows.map((row) => {
+    let complete = 0;
+    if (row.askingPriceNgn && Number(row.askingPriceNgn) > 0) complete++;
+    if (row.mileageKm != null) complete++;
+    if (Array.isArray(row.images) && row.images.length > 0) complete++;
+    if (row.conditionReport && typeof row.conditionReport === "object") complete++;
+    return { id: row.id, score: Math.round((complete / 4) * 100), needs: [
+      !(row.askingPriceNgn && Number(row.askingPriceNgn) > 0) ? "price" : null,
+      row.mileageKm == null ? "mileage" : null,
+      !(Array.isArray(row.images) && row.images.length > 0) ? "photos" : null,
+      !(row.conditionReport && typeof row.conditionReport === "object") ? "condition report" : null,
+    ].filter(Boolean) as string[] };
+  });
+  const average = rows.length ? Math.round(rows.reduce((n, row) => {
+    const bits = [
+      !!(row.askingPriceNgn && Number(row.askingPriceNgn) > 0),
+      row.mileageKm != null,
+      Array.isArray(row.images) && row.images.length > 0,
+      !!(row.conditionReport && typeof row.conditionReport === "object"),
+    ].filter(Boolean).length;
+    return n + (bits / 4) * 100;
+  }, 0) / rows.length) : 0;
+  return { averageScore: average, listings: checks };
+}
+
+export async function getDealerReliability(dealerUserId: string) {
+  const rows = await db.select({
+    orders: sql<number>`count(distinct ${order.id})`,
+    settled: sql<number>`count(distinct case when ${orderSettlement.status} = 'settled' then ${order.id} end)`,
+  }).from(orderItem)
+    .innerJoin(order, eq(orderItem.orderId, order.id))
+    .leftJoin(orderSettlement, eq(orderSettlement.orderItemId, orderItem.id))
+    .where(eq(orderItem.sellerId, dealerUserId));
+  const row = rows[0];
+  const orders = Number(row?.orders ?? 0);
+  const settled = Number(row?.settled ?? 0);
+  return { completedOrders: settled, trackedOrders: orders, settlementRate: orders ? Math.round((settled / orders) * 100) : null };
+}
+
+export async function getDealerCareEvents(dealerId: string, limit = 20) {
+  return db.select().from(vehicleCareEvent).where(and(eq(vehicleCareEvent.dealerId, dealerId), eq(vehicleCareEvent.isPublic, true))).orderBy(sql`${vehicleCareEvent.eventDate} desc`).limit(limit);
+}
+
+export async function getVehicleCareEvents(listingId: string, includePrivate = false) {
+  const conditions = includePrivate ? eq(vehicleCareEvent.listingId, listingId) : and(eq(vehicleCareEvent.listingId, listingId), eq(vehicleCareEvent.isPublic, true));
+  return db.select().from(vehicleCareEvent).where(conditions).orderBy(sql`${vehicleCareEvent.eventDate} desc`);
+}
+
+export async function getUpcomingDealerCareEvents(dealerId: string, limit = 10) {
+  return db.select().from(vehicleCareEvent)
+    .where(and(eq(vehicleCareEvent.dealerId, dealerId), sql`${vehicleCareEvent.nextDueAt} is not null`))
+    .orderBy(vehicleCareEvent.nextDueAt)
+    .limit(limit);
+}
+
+export async function createDealerCareEvent(userId: string, data: {
+  listingId: string;
+  type: (typeof vehicleCareEventTypeEnum.enumValues)[number];
+  eventDate: Date;
+  title: string;
+  notes?: string;
+  provider?: string;
+  location?: string;
+  mileageKm?: number;
+  nextDueAt?: Date;
+  nextDueMileageKm?: number;
+  evidenceUrl?: string;
+  isPublic?: boolean;
+}) {
+  const owned = await db.select({ id: dealer.id }).from(dealer).where(eq(dealer.userId, userId)).limit(1);
+  if (!owned[0]) throw new Error("Dealer profile required");
+  const vehicle = await db.select({ id: listing.id }).from(listing).where(and(eq(listing.id, data.listingId), eq(listing.sellerId, userId))).limit(1);
+  if (!vehicle[0]) throw new Error("Vehicle is not owned by this dealer");
+  const [created] = await db.insert(vehicleCareEvent).values({ ...data, dealerId: owned[0].id, createdBy: userId }).returning();
+  return created;
 }
